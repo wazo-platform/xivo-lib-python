@@ -1,12 +1,8 @@
-# -*- coding: utf8 -*-
-"""Helper functions for XIVO
-
-Copyright (C) 2008-2010  Avencall
-
-"""
+# -*- coding: utf-8 -*-
+"""Helper functions for XIVO"""
 
 __license__ = """
-    Copyright (C) 2008-2010  Avencall
+    Copyright (C) 2008-2012  Avencall
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -130,18 +126,18 @@ def unsplit_extension(xlist):
 
     return '*'.join(ret)
 
-def fkey_extension(xleft, xlist):
+
+def fkey_extension(funckey_prefix, funckey_args):
     components = []
 
-    xleft = clean_extension(xleft)
-
-    for x in xlist:
+    for x in funckey_args:
         x = clean_extension(x)
 
         if x:
             components.append(x)
 
-    return xleft + unsplit_extension(components)
+    return clean_extension(funckey_prefix) + unsplit_extension(components)
+
 
 def speed_dial_key_components(xleft, xright, fkext, monitoringext, isbsfilter):
     """
