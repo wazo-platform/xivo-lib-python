@@ -155,9 +155,6 @@ __license__ = """
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-
-from xivo import UpCollections # pylint: disable-msg=W0611
-
 from collections import namedtuple
 import copy
 import yaml
