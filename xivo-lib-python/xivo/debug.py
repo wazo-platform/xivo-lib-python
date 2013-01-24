@@ -40,10 +40,21 @@ def _no_op_decorator(fun):
 def trace_duration(fun):
     fun_name = fun.__name__
     @functools.wraps(fun)
-    def aux_fun(*args, **kwargs):
+    def aux(*args, **kwargs):
         start_time = time.time()
         result = fun(*args, **kwargs)
         duration = time.time() - start_time
         logger.info('Execution of %r took %.3fs', fun_name, duration)
         return result
-    return aux_fun
+    return aux
+
+
+@_debug
+def trace_call(fun):
+    fun_name = fun.__name__
+    @functools.wraps(fun)
+    def aux(*args, **kwargs):
+        logger.info('Executing %r', fun_name)
+        result = fun(*args, **kwargs)
+        return result
+    return aux
