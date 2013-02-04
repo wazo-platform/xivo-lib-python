@@ -20,11 +20,11 @@ class CommandLineCompleter(object):
     def __init__(self, command_registry):
         self._command_registry = command_registry
 
-    def complete_last_word(self, command_line):
-        last_word = command_line.words[-1]
-        candidates = self._command_registry.get_next_word(command_line.words[:-1])
+    def complete_last_word(self, words):
+        last_word = words[-1]
+        candidates = self._command_registry.get_next_word(words[:-1])
         return sorted(candidate for candidate in candidates if candidate.startswith(last_word))
 
-    def complete_next_word(self, command_line):
-        candidates = self._command_registry.get_next_word(command_line.words)
+    def complete_next_word(self, words):
+        candidates = self._command_registry.get_next_word(words)
         return sorted(candidates)

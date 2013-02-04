@@ -45,11 +45,11 @@ class ReadlineCompletionHelper(object):
 
     def _refresh_candidates(self, text):
         raw_command_line = self._get_raw_command_line()
-        command_line = self._raw_command_line_parser.parse(raw_command_line)
+        words = self._raw_command_line_parser.split(raw_command_line)
         if text:
-            self._candidates = self._command_line_completer.complete_last_word(command_line)
+            self._candidates = self._command_line_completer.complete_last_word(words)
         else:
-            self._candidates = self._command_line_completer.complete_next_word(command_line)
+            self._candidates = self._command_line_completer.complete_next_word(words)
 
         if len(self._candidates) == 1:
             self._candidates[0] += self._raw_command_line_parser.word_delimiter

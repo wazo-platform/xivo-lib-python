@@ -20,7 +20,6 @@ from __future__ import unicode_literals
 import unittest
 from mock import Mock
 from hamcrest import assert_that, equal_to
-from xivo.cli.commandline import CommandLine
 from xivo.cli.completion.completer import CommandLineCompleter
 from xivo.cli.registry import CommandRegistry
 
@@ -33,52 +32,49 @@ class TestCompleter(unittest.TestCase):
         self.completer = CommandLineCompleter(self.command_registry)
 
     def test_complete_next_word_empty_line(self):
-        command_line = self._new_command_line('')
+        words = []
 
-        candidates = self.completer.complete_next_word(command_line)
+        candidates = self.completer.complete_next_word(words)
 
         self.command_registry.get_next_word.assert_called_once_with([])
         assert_that(candidates, equal_to(['agents', 'users']))
 
     def test_complete_last_word_one_valid_letter(self):
-        command_line = self._new_command_line('a')
+        words = ['a']
 
-        candidates = self.completer.complete_last_word(command_line)
+        candidates = self.completer.complete_last_word(words)
 
         self.command_registry.get_next_word.assert_called_once_with([])
         assert_that(candidates, equal_to(['agents']))
 
     def test_complete_last_word_one_invalid_letter(self):
-        command_line = self._new_command_line('x')
+        words = ['x']
 
-        candidates = self.completer.complete_last_word(command_line)
+        candidates = self.completer.complete_last_word(words)
 
         self.command_registry.get_next_word.assert_called_once_with([])
         assert_that(candidates, equal_to([]))
 
     def test_complete_last_word_one_valid_word(self):
-        command_line = self._new_command_line('agents')
+        words = ['agents']
 
-        candidates = self.completer.complete_last_word(command_line)
+        candidates = self.completer.complete_last_word(words)
 
         self.command_registry.get_next_word.assert_called_once_with([])
         assert_that(candidates, equal_to(['agents']))
 
     def test_complete_next_word_one_valid_word(self):
-        command_line = self._new_command_line('users')
+        words = ['users']
 
-        candidates = self.completer.complete_next_word(command_line)
+        candidates = self.completer.complete_next_word(words)
 
         self.command_registry.get_next_word.assert_called_once_with(['users'])
         assert_that(candidates, equal_to(['agents', 'users']))
 
     def test_complete_last_word_two_valid_words(self):
-        command_line = self._new_command_line('users a')
+        words = ['users', 'a']
 
-        candidates = self.completer.complete_last_word(command_line)
+        candidates = self.completer.complete_last_word(words)
 
         self.command_registry.get_next_word.assert_called_once_with(['users'])
         assert_that(candidates, equal_to(['agents']))
-
-    def _new_command_line(self, raw_command_line):
-        return CommandLine(raw_command_line.split(), None, None)
