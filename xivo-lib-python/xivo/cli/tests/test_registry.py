@@ -34,25 +34,25 @@ class TestCommandRegistry(unittest.TestCase):
         self.command_registry.register_command('foo bar', self.command)
         words = ['foo', 'bar']
 
-        command, args = self.command_registry.get_command_and_args_from_words(words)
+        command, args = self.command_registry.get_command_and_args(words)
 
-        assert_that(command, equal_to(self.command))
+        assert_that(command._command, equal_to(self.command))
         assert_that(args, equal_to([]))
 
     def test_get_command_and_args_when_subset_match(self):
         self.command_registry.register_command('foo bar', self.command)
         words = ['foo', 'bar', '42']
 
-        command, args = self.command_registry.get_command_and_args_from_words(words)
+        command, args = self.command_registry.get_command_and_args(words)
 
-        assert_that(command, equal_to(self.command))
+        assert_that(command._command, equal_to(self.command))
         assert_that(args, equal_to(['42']))
 
     def test_get_command_and_args_when_no_match(self):
         words = ['foo', 'bar', '42']
 
         self.assertRaises(NoMatchingCommandError,
-                          self.command_registry.get_command_and_args_from_words, words)
+                          self.command_registry.get_command_and_args, words)
 
     def test_get_commands(self):
         self.command_registry.register_command('foo bar', self.command)

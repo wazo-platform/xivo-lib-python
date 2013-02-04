@@ -35,12 +35,19 @@ class CommandRegistry(object):
                 candidates.add(command.words[nb_words])
         return list(candidates)
 
+    def get_command(self, words):
+        words_tuple = tuple(words)
+        command = self._get_command(words_tuple)
+        if command is None:
+            raise NoMatchingCommandError(words)
+        return command
+
     def get_command_and_args(self, words):
         words_tuple = tuple(words)
         for command in self._commands:
             nb_words = command.nb_words
             if command.words == words_tuple[:nb_words]:
-                return command._command, words[nb_words:]
+                return command, words[nb_words:]
         raise NoMatchingCommandError(words)
 
     def get_commands(self):
@@ -66,6 +73,13 @@ class _NamedCommandDecorator(object):
         self.name = name
         self.words = tuple(words)
         self.nb_words = len(words)
+
+    def format_usage(self):
+        usage = self._command.usage
+        if usage:
+            return 'usage: {0} {1}'.format(self.name, usage)
+        else:
+            return 'usage: {0}'.format(self.name)
 
     def __getattr__(self, name):
         return getattr(self._command, name)

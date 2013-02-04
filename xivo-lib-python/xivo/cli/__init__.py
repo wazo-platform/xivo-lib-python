@@ -15,5 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-from xivo.cli.command.base import BaseCommand
-from xivo.cli.facade import FacadeInterpreter as Interpreter
+from .command.base import BaseCommand
+from .exception import UsageError
+from .facade import FacadeInterpreter as Interpreter

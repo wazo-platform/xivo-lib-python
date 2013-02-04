@@ -18,6 +18,8 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from xivo.cli.exception import UsageError
+
 
 class Executor(object):
 
@@ -35,11 +37,13 @@ class Executor(object):
         if command_line.is_blank():
             pass
         elif command_line.command is None:
-            print('No such command:', raw_command_line)
+            print('no such command:', raw_command_line)
         else:
             command = command_line.command
             try:
                 execute_args = command.prepare(command_line.command_args)
                 command.execute(*execute_args)
+            except UsageError:
+                print(command.format_usage())
             except Exception as e:
                 self._error_handler.on_exception(e)

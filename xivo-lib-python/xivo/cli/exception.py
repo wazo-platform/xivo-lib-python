@@ -21,3 +21,7 @@ class CommandAlreadyRegisteredError(Exception):
 
 class NoMatchingCommandError(Exception):
     pass
+
+
+class UsageError(Exception):
+    pass
