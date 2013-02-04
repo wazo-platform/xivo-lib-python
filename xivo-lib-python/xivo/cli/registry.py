@@ -26,6 +26,15 @@ class CommandRegistry(object):
     def __init__(self):
         self._commands = []
 
+    def complete_next_word(self, words):
+        candidates = set()
+        words_tuple = tuple(words)
+        nb_words = len(words_tuple)
+        for command in self._commands:
+            if command.nb_words > nb_words and command.words[:nb_words] == words_tuple:
+                candidates.add(command.words[nb_words])
+        return list(candidates)
+
     def get_command_and_args_from_words(self, words):
         words_tuple = tuple(words)
         for command in self._commands:
@@ -36,15 +45,6 @@ class CommandRegistry(object):
 
     def get_commands(self):
         return list(self._commands)
-
-    def get_next_word(self, words):
-        candidates = set()
-        words_tuple = tuple(words)
-        nb_words = len(words_tuple)
-        for command in self._commands:
-            if command.nb_words > nb_words and command.words[:nb_words] == words_tuple:
-                candidates.add(command.words[nb_words])
-        return list(candidates)
 
     def register_command(self, name, command):
         command_words = tuple(name.split(' '))

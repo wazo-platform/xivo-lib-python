@@ -22,9 +22,9 @@ class CommandLineCompleter(object):
 
     def complete_last_word(self, words):
         last_word = words[-1]
-        candidates = self._command_registry.get_next_word(words[:-1])
+        candidates = self._command_registry.complete_next_word(words[:-1])
         return sorted(candidate for candidate in candidates if candidate.startswith(last_word))
 
     def complete_next_word(self, words):
-        candidates = self._command_registry.get_next_word(words)
+        candidates = self._command_registry.complete_next_word(words)
         return sorted(candidates)

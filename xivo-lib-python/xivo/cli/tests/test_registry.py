@@ -61,7 +61,7 @@ class TestCommandRegistry(unittest.TestCase):
 
         assert_that(commands[0].name, equal_to('foo bar'))
 
-    def test_get_next_word_when_no_words(self):
+    def test_complete_next_word_when_no_words(self):
         command1 = self._new_command()
         command2 = self._new_command()
         command3 = self._new_command()
@@ -69,11 +69,11 @@ class TestCommandRegistry(unittest.TestCase):
         self.command_registry.register_command('users add', command2)
         self.command_registry.register_command('users list', command3)
 
-        words = self.command_registry.get_next_word([])
+        words = self.command_registry.complete_next_word([])
 
         assert_that(words, equal_to(['agents', 'users']))
 
-    def test_get_next_word_when_unknown_word(self):
+    def test_complete_next_word_when_unknown_word(self):
         command1 = self._new_command()
         command2 = self._new_command()
         command3 = self._new_command()
@@ -81,11 +81,11 @@ class TestCommandRegistry(unittest.TestCase):
         self.command_registry.register_command('users add', command2)
         self.command_registry.register_command('users list', command3)
 
-        words = self.command_registry.get_next_word(['xyz'])
+        words = self.command_registry.complete_next_word(['xyz'])
 
         assert_that(words, equal_to([]))
 
-    def test_get_next_word_when_known_word(self):
+    def test_complete_next_word_when_known_word(self):
         command1 = self._new_command()
         command2 = self._new_command()
         command3 = self._new_command()
@@ -93,7 +93,7 @@ class TestCommandRegistry(unittest.TestCase):
         self.command_registry.register_command('users add', command2)
         self.command_registry.register_command('users list', command3)
 
-        words = self.command_registry.get_next_word(['users'])
+        words = self.command_registry.complete_next_word(['users'])
 
         assert_that(words, equal_to(['add', 'list']))
 
