@@ -34,7 +34,7 @@ class RawCommandLineParser(object):
     def parse(self, raw_command_line):
         words = self.split(raw_command_line)
         try:
-            command, command_args = self.command_registry.get_command_and_args_from_words(words)
+            command, command_args = self.command_registry.get_command_and_args(words)
         except NoMatchingCommandError:
             command = None
             command_args = None

@@ -35,7 +35,7 @@ class CommandRegistry(object):
                 candidates.add(command.words[nb_words])
         return list(candidates)
 
-    def get_command_and_args_from_words(self, words):
+    def get_command_and_args(self, words):
         words_tuple = tuple(words)
         for command in self._commands:
             nb_words = command.nb_words
