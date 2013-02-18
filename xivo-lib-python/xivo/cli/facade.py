@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 
 import os.path
 import sys
+from xivo.cli import history
 from xivo.cli.command.help import HelpCommand
 from xivo.cli.command.exit import ExitCommand
 from xivo.cli.completion.completer import CommandLineCompleter
@@ -32,10 +33,13 @@ from xivo.cli.source.input import InputRawCommandLineSource
 
 class FacadeInterpreter(object):
 
-    def __init__(self, prompt=None):
+    def __init__(self, prompt=None, history_file=None):
         if prompt is None:
             prompt = '{0}> '.format(os.path.basename(sys.argv[0]))
+        if history_file:
+            history_file = os.path.expanduser(history_file)
         self._prompt = prompt
+        self._history_file = history_file
         self._command_registry = CommandRegistry()
         self._command_line_completer = CommandLineCompleter(self._command_registry)
         self._raw_command_line_parser = RawCommandLineParser(self._command_registry)
@@ -68,4 +72,16 @@ class FacadeInterpreter(object):
         executor = Executor(raw_command_line_source,
                             self._raw_command_line_parser,
                             self._error_handler)
-        executor.execute()
+        self._load_history()
+        try:
+            executor.execute()
+        finally:
+            self._save_history()
+
+    def _load_history(self):
+        if self._history_file:
+            history.load(self._history_file)
+
+    def _save_history(self):
+        if self._history_file:
+            history.save(self._history_file)
