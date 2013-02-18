@@ -17,6 +17,9 @@
 
 from __future__ import unicode_literals
 
+import functools
+from xivo.cli.exception import UsageError
+
 
 def compute_ids(command_arg):
     ids = []
@@ -27,3 +30,15 @@ def compute_ids(command_arg):
         else:
             ids.extend(xrange(int(start), int(end) + 1))
     return ids
+
+
+def wraps_error_as_usage_error(fun):
+    @functools.wraps(fun)
+    def aux(*args, **kwargs):
+        try:
+            return fun(*args, **kwargs)
+        except UsageError:
+            raise
+        except Exception:
+            raise UsageError()
+    return aux
