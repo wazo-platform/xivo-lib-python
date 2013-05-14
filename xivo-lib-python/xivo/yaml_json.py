@@ -30,7 +30,7 @@ def stringify_keys(obj):
     In JSON, it is not.
     This function returns a *deep* copy of @obj except that integer keys are
     replaced by their decimal representation, ex:
-    
+
     >>> stringify_keys([{'vs_0001': {0: 'static_0001'}}, 12])
     [{'vs_0001': {'0': 'static_0001'}}, 12]
     """
@@ -54,12 +54,12 @@ def unstringify_keys(obj):
     """
     Returns a *deep* copy of @obj except that keys of dictionaries are
     converted to integers when possible.
-    
+
     See also stringify_keys()
-    
+
     WARNING: There is no warranty that
         obj == unstringify_keys(stringify_keys(obj))
-    
+
     >>> unstringify_keys([{'vs_0001': {'0': 'static_0001'}}, 12])
     [{'vs_0001': {0: 'static_0001'}}, 12]
     """

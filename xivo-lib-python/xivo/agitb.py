@@ -56,6 +56,7 @@ import sys
 
 __UNDEF__ = []                          # a special sentinel object
 
+
 def lookup(name, frame, lcals):
     """Find the value for a given name in the given environment."""
     if name in lcals:
@@ -72,11 +73,12 @@ def lookup(name, frame, lcals):
                 return 'builtin', getattr(builtins, name)
     return None, __UNDEF__
 
+
 def scanvars(reader, frame, lcals):
     """Scan one logical line of Python and look up values of variables used."""
     import tokenize, keyword
     xvars, lasttoken, parent, prefix, value = [], None, None, '', __UNDEF__
-    for ttype, token, start, end, line in tokenize.generate_tokens(reader): # pylint: disable-msg=W0612
+    for ttype, token, start, end, line in tokenize.generate_tokens(reader):  # pylint: disable-msg=W0612
         if ttype == tokenize.NEWLINE:
             break
         if ttype == tokenize.NAME and token not in keyword.kwlist:
@@ -134,7 +136,7 @@ function calls leading up to the error, in the order they occurred.
             i = lnum - index
             for line in lines:
                 num = '%5d ' % i
-                rows.append(num+line.rstrip())
+                rows.append(num + line.rstrip())
                 i += 1
 
         done, dump = {}, []
@@ -160,7 +162,7 @@ function calls leading up to the error, in the order they occurred.
     if type(evalue) is types.InstanceType:
         for name in dir(evalue):
             value = pydoc.text.repr(getattr(evalue, name))
-            exception.append('\n%s%s = %s' % (" "*4, name, value))
+            exception.append('\n%s%s = %s' % (" " * 4, name, value))
 
     import traceback
     return head + ''.join(frames) + ''.join(exception) + '''
@@ -170,6 +172,7 @@ the original traceback:
 
 %s
 ''' % ''.join(traceback.format_exception(etype, evalue, etb))
+
 
 class Hook:
     """A hook to replace sys.excepthook that sends detailed tracebacks to
@@ -222,7 +225,7 @@ class Hook:
                 self.agi.verbose(msg, 4)
             else:
                 self.file.write(msg + '\n')
-        
+
         try:
             self.file.flush()
         except Exception:
@@ -230,16 +233,17 @@ class Hook:
 
 
 handler = Hook().handle
+
+
 def enable(agi=None, display=1, logdir=None, context=5):
     """Install an exception handler that can send exceptions to agi.verbose
 
     The optional argument 'display' can be set to 0 to suppress sending the
     traceback to the Asterisk verbose logs, and 'logdir' can be set to a
     directory to cause tracebacks to be written to files there."""
-    except_hook =  Hook(display=display, logdir=logdir,
+    except_hook = Hook(display=display, logdir=logdir,
                           context=context, agi=agi)
     sys.excepthook = except_hook
-   
+
     global handler
     handler = except_hook.handle
-    

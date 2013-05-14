@@ -161,7 +161,7 @@ import yaml
 import logging
 
 
-log = logging.getLogger("xivo.xys") # pylint: disable-msg=C0103
+log = logging.getLogger("xivo.xys")  # pylint: disable-msg=C0103
 
 
 # NOTE: content must stay first
@@ -184,7 +184,7 @@ def _optmand_content(x):
 
 def _construct_node(loader, node, base_tag):
     "Warning: depends on python-yaml internals"
-    node = copy.copy(node) # bypass YAML anti recursion
+    node = copy.copy(node)  # bypass YAML anti recursion
     best_tag = base_tag
     best_fit = 0
     for key, val in loader.DEFAULT_TAGS.iteritems():
@@ -250,6 +250,7 @@ def add_parameterized_validator(param_validator, base_tag, tag_prefix=None):
     # pylint: disable-msg=C0111,W0621
     if not tag_prefix:
         tag_prefix = u'!~%s(' % param_validator.__name__
+
     def multi_constructor(loader, tag_suffix, node):
         def temp_validator(node, schema):
             return param_validator(node, schema, *_split_params(tag_prefix, tag_suffix))
@@ -260,7 +261,7 @@ def add_parameterized_validator(param_validator, base_tag, tag_prefix=None):
 
 def _add_validator_internal(validator, base_tag):
     "with builtin tag prefixing"
-    add_validator(validator, base_tag, tag = u'!~~' + validator.__name__)
+    add_validator(validator, base_tag, tag=u'!~~' + validator.__name__)
 
 
 def _add_parameterized_validator_internal(param_validator, base_tag):
@@ -268,7 +269,7 @@ def _add_parameterized_validator_internal(param_validator, base_tag):
     add_parameterized_validator(param_validator, base_tag, tag_prefix=u'!~~%s(' % param_validator.__name__)
 
 
-def enum(nstr, schema, *symbols): # pylint: disable-msg=W0613
+def enum(nstr, _schema, *symbols):  # pylint: disable-msg=W0613
     """
     !~~enum(symb1[,symb2[,...]])
         corresponding strings in documents must be in the set of
@@ -277,7 +278,7 @@ def enum(nstr, schema, *symbols): # pylint: disable-msg=W0613
     return nstr in symbols
 
 
-def seqlen(lst, schema, min_len, max_len): # pylint: disable-msg=W0613
+def seqlen(lst, _schema, min_len, max_len):  # pylint: disable-msg=W0613
     """
     !~~seqlen(min,max)
         corresponding sequences in documents must have a length between
@@ -286,7 +287,7 @@ def seqlen(lst, schema, min_len, max_len): # pylint: disable-msg=W0613
     return min_len <= len(lst) <= max_len
 
 
-def between(val, schema, min_val, max_val): # pylint: disable-msg=W0613
+def between(val, _schema, min_val, max_val):  # pylint: disable-msg=W0613
     """
     !~~between(min,max)
         corresponding integers in documents must be between min and max,
@@ -334,7 +335,7 @@ _add_parameterized_validator_internal(seqlen, u'!!seq')
 _add_parameterized_validator_internal(between, u'!!int')
 _add_parameterized_validator_internal(enum, u'!!str')
 add_validator(fixed, u'!!str', '!~~fixedStr')
-add_validator(fixed, u'!!int', '!~~fixedInt') # XXX: validation tag overloading?
+add_validator(fixed, u'!!int', '!~~fixedInt')  # XXX: validation tag overloading?
 _add_validator_internal(startswith, u'!!str')
 _add_validator_internal(prefixedDec, u'!!str')
 
@@ -437,7 +438,7 @@ def validate(document, schema):
             if not validate(elt, schema[0]):
                 return False
         return True
-    else: # scalar
+    else:  # scalar
         if isinstance(schema, str):
             schema = unicode(schema)
         if isinstance(document, str):

@@ -25,16 +25,17 @@ __version__ = "$Revision$ $Date$"
 
 from xml.parsers import expat
 
+
 class XML2Dict:
     """
     A simple class to convert XML data into Python dictionary.
     """
     def __init__(self):
-        self._cdata_parts   = None
-        self._current       = None
-        self._stack         = None
-        self._parser        = None
-        self.root           = None
+        self._cdata_parts = None
+        self._current = None
+        self._stack = None
+        self._parser = None
+        self.root = None
 
     def _set_item(self, k, v):
         if k != '__cdata__' and k in self._current:
@@ -46,10 +47,10 @@ class XML2Dict:
             value = v
         self._current[k] = value
 
-    def startElement(self, name, attrs):
+    def startElement(self, _name, attrs):
         self._stack.append((self._current, self._cdata_parts))
-        self._current       = {}
-        self._cdata_parts   = []
+        self._current = {}
+        self._cdata_parts = []
         for k, v in attrs.items():
             self._set_item(k, v)
 
@@ -71,15 +72,15 @@ class XML2Dict:
         self._cdata_parts.append(content)
 
     def Parse(self, data):
-        self.root           = {}
-        self._stack         = []
-        self._current       = self.root
-        self._cdata_parts   = []
+        self.root = {}
+        self._stack = []
+        self._current = self.root
+        self._cdata_parts = []
 
         self._parser = expat.ParserCreate()
-        self._parser.StartElementHandler    = self.startElement
-        self._parser.EndElementHandler      = self.endElement
-        self._parser.CharacterDataHandler   = self.characters
+        self._parser.StartElementHandler = self.startElement
+        self._parser.EndElementHandler = self.endElement
+        self._parser.CharacterDataHandler = self.characters
 
         self._parser.Parse(data)
         return self.root
