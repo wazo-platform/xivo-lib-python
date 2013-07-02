@@ -18,4 +18,4 @@
 from collections import namedtuple
 
 
-Extension = namedtuple('FullExtension', ['number', 'context'])
+Extension = namedtuple('FullExtension', ['number', 'context', 'is_internal'])
