@@ -18,7 +18,7 @@
 import unittest
 
 from xivo.asterisk.protocol_interface import ProtocolInterface
-from xivo.asterisk.protocol_interface import InvalidChannel
+from xivo.asterisk.protocol_interface import InvalidChannelError
 from xivo.asterisk.protocol_interface import protocol_interface_from_channel
 
 
@@ -43,4 +43,4 @@ class TestProtocolInterface(unittest.TestCase):
     def test_protocol_interface_from_channel_invalid(self):
         invalid_channel = 'slkdfjaslkdjfaslkdjflskdjf'
 
-        self.assertRaises(InvalidChannel, protocol_interface_from_channel, invalid_channel)
+        self.assertRaises(InvalidChannelError, protocol_interface_from_channel, invalid_channel)
