@@ -18,7 +18,7 @@
 import collections
 import re
 
-channel_regexp = re.compile(r'(sip|sccp)/(\w+).*', re.I)
+channel_regexp = re.compile(r'(sip|sccp)/(\w+)', re.I)
 
 
 ProtocolInterface = collections.namedtuple('ProtocolInterface', ['protocol', 'interface'])
