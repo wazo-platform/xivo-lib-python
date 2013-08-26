@@ -39,3 +39,13 @@ class UnicodeDictReader(csv.DictReader):
     def next(self):
         return dict((key, val.decode(self._encoding))
                     for (key, val) in csv.DictReader.next(self).iteritems())
+
+
+class UnicodeDictWriter(csv.DictWriter):
+
+    def __init__(self, *args, **kwargs):
+        self._encoding = kwargs.pop('encoding', 'utf-8')
+        csv.DictWriter.__init__(self, *args, **kwargs)
+
+    def writerow(self, row):
+        csv.DictWriter.writerow(self, dict((key, unicode(val).encode(self._encoding)) for (key, val) in row.iteritems()))
