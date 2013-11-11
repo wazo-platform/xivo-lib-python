@@ -1,23 +1,22 @@
 #!/usr/bin/env python
-
-__version__ = "$Revision$ $Date$"
+# -*- coding: utf-8 -*-
 
 from distutils.core import setup
 
-setup(name='xivo',
-      version='1.0',
-      description='These are useful python libraries to be used with XIVO code',
-      author='Proformatique',
-      author_email='technique@proformatique.com',
-      url='http://xivo.fr/',
-      packages=['xivo',
-                'xivo.asterisk',
-                'xivo.cli',
-                'xivo.cli.command',
-                'xivo.cli.completion',
-                'xivo.cli.source',
-                'xivo.BackSQL'],
-      data_files=[
-                  ('/usr/bin', ['utils/pybacktrace']),
-                 ],
-     )
+setup(
+    name='xivo',
+    version='1.0',
+    description='These are useful python libraries to be used with XIVO code',
+    author='Avencall',
+    author_email='xivo-dev@lists.proformatique.com',
+    url='http://projects.xivo.fr/',
+    packages=[
+        'xivo',
+        'xivo.asterisk',
+        'xivo.cli',
+        'xivo.cli.command',
+        'xivo.cli.completion',
+        'xivo.cli.source',
+        'xivo.BackSQL',
+    ],
+)
