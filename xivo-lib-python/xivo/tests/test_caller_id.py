@@ -16,6 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import unittest
+
+from hamcrest import assert_that, equal_to
+from xivo import caller_id
 from xivo.caller_id import build_caller_id, _complete_caller_id, extract_number, \
     extract_displayname
 
@@ -68,3 +71,19 @@ class TestCallerID(unittest.TestCase):
 
     def test_extract_displayname_with_invalid_caller_id(self):
         self.assertRaises(ValueError, extract_displayname, '1001')
+
+    def test_assemble_caller_id_with_extension(self):
+        fullname = 'User 1'
+        number = '2345'
+
+        result = caller_id.assemble_caller_id(fullname, number)
+
+        assert_that(result, equal_to('"%s" <%s>' % (fullname, number)))
+
+    def test_assemble_caller_id_without_extension(self):
+        fullname = 'User 1'
+        number = None
+
+        result = caller_id.assemble_caller_id(fullname, number)
+
+        assert_that(result, equal_to('"%s"' % fullname))

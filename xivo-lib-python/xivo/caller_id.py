@@ -46,3 +46,9 @@ def extract_displayname(caller_id):
         return result.groups()[0]
     else:
         raise ValueError('Not a valid Caller ID: %s', caller_id)
+
+
+def assemble_caller_id(fullname, number):
+    if number:
+        return '"%s" <%s>' % (fullname, number)
+    return '"%s"' % fullname
