@@ -42,7 +42,7 @@ from xivo import shvar
 log = logging.getLogger("xivo.xivo_config") # pylint: disable-msg=C0103
 
 
-SYSCONF_DIR = "/etc/pf-xivo/sysconf"
+SYSCONF_DIR = "/etc/xivo/sysconf"
 
 STORE_BASE = os.path.join(SYSCONF_DIR, "store")
 

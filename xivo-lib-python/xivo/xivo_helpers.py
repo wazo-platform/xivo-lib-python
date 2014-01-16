@@ -28,7 +28,7 @@ from xivo.BackSQL import backpostgresql
 
 log = logging.getLogger("xivo.xivo_helpers")
 
-AGI_CONFFILE = "/etc/pf-xivo/xivo-agid.conf"
+AGI_CONFFILE = "/etc/xivo/xivo-agid.conf"
 
 find_asterisk_pattern_char = re.compile('[[NXZ!.]').search
 
