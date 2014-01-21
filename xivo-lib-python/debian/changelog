@@ -1,0 +1,173 @@
+xivo-lib-python (12.22~20121107.160154.caae793-1) squeeze-xivo-skaro-dev; urgency=low
+
+  * rename package 
+
+ -- Nicolas HICHER (atarakt) <nhicher@proformatique.com>  Wed, 07 Nov 2012 11:04:04 -0500
+
+pf-xivo-lib-python (17:1.2~alpha-1.4-1) squeeze-xivo-skaro-dev; urgency=low
+
+  * Fix version for packaging-farm
+
+ -- Nicolas HICHER (atarakt) <nhicher@proformatique.com>  Wed, 28 Sep 2011 15:08:09 -0400
+
+pf-xivo-lib-python (17:1.1~svn7527-12) lenny-xivo-gallifrey-dev; urgency=low
+
+  * Readded python-yaml, removed by mistake.
+
+ -- Marc Dequènes (Duck) <mdequenes@proformatique.com>  Fri, 05 Feb 2010 12:34:06 +0100
+
+pf-xivo-lib-python (17:1.1~svn7527-11) lenny-xivo-gallifrey-dev; urgency=low
+
+  * python-yaml is integrated in Python core, removed dependency.
+
+ -- Marc Dequènes (Duck) <mdequenes@proformatique.com>  Fri, 05 Feb 2010 11:52:07 +0100
+
+pf-xivo-lib-python (17:1.1~svn7509-2) lenny-xivo-gallifrey-dev; urgency=low
+
+  * Updated for Python 2.5.
+
+ -- Marc Dequènes (Duck) <mdequenes@proformatique.com>  Wed, 03 Feb 2010 11:30:23 +0100
+
+pf-xivo-lib-python (17:1.1~svn7436-2) etch-xivo-gallifrey-dev; urgency=low
+
+  * Added depends on python-cjson.
+
+ -- Adrien DELLE CAVE (Decryptus) <decryptus@proformatique.com>  Tue, 12 Jan 2010 19:37:34 +0100
+
+pf-xivo-lib-python (0.4~svn4138-0) etch-xivo-k-9-dev; urgency=low
+ 
+  * Preparing new development snapshot.
+  * In control, build-dep on python-all-dev (>= 2.4.4-2) instead of
+    (>= 2.3.5-11) because we are targeting Python 2.4.
+  * Removed references to ami.py because this module has been removed.
+  * Updated the debian/copyright file.
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Fri, 19 Sep 2008 17:23:46 +0200
+
+pf-xivo-lib-python (0.4~svn4107-0) etch-xivo-k-9-dev; urgency=low
+
+  * Preparing new development snapshot.
+  * Fixed typos in debian/copyright.
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Tue, 16 Sep 2008 17:11:38 +0200
+
+pf-xivo-lib-python (0.4~svn3641-3) etch-xivo-k-9-dev; urgency=low
+
+  * Replaced all occurrences to Xivo by XIVO in copyright file.
+
+ -- Adrien DELLE CAVE (Decryptus) <decryptus@proformatique.com>  Wed, 23 Jul 2008 00:37:12 +0200
+
+pf-xivo-lib-python (0.4~svn3516-2) etch-xivo-k-9-dev; urgency=low
+
+  * Added ${python:Versions} ${python:Depends} and ${python:Provides}
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Thu, 10 Jul 2008 15:39:58 +0200
+
+pf-xivo-lib-python (0.4~svn3342-0) etch-xivo-k-9-dev; urgency=low
+
+  * Renamed ifplugd.vlan to vlanupdown because this script is to be invoked by
+    run-parts which refuses to consider executables if their filename contains
+    a dot.
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Fri, 20 Jun 2008 04:49:57 +0200
+
+pf-xivo-lib-python (0.4~svn3341-0) etch-xivo-k-9-dev; urgency=low
+
+  * Added a dependency on ifplugd.
+  * Added a script for ifplugd which up/down VLAN when an up/down event occurs
+    on the physical interface they are based on.
+  * Removed a dependency on pyparsing.
+  * Removed unneeded explicit build-dep on python-support from control.in,
+    because @cdbs@ already adds it in control automatically.
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Fri, 20 Jun 2008 02:49:37 +0200
+
+pf-xivo-lib-python (0.4~svn3335-0) etch-xivo-k-9-dev; urgency=low
+
+  * Build and install new helper tool ifacenames.
+  * Added myself in uploaders
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Thu, 19 Jun 2008 18:46:00 +0200
+
+pf-xivo-lib-python (0.4~svn3207-0) etch-xivo-k-9-dev; urgency=low
+
+  * Updated a copyright year 
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Thu,  5 Jun 2008 18:38:49 +0200
+
+pf-xivo-lib-python (0.4~svn3115-1) etch-xivo-k-9-dev; urgency=low
+
+  * Added dependency on python-yaml 
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Wed, 28 May 2008 14:51:05 +0200
+
+pf-xivo-lib-python (0.4~svn3115-0) etch-xivo-k-9-dev; urgency=low
+
+  * simple-patchsys.mk not used, removed.
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Tue, 27 May 2008 19:07:59 +0200
+
+pf-xivo-lib-python (0.4~svn3082-0) etch-xivo-k-9-dev; urgency=low
+
+  * Removed false LDAP dependency
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Fri, 23 May 2008 18:53:13 +0200
+
+pf-xivo-lib-python (0.4~svn3070) etch-xivo-k-9-dev; urgency=low
+
+  * Licensing update. 
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Thu, 22 May 2008 20:15:08 +0200
+
+pf-xivo-lib-python (0.4~svn2527) etch-xivo-k-9-dev; urgency=low
+
+  * Added pyversions
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Tue,  4 Mar 2008 20:56:05 +0100
+
+pf-xivo-lib-python (0.4~svn2454) etch-xivo-k-9-dev; urgency=low
+
+  * Licensing update. 
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Thu, 21 Feb 2008 02:59:09 +0100
+
+pf-xivo-lib-python (0.1.1~svn1649-0) etch; urgency=low
+
+  * Preparing new development snapshot.
+  * Packaging now uses python-support.
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Tue, 23 Oct 2007 12:35:58 +0200
+
+pf-xivo-lib-python (0.1~svn1189-0) etch; urgency=low
+
+  * Preparing new development snapshot.
+  * Changed dependencies: added python-pyparsing (used by new module
+    http_pyparsing.py of the library)
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Thu, 19 Jul 2007 20:55:10 +0200
+
+pf-xivo-lib-python (0.1~svn1005-0) etch; urgency=low
+
+  * Preparing new development snapshot.
+  * Fixed some license related stuff.
+
+ -- Guillaume Knispel <gknispel@proformatique.com>  Sun,  1 Jul 2007 22:59:04 +0200
+
+pf-xivo-lib-python (0.1~svn690-2) etch; urgency=low
+
+  * BackSQL directory fixed in debian/install.
+
+ -- Corentin Le Gall <clegall@proformatique.com>  Thu, 24 May 2007 12:20:32 +0200
+
+pf-xivo-lib-python (0.1~svn690-1) etch; urgency=low
+
+  * New upstream development snapshot.
+
+ -- Corentin Le Gall <clegall@proformatique.com>  Wed, 23 May 2007 11:51:19 +0200
+
+pf-xivo-lib-python (0.1~svn600-1) etch; urgency=low
+
+  * Initial release.
+
+ -- Corentin Le Gall <corentin@proformatique.com>  Tue, 15 May 2007 16:01:29 +0200
+

@@ -1,0 +1,22 @@
+Source: xivo-lib-python
+Section: python
+Priority: extra
+Maintainer: XiVO Dev Team <dev@avencall.com>
+Uploaders: XiVO Builder Team <release@xivo.fr>
+Build-Depends: debhelper (>= 8), dh-python, python-all (>= 2.7), python-setuptools
+Standards-Version: 3.9.4
+X-Python-Version: >= 2.7
+Homepage: http://xivo.fr/
+
+Package: xivo-lib-python
+Architecture: all
+Provides: ${python:Provides}, pf-xivo-lib-python
+Replaces:  pf-xivo-lib-python
+Conflicts: pf-xivo-lib-python
+Depends: ${python:Depends}, ${misc:Depends}, python-cjson, python-yaml, ifplugd (>= 0.28), python-psycopg2
+Description: XIVO Python libraries
+ XIVO is a system based on a powerful IPBX, to bring an easy to
+ install solution for telephony and related services.
+ .
+ These are useful python libraries to be used with XIVO code.
+ .
