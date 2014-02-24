@@ -19,3 +19,4 @@ from collections import namedtuple
 
 
 Extension = namedtuple('FullExtension', ['number', 'context', 'is_internal'])
+Extension.__repr__ = lambda self: '%s@%s' % (self.number, self.context)
