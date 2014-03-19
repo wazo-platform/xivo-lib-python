@@ -19,6 +19,7 @@ import collections
 import re
 
 channel_regexp = re.compile(r'(sip|sccp|local)/([\w@-]+)-', re.I)
+agent_channel_regex = re.compile(r'Local/id-(\d+)@agentcallback')
 
 
 ProtocolInterface = collections.namedtuple('ProtocolInterface', ['protocol', 'interface'])
@@ -39,3 +40,11 @@ def protocol_interface_from_channel(channel):
     interface = matches.group(2)
 
     return ProtocolInterface(protocol, interface)
+
+
+def agent_id_from_channel(channel):
+    matches = agent_channel_regex.match(channel)
+    if matches is None:
+        raise InvalidChannelError(channel)
+
+    return int(matches.group(1))

@@ -20,6 +20,7 @@ import unittest
 from xivo.asterisk.protocol_interface import ProtocolInterface
 from xivo.asterisk.protocol_interface import InvalidChannelError
 from xivo.asterisk.protocol_interface import protocol_interface_from_channel
+from xivo.asterisk.protocol_interface import agent_id_from_channel
 
 
 class TestProtocolInterface(unittest.TestCase):
@@ -52,3 +53,16 @@ class TestProtocolInterface(unittest.TestCase):
         result = protocol_interface_from_channel(local_channel)
 
         self.assertEquals(result, expected_result)
+
+    def test_agent_id_from_channel(self):
+        channel = 'Local/id-55@agentcallback-00000001;2'
+        expected_id = 55
+
+        result = agent_id_from_channel(channel)
+
+        self.assertEquals(result, expected_id)
+
+    def test_agent_id_from_channel_invalid(self):
+        channel = 'asjasldfkjag\'fghdfl48u4'
+
+        self.assertRaises(InvalidChannelError, agent_id_from_channel, channel)
