@@ -18,13 +18,14 @@
 import collections
 import re
 
-channel_regexp = re.compile(r'(sip|sccp)/(\w+)', re.I)
+channel_regexp = re.compile(r'(sip|sccp|local)/([\w@-]+)-', re.I)
 
 
 ProtocolInterface = collections.namedtuple('ProtocolInterface', ['protocol', 'interface'])
 
 
 class InvalidChannelError(ValueError):
+
     def __init__(self, invalid_channel):
         ValueError.__init__(self, 'the channel %s is invalid' % invalid_channel)
 
@@ -33,6 +34,7 @@ def protocol_interface_from_channel(channel):
     matches = channel_regexp.match(channel)
     if matches is None:
         raise InvalidChannelError(channel)
+
     protocol = matches.group(1)
     interface = matches.group(2)
 

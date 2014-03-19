@@ -44,3 +44,11 @@ class TestProtocolInterface(unittest.TestCase):
         invalid_channel = 'slkdfjaslkdjfaslkdjflskdjf'
 
         self.assertRaises(InvalidChannelError, protocol_interface_from_channel, invalid_channel)
+
+    def test_with_a_local_channel(self):
+        local_channel = 'Local/id-5@agentcallback-00000001;2'
+        expected_result = ProtocolInterface('Local', 'id-5@agentcallback')
+
+        result = protocol_interface_from_channel(local_channel)
+
+        self.assertEquals(result, expected_result)
