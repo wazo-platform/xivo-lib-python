@@ -41,6 +41,14 @@ class TestProtocolInterface(unittest.TestCase):
 
         self.assertEquals(expected_result, result)
 
+    def test_protocol_interface_from_channel_async_goto(self):
+        channel = 'AsyncGoto/SCCP/1011-0000007c'
+        expected_result = ProtocolInterface('SCCP', '1011')
+
+        result = protocol_interface_from_channel(channel)
+
+        self.assertEquals(expected_result, result)
+
     def test_protocol_interface_from_channel_invalid(self):
         invalid_channel = 'slkdfjaslkdjfaslkdjflskdjf'
 

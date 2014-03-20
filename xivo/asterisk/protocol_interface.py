@@ -32,7 +32,7 @@ class InvalidChannelError(ValueError):
 
 
 def protocol_interface_from_channel(channel):
-    matches = channel_regexp.match(channel)
+    matches = channel_regexp.search(channel)
     if matches is None:
         raise InvalidChannelError(channel)
 
