@@ -27,7 +27,7 @@ ProtocolInterface = collections.namedtuple('ProtocolInterface', ['protocol', 'in
 
 class InvalidChannelError(ValueError):
 
-    def __init__(self, invalid_channel):
+    def __init__(self, invalid_channel=None):
         ValueError.__init__(self, 'the channel %s is invalid' % invalid_channel)
 
 
