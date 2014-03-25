@@ -18,22 +18,33 @@
 import collections
 import re
 
-channel_regexp = re.compile(r'(sip|sccp)/(\w+)', re.I)
+channel_regexp = re.compile(r'(sip|sccp|local)/([\w@-]+)-', re.I)
+agent_channel_regex = re.compile(r'Local/id-(\d+)@agentcallback')
 
 
 ProtocolInterface = collections.namedtuple('ProtocolInterface', ['protocol', 'interface'])
 
 
 class InvalidChannelError(ValueError):
-    def __init__(self, invalid_channel):
+
+    def __init__(self, invalid_channel=None):
         ValueError.__init__(self, 'the channel %s is invalid' % invalid_channel)
 
 
 def protocol_interface_from_channel(channel):
-    matches = channel_regexp.match(channel)
+    matches = channel_regexp.search(channel)
     if matches is None:
         raise InvalidChannelError(channel)
+
     protocol = matches.group(1)
     interface = matches.group(2)
 
     return ProtocolInterface(protocol, interface)
+
+
+def agent_id_from_channel(channel):
+    matches = agent_channel_regex.match(channel)
+    if matches is None:
+        raise InvalidChannelError(channel)
+
+    return int(matches.group(1))

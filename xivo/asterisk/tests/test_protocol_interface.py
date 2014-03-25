@@ -20,6 +20,7 @@ import unittest
 from xivo.asterisk.protocol_interface import ProtocolInterface
 from xivo.asterisk.protocol_interface import InvalidChannelError
 from xivo.asterisk.protocol_interface import protocol_interface_from_channel
+from xivo.asterisk.protocol_interface import agent_id_from_channel
 
 
 class TestProtocolInterface(unittest.TestCase):
@@ -40,7 +41,36 @@ class TestProtocolInterface(unittest.TestCase):
 
         self.assertEquals(expected_result, result)
 
+    def test_protocol_interface_from_channel_async_goto(self):
+        channel = 'AsyncGoto/SCCP/1011-0000007c'
+        expected_result = ProtocolInterface('SCCP', '1011')
+
+        result = protocol_interface_from_channel(channel)
+
+        self.assertEquals(expected_result, result)
+
     def test_protocol_interface_from_channel_invalid(self):
         invalid_channel = 'slkdfjaslkdjfaslkdjflskdjf'
 
         self.assertRaises(InvalidChannelError, protocol_interface_from_channel, invalid_channel)
+
+    def test_with_a_local_channel(self):
+        local_channel = 'Local/id-5@agentcallback-00000001;2'
+        expected_result = ProtocolInterface('Local', 'id-5@agentcallback')
+
+        result = protocol_interface_from_channel(local_channel)
+
+        self.assertEquals(result, expected_result)
+
+    def test_agent_id_from_channel(self):
+        channel = 'Local/id-55@agentcallback-00000001;2'
+        expected_id = 55
+
+        result = agent_id_from_channel(channel)
+
+        self.assertEquals(result, expected_id)
+
+    def test_agent_id_from_channel_invalid(self):
+        channel = 'asjasldfkjag\'fghdfl48u4'
+
+        self.assertRaises(InvalidChannelError, agent_id_from_channel, channel)
