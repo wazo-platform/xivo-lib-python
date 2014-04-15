@@ -1,4 +1,3 @@
-nose
 mock
 pyhamcrest
 psycopg2
