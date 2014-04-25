@@ -49,6 +49,14 @@ class TestProtocolInterface(unittest.TestCase):
 
         self.assertEquals(expected_result, result)
 
+    def test_protocol_interface_from_channel_dahdi(self):
+        channel = 'DAHDI/i1/1042-7'
+        expected_result = ProtocolInterface('DAHDI', 'i1/1042')
+
+        result = protocol_interface_from_channel(channel)
+
+        self.assertEquals(expected_result, result)
+
     def test_protocol_interface_from_channel_invalid(self):
         invalid_channel = 'slkdfjaslkdjfaslkdjflskdjf'
 
