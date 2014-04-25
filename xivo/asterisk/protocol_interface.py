@@ -18,7 +18,7 @@
 import collections
 import re
 
-channel_regexp = re.compile(r'(sip|sccp|local|dahdi)/([\w@/-]+)-', re.I)
+channel_regexp = re.compile(r'(sip|sccp|local|dahdi|iax2)/([\w@/-]+)-', re.I)
 agent_channel_regex = re.compile(r'Local/id-(\d+)@agentcallback')
 
 

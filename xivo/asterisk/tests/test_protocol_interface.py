@@ -57,6 +57,14 @@ class TestProtocolInterface(unittest.TestCase):
 
         self.assertEquals(expected_result, result)
 
+    def test_protocol_interface_from_channel_iax(self):
+        channel = 'IAX2/pigjkls-5304'
+        expected_result = ProtocolInterface('IAX2', 'pigjkls')
+
+        result = protocol_interface_from_channel(channel)
+
+        self.assertEquals(expected_result, result)
+
     def test_protocol_interface_from_channel_invalid(self):
         invalid_channel = 'slkdfjaslkdjfaslkdjflskdjf'
 
