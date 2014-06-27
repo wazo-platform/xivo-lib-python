@@ -9,7 +9,7 @@ setup(
     description='These are useful python libraries to be used with XIVO code',
     author='Avencall',
     author_email='xivo-dev@lists.proformatique.com',
-    url='http://projects.xivo.fr/',
+    url='http://projects.xivo.io/',
     packages=[
         'xivo',
         'xivo.asterisk',
