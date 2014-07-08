@@ -29,7 +29,7 @@ import re
 import sys
 import errno
 import logging
-
+from contextlib import contextmanager
 
 SLASH_PROC = os.sep + 'proc'
 PROG_SLINK = 'exe'
@@ -234,4 +234,9 @@ def daemonize():
         log.exception("error during file descriptor redirection")
 
 
-# TODO: some automatic tests
+@contextmanager
+def daemon_context(pid_file_name):
+    daemonize()
+    lock_pidfile_or_die(pid_file_name)
+    yield
+    unlock_pidfile(pid_file_name)
