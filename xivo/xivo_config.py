@@ -39,7 +39,7 @@ from xivo import udev
 from xivo import shvar
 
 
-log = logging.getLogger("xivo.xivo_config") # pylint: disable-msg=C0103
+log = logging.getLogger("xivo.xivo_config")  # pylint: disable-msg=C0103
 
 
 SYSCONF_DIR = "/etc/xivo/sysconf"
@@ -64,9 +64,9 @@ GENERATED_NEW = "new"
 NETWORK_CONFIG_FILE = "network.yaml"
 
 #                                   path used by system:
-INTERFACES_FILE = "interfaces"      # /etc/network/
-DHCPD_CONF_FILE = "dhcpd.conf"      # /etc/dhcp/
-IFPLUGD_FILE = "ifplugd"            # /etc/default/
+INTERFACES_FILE = "interfaces"  # /etc/network/
+DHCPD_CONF_FILE = "dhcpd.conf"  # /etc/dhcp/
+IFPLUGD_FILE = "ifplugd"  # /etc/default/
 
 AUTHORIZED_PREFIXES = ("eth", "vlan", "dummy")
 
@@ -176,7 +176,7 @@ ID_CHR = ''.join(map(chr, xrange(0, 256)))
 
 PhoneClasses = {}
 
-### GENERAL CONF
+# ## GENERAL CONF
 
 
 def specific(nstr):
@@ -289,7 +289,7 @@ def specific_prefixDec(fname, prefix):
         except ValueError:
             return False
         return True
-    validator.__name__ = fname # pylint: disable-msg=W0621
+    validator.__name__ = fname  # pylint: disable-msg=W0621
     return validator
 
 
@@ -439,7 +439,7 @@ def plausible_configuration(conf, schema):
     voip_fixed = ('voipServer', 'bootServer', 'directory', 'ntp', 'router')
     for field in voip_fixed:
         if field in addresses:
-            if network.parse_ipv4(addresses[field]) == broadcast: # TODO: other sanity checks...
+            if network.parse_ipv4(addresses[field]) == broadcast:  # TODO: other sanity checks...
                 log.error("invalid voip service related IP %r: %r", field, addresses[field])
                 return False
     # router, if present, must be in the network
@@ -528,8 +528,8 @@ services:
 
 # TODO:
 # ipConfs:
-#	static_xxxx:
-#		comment:
+# 	static_xxxx:
+# 		comment:
 # dont le contenu sera injecte dans /e/n/i
 
 # TODO creer un program qui fill les truc par defaut non remplis de network.yaml
@@ -724,7 +724,7 @@ def generate_interfaces(old_lines, conf):
         elif up is KEPT:
             if space_blocks:
                 new_eni.append(space_blocks[0])
-        else: # dismiss space blocks for which adjacent non space blocks are both removed
+        else:  # dismiss space blocks for which adjacent non space blocks are both removed
             pass
         del space_blocks[:]
 
@@ -768,7 +768,7 @@ def generate_interfaces(old_lines, conf):
             else:
                 log.info("removing empty %r stanza", block.allow_kw)
                 down = REMOVED
-        else: # interfaces.EniBlockUnknown
+        else:  # interfaces.EniBlockUnknown
             log.info("removing invalid block")
             down = REMOVED
 
@@ -807,13 +807,13 @@ def generate_interfaces(old_lines, conf):
             if not specific(ipConfs_tag):
                 continue
             elif 'ipConfs' in conf and ipConfs_tag in conf['ipConfs']:
-                family      = 'inet'
-                method      = 'static'
+                family = 'inet'
+                method = 'static'
                 currentconf = conf['ipConfs'][ipConfs_tag]
             else:
                 currentconf = conf['customipConfs'][ipConfs_tag]
-                family      = currentconf.get('family', 'inet')
-                method      = currentconf.get('method', 'static')
+                family = currentconf.get('family', 'inet')
+                method = currentconf.get('method', 'static')
 
             if currentconf.has_key('ifname'):
                 ifname = currentconf['ifname']
@@ -844,7 +844,7 @@ def generate_interfaces(old_lines, conf):
 
                 if 'mtu' in currentconf:
                     yield "\tmtu %d\n" % currentconf['mtu']
-                    
+
 
             if 'options' in currentconf:
                 for optname, optvalue in unreserved_interfaces_options(currentconf['options']):
