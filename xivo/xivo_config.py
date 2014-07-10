@@ -305,7 +305,7 @@ def plausible_static(static, schema):
         return False
     addr_list = [address]
     net = network.mask_ipv4(netmask, address)
-    for other in ('gateway'):
+    for other in ('broadcast', 'gateway'):
         other_ip = static.get(other)
         if other_ip:
             parsed_ip = network.parse_ipv4(other_ip)
