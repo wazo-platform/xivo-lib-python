@@ -16,8 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import logging
+import sys
 
 DEFAULT_LOG_FORMAT = '%(asctime)s [%(process)d] (%(levelname)s) (%(name)s): %(message)s'
+
+
+class _LogLevelFilter(logging.Filter):
+    def __init__(self, level_filter):
+        self._level_filter = level_filter
+
+    def filter(self, record):
+        return self._level_filter(record.levelno)
 
 
 def setup_logging(log_file, foreground=False, debug=False, log_format=DEFAULT_LOG_FORMAT):
@@ -30,9 +39,15 @@ def setup_logging(log_file, foreground=False, debug=False, log_format=DEFAULT_LO
     root_logger.addHandler(handler)
 
     if foreground:
-        handler = logging.StreamHandler()
-        handler.setFormatter(formatter)
-        root_logger.addHandler(handler)
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        stdout_handler.addFilter(_LogLevelFilter(lambda level: level <= logging.WARNING))
+        stdout_handler.setFormatter(formatter)
+        root_logger.addHandler(stdout_handler)
+
+        stderr_handler = logging.StreamHandler(sys.stderr)
+        stderr_handler.addFilter(_LogLevelFilter(lambda level: level > logging.WARNING))
+        stderr_handler.setFormatter(formatter)
+        root_logger.addHandler(stderr_handler)
 
     if debug:
         root_logger.setLevel(logging.DEBUG)
