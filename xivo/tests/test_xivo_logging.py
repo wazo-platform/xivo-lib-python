@@ -15,7 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-from hamcrest import assert_that, equal_to
+import logging
+import tempfile
+
+from cStringIO import StringIO
+from hamcrest import assert_that, contains_string, equal_to, has_length
 from mock import Mock, patch
 from unittest import TestCase
 
@@ -52,7 +56,7 @@ class TestLogging(TestCase):
 
         setup_logging(log_file, foreground=True)
 
-        stream_handler.setFormatter.assert_called_once_with(formatter)
+        stream_handler.setFormatter.assert_any_call(formatter)
         root_logger.addHandler.assert_any_call(stream_handler)
 
     def test_setup_logging_with_no_debug_then_log_level_is_info(self, logging):
@@ -85,3 +89,38 @@ class TestLogging(TestCase):
         setup_logging(log_file, log_format=log_format)
 
         logging.Formatter.assert_called_once_with(log_format)
+
+
+@patch('sys.stderr', new_callable=StringIO)
+@patch('sys.stdout', new_callable=StringIO)
+class TestLoggingOutput(TestCase):
+    def setUp(self):
+        _, self.file_name = tempfile.mkstemp()
+
+    def test_setup_logging_when_log_in_info_level_then_log_in_stdout(self, stdout, stderr):
+        message = 'test info'
+
+        setup_logging(self.file_name, foreground=True)
+        logging.getLogger('test').info(message)
+
+        assert_that(stdout.getvalue(), contains_string(message))
+        assert_that(stderr.getvalue(), has_length(0))
+
+    def test_setup_logging_when_log_in_warning_level_then_log_in_stdout(self, stdout, stderr):
+        message = 'test warning'
+
+        setup_logging(self.file_name, foreground=True)
+        logging.getLogger('test').warning(message)
+
+        assert_that(stdout.getvalue(), contains_string(message))
+        assert_that(stderr.getvalue(), has_length(0))
+
+    def test_setup_logging_when_log_in_error_level_then_log_in_stderr(self, stdout, stderr):
+        message = 'test error'
+        _, file_name = tempfile.mkstemp()
+
+        setup_logging(file_name, foreground=True)
+        logging.getLogger('test').error(message)
+
+        assert_that(stderr.getvalue(), contains_string(message))
+        assert_that(stdout.getvalue(), has_length(0))
