@@ -235,7 +235,7 @@ def daemonize():
 
 
 @contextmanager
-def daemon_context(pid_file_name, foreground=False):
+def pidfile_context(pid_file_name, foreground=False):
     if not foreground:
         daemonize()
 
