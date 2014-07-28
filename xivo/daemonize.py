@@ -235,8 +235,10 @@ def daemonize():
 
 
 @contextmanager
-def daemon_context(pid_file_name):
-    daemonize()
+def daemon_context(pid_file_name, foreground=False):
+    if not foreground:
+        daemonize()
+
     lock_pidfile_or_die(pid_file_name)
     yield
     unlock_pidfile(pid_file_name)
