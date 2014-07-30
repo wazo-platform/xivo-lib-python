@@ -237,8 +237,14 @@ def daemonize():
 @contextmanager
 def pidfile_context(pid_file_name, foreground=False):
     if not foreground:
+        log.debug("Daemonizing...")
         daemonize()
+        log.debug("Daemonized.")
 
+    log.debug("Locking PID file...")
     lock_pidfile_or_die(pid_file_name)
+    log.debug("PID file locked.")
     yield
+    log.debug("Unlocking PID...")
     unlock_pidfile(pid_file_name)
+    log.debug("PID file unlocked.")
