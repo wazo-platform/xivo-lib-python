@@ -36,7 +36,7 @@ PROG_SLINK = 'exe'
 PROG_CMDLN = 'cmdline'
 
 
-log = logging.getLogger("xivo.daemonize") # pylint: disable-msg=C0103
+log = logging.getLogger("xivo.daemonize")  # pylint: disable-msg=C0103
 
 
 def remove_if_stale_pidfile(pidfile):
@@ -51,7 +51,7 @@ def remove_if_stale_pidfile(pidfile):
             pid_maydaemon = int(file(pidfile).readline().strip())
         except IOError, e:
             if e.errno == errno.ENOENT:
-                return # nothing to suppress, so do nothing...
+                return  # nothing to suppress, so do nothing...
             raise
         # Who are we?
         i_am = c14n_prog_name(sys.argv[0])
@@ -68,7 +68,8 @@ def remove_if_stale_pidfile(pidfile):
             raise
         # Check the whole command line of the other process
         if i_am in map(c14n_prog_name, other_cmdline):
-            log.warning("A pidfile %r already exists (contains pid %d) and the correponding process command line contains our own name %r",
+            log.warning("A pidfile %r already exists (contains pid %d) and the "
+                        "correponding process command line contains our own name %r",
                         pidfile, pid_maydaemon, i_am)
             return
         # It may not be us, but we must be quite sure about that so also try
@@ -89,18 +90,20 @@ def remove_if_stale_pidfile(pidfile):
             else:
                 raise
         if i_am == lock_pgm:
-            log.warning("A pidfile %r already exists (contains pid %d) and an executable with our name %r is runnning with that pid.",
+            log.warning("A pidfile %r already exists (contains pid %d) and an "
+                        "executable with our name %r is runnning with that pid.",
                         pidfile, pid_maydaemon, i_am)
             return
         # Ok to remove the previously existing pidfile now.
-        log.info("A pidfile %r already exists (contains pid %d) but the corresponding process does not seem to match with our own name %r.  "
+        log.info("A pidfile %r already exists (contains pid %d) but the "
+                 "corresponding process does not seem to match with our own name %r.  "
                  "Will remove the pidfile.", pidfile, pid_maydaemon, i_am)
         log.info("Splitted command line of the other process: %s", other_cmdline)
         if lock_pgm:
             log.info("Name of the executable the other process comes from: %s", full_pgm)
         os.unlink(pidfile)
         return
-    except Exception: # pylint: disable-msg=W0703
+    except Exception:  # pylint: disable-msg=W0703
         log.exception("unexpected error")
 
 
@@ -124,17 +127,16 @@ def take_file_lock(own_file, lock_file, own_content):
     except OSError, e:
         if e.errno == errno.EEXIST:
             log.warning("The lock file %r already exists - won't "
-                    "overwrite it.  An other instance of ourself "
-                    "is probably running.", lock_file)
+                        "overwrite it.  An other instance of ourself "
+                        "is probably running.", lock_file)
             return False
         else:
             raise
     content = file(lock_file).read(len(own_content) + 1)
     if content != own_content:
-        log.warning(
-                "I thought I successfully took the lock file %r but "
-                "it does not contain what was expected.  Somebody is "
-                "playing with us.", lock_file)
+        log.warning("I thought I successfully took the lock file %r but "
+                    "it does not contain what was expected.  Somebody is "
+                    "playing with us.", lock_file)
         return False
     return True
 
@@ -199,44 +201,52 @@ def daemonize():
     try:
         pid = os.fork()
         if pid > 0:
-            os._exit(0) # pylint: disable-msg=W0212
+            os._exit(0)  # pylint: disable-msg=W0212
     except OSError, e:
         log.exception("first fork() failed: %d (%s)", e.errno, e.strerror)
         sys.exit(1)
-    
+
     os.setsid()
     os.umask(0)
     os.chdir("/")
-    
+
     try:
         pid = os.fork()
         if pid > 0:
-            os._exit(0) # pylint: disable-msg=W0212
+            os._exit(0)  # pylint: disable-msg=W0212
     except OSError, e:
         log.exception("second fork() failed: %d (%s)", e.errno, e.strerror)
         sys.exit(1)
-    
+
     try:
         devnull_fd = os.open(os.devnull, os.O_RDWR)
-        
+
         for stdf in (sys.__stdout__, sys.__stderr__):
             try:
                 stdf.flush()
-            except Exception: # pylint: disable-msg=W0703,W0704
+            except Exception:  # pylint: disable-msg=W0703,W0704
                 pass
-        
+
         for stdf in (sys.__stdin__, sys.__stdout__, sys.__stderr__):
             try:
                 os.dup2(devnull_fd, stdf.fileno())
-            except OSError: # pylint: disable-msg=W0704
+            except OSError:  # pylint: disable-msg=W0704
                 pass
-    except Exception: # pylint: disable-msg=W0703
+    except Exception:  # pylint: disable-msg=W0703
         log.exception("error during file descriptor redirection")
 
 
 @contextmanager
-def daemon_context(pid_file_name):
-    daemonize()
+def pidfile_context(pid_file_name, foreground=False):
+    if not foreground:
+        log.debug("Daemonizing...")
+        daemonize()
+        log.debug("Daemonized.")
+
+    log.debug("Locking PID file...")
     lock_pidfile_or_die(pid_file_name)
+    log.debug("PID file locked.")
     yield
+    log.debug("Unlocking PID...")
     unlock_pidfile(pid_file_name)
+    log.debug("PID file unlocked.")
