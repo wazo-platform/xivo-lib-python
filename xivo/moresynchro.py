@@ -52,9 +52,8 @@ class Once(object):
             if self._initialized:
                 return
 
+            init_routine()
             self._initialized = 1
-
-        init_routine()
 
 
 class RWLock:
