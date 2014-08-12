@@ -30,19 +30,12 @@ Copyright (C) 2007-2010  Avencall
         Copyright (C) 2007, Heiko Wundram.
         Released under the BSD-license.
 
-- ListLock              simple dictionary used to atomically test and insert
-                        implemented locks are reentrant
-
-    Useful to lock basing on dynamic symbolic identifiers instead of
-    already known computer objects.
-
 """
-
-__version__ = "$Revision$ $Date$"
 
 import time
 import thread
 import threading
+
 
 class RWLock:
     """
@@ -180,54 +173,3 @@ class RWLock:
                 raise thread.error, "release unlocked lock"
         finally:
             self.__condition.release()
-
-class ListLock:
-
-    "This class let us lock on a given object identifier in a set"
-
-    def __init__(self):
-        self.lock = threading.Lock()
-        self.locked = {}
-
-    def try_acquire(self, elt):
-        """
-        elt must be hashable.
-
-        If not yet locked, elt is captured for the current thread and
-        True is returned.
-
-        If already locked by the current thread its recursive counter
-        is incremented and True is returned.
-
-        If already locked by another thread False is returned.
-        """
-        me = threading.currentThread()
-        self.lock.acquire()
-        try:
-            if elt not in self.locked:
-                self.locked[elt] = [me, 1]
-                return True
-            elif self.locked[elt][0] == me:
-                self.locked[elt][1] += 1
-                return True
-        finally:
-            self.lock.release()
-        return False
-
-    def release(self, elt):
-        """
-        elt must be already locked (if it is not a thread.error
-        exception will be raised)
-
-        The recursive counter for elt is decremented and when it
-        reaches zero the lock is released.
-        """
-        self.lock.acquire()
-        try:
-            if elt not in self.locked:
-                raise thread.error, "release unlocked lock for %s" % `elt`
-            self.locked[elt][1] -= 1
-            if not self.locked[elt][1]:
-                del self.locked[elt]
-        finally:
-            self.lock.release()
