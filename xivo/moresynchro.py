@@ -37,6 +37,26 @@ import thread
 import threading
 
 
+class Once(object):
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._initialized = False
+
+    def once(self, init_routine):
+        # common case optimization
+        if self._initialized:
+            return
+
+        with self._lock:
+            if self._initialized:
+                return
+
+            self._initialized = 1
+
+        init_routine()
+
+
 class RWLock:
     """
     Simple RWLock with timeouts, without promotion.
