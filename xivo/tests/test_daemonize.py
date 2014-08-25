@@ -32,13 +32,13 @@ class TestPidfileContext(unittest.TestCase):
         with daemonize.pidfile_context(sentinel.filename):
             lock_fn.assert_called_once_with(sentinel.filename)
 
-    def test_that_unlock_is_called(self, lock_fn, unlock_fn):
+    def test_that_unlock_is_called(self, _lock_fn, unlock_fn):
         with daemonize.pidfile_context(sentinel.filename):
             pass
 
         unlock_fn.assert_called_once_with(sentinel.filename)
 
-    def test_that_unlock_is_called_on_exception(self, lock_fn, unlock_fn):
+    def test_that_unlock_is_called_on_exception(self, _lock_fn, unlock_fn):
         def f():
             with daemonize.pidfile_context(sentinel.filename):
                 raise Exception('ok')
