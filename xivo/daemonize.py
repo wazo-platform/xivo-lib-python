@@ -238,7 +238,6 @@ def daemonize():
 
 @contextmanager
 def pidfile_context(pid_file_name, foreground=False):
-    print 'called'
     if not foreground:
         log.debug("Daemonizing...")
         daemonize()
