@@ -15,8 +15,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-from flup.server.fcgi import WSGIServer
+from mock import patch, sentinel as s
+from unittest import TestCase
+
+from xivo import wsgi
 
 
-def run(http_app, **kwargs):
-    WSGIServer(http_app, **kwargs).run()
+@patch('signal.signal')
+@patch('xivo.wsgi.WSGIServer')
+class TestWSGI(TestCase):
+
+    def test_run_starts_wsgi_server_with_app(self, wsgi_init, _signal):
+        server = wsgi_init.return_value
+
+        wsgi.run(s.app)
+
+        wsgi_init.assert_called_once_with(s.app)
+        server.run.assert_called_once_with()
+
+    def test_run_passes_kwargs_to_wsgi_server(self, wsgi_init, _signal):
+        kwargs = {
+            'bindAddress': s.socket,
+            'debug': True
+        }
+
+        wsgi.run(s.app, **kwargs)
+
+        wsgi_init.assert_called_once_with(s.app, **kwargs)
