@@ -23,7 +23,7 @@ from hamcrest import assert_that, contains_string, equal_to, has_length
 from mock import Mock, patch
 from unittest import TestCase
 
-from ..xivo_logging import DEFAULT_LOG_FORMAT, setup_logging
+from ..xivo_logging import DEFAULT_LOG_FORMAT, DEFAULT_LOG_LEVEL, setup_logging
 
 
 @patch('xivo.xivo_logging.logging')
@@ -59,19 +59,35 @@ class TestLogging(TestCase):
         stream_handler.setFormatter.assert_any_call(formatter)
         root_logger.addHandler.assert_any_call(stream_handler)
 
-    def test_setup_logging_with_no_debug_then_log_level_is_info(self, logging):
+    def test_setup_logging_with_no_flags_then_log_level_is_default(self, logging):
         log_file = Mock()
         root_logger = logging.getLogger.return_value
 
         setup_logging(log_file)
 
-        root_logger.setLevel.assert_called_once_with(logging.INFO)
+        root_logger.setLevel.assert_called_once_with(DEFAULT_LOG_LEVEL)
 
     def test_setup_logging_with_debug_then_log_level_is_debug(self, logging):
         log_file = Mock()
         root_logger = logging.getLogger.return_value
 
         setup_logging(log_file, debug=True)
+
+        root_logger.setLevel.assert_called_once_with(logging.DEBUG)
+
+    def test_setup_logging_with_loglevel_then_log_level_is_changed(self, logging):
+        log_file = Mock()
+        root_logger = logging.getLogger.return_value
+
+        setup_logging(log_file, log_level=logging.ERROR)
+
+        root_logger.setLevel.assert_called_once_with(logging.ERROR)
+
+    def test_setup_logging_with_loglevel_and_debug_then_log_level_is_debug(self, logging):
+        log_file = Mock()
+        root_logger = logging.getLogger.return_value
+
+        setup_logging(log_file, debug=True, log_level=logging.ERROR)
 
         root_logger.setLevel.assert_called_once_with(logging.DEBUG)
 

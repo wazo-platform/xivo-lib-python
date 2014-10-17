@@ -19,6 +19,7 @@ import logging
 import sys
 
 DEFAULT_LOG_FORMAT = '%(asctime)s [%(process)d] (%(levelname)s) (%(name)s): %(message)s'
+DEFAULT_LOG_LEVEL = logging.INFO
 
 
 class _LogLevelFilter(logging.Filter):
@@ -29,7 +30,7 @@ class _LogLevelFilter(logging.Filter):
         return self._level_filter(record.levelno)
 
 
-def setup_logging(log_file, foreground=False, debug=False, log_format=DEFAULT_LOG_FORMAT):
+def setup_logging(log_file, foreground=False, debug=False, log_level=DEFAULT_LOG_LEVEL, log_format=DEFAULT_LOG_FORMAT):
     root_logger = logging.getLogger()
 
     formatter = logging.Formatter(log_format)
@@ -50,6 +51,5 @@ def setup_logging(log_file, foreground=False, debug=False, log_format=DEFAULT_LO
         root_logger.addHandler(stderr_handler)
 
     if debug:
-        root_logger.setLevel(logging.DEBUG)
-    else:
-        root_logger.setLevel(logging.INFO)
+        log_level = logging.DEBUG
+    root_logger.setLevel(log_level)
