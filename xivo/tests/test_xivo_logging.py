@@ -23,7 +23,10 @@ from hamcrest import assert_that, contains_string, equal_to, has_length
 from mock import Mock, patch
 from unittest import TestCase
 
-from ..xivo_logging import DEFAULT_LOG_FORMAT, DEFAULT_LOG_LEVEL, setup_logging
+from xivo.xivo_logging import DEFAULT_LOG_FORMAT
+from xivo.xivo_logging import DEFAULT_LOG_LEVEL
+from xivo.xivo_logging import setup_logging
+from xivo.xivo_logging import get_log_level_by_name
 
 
 @patch('xivo.xivo_logging.logging')
@@ -140,3 +143,23 @@ class TestLoggingOutput(TestCase):
 
         assert_that(stderr.getvalue(), contains_string(message))
         assert_that(stdout.getvalue(), has_length(0))
+
+
+class TestLogLevelByName(TestCase):
+
+    def test_get_log_level_by_name_when_unknown_then_raise_valueerror(self):
+        self.assertRaises(ValueError, get_log_level_by_name, 'not a log level name')
+
+    def test_get_log_level_by_name_when_valid_name_then_return_log_level(self):
+        assert_that(get_log_level_by_name('DEBUG'), equal_to(logging.DEBUG))
+        assert_that(get_log_level_by_name('INFO'), equal_to(logging.INFO))
+        assert_that(get_log_level_by_name('WARNING'), equal_to(logging.WARNING))
+        assert_that(get_log_level_by_name('ERROR'), equal_to(logging.ERROR))
+        assert_that(get_log_level_by_name('CRITICAL'), equal_to(logging.CRITICAL))
+
+    def test_get_log_level_by_name_when_valid_lower_name_then_return_log_level(self):
+        assert_that(get_log_level_by_name('debug'), equal_to(logging.DEBUG))
+        assert_that(get_log_level_by_name('info'), equal_to(logging.INFO))
+        assert_that(get_log_level_by_name('warning'), equal_to(logging.WARNING))
+        assert_that(get_log_level_by_name('error'), equal_to(logging.ERROR))
+        assert_that(get_log_level_by_name('critical'), equal_to(logging.CRITICAL))

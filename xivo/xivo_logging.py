@@ -53,3 +53,19 @@ def setup_logging(log_file, foreground=False, debug=False, log_level=DEFAULT_LOG
     if debug:
         log_level = logging.DEBUG
     root_logger.setLevel(log_level)
+
+
+def get_log_level_by_name(log_level_name):
+    levels = {
+        'CRITICAL': logging.CRITICAL,
+        'ERROR': logging.ERROR,
+        'WARNING': logging.WARNING,
+        'INFO': logging.INFO,
+        'DEBUG': logging.DEBUG,
+    }
+    log_level_name = log_level_name.upper()
+
+    if log_level_name not in levels:
+        raise ValueError('Unknown log level {}'.format(log_level_name))
+
+    return levels[log_level_name]
