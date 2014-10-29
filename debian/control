@@ -13,7 +13,7 @@ Architecture: all
 Provides: ${python:Provides}, pf-xivo-lib-python
 Replaces:  pf-xivo-lib-python
 Conflicts: pf-xivo-lib-python
-Depends: ${python:Depends}, ${misc:Depends}, python-cjson, python-yaml, ifplugd (>= 0.28), python-psycopg2
+Depends: ${python:Depends}, ${misc:Depends}, python-cjson, python-yaml, ifplugd (>= 0.28), python-psycopg2, python-flup
 Description: XIVO Python libraries
  XIVO is a system based on a powerful IPBX, to bring an easy to
  install solution for telephony and related services.

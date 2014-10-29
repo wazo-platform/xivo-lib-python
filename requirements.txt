@@ -1,3 +1,4 @@
 mock
 pyhamcrest
 psycopg2
+flup
