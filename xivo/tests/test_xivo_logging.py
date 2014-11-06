@@ -15,18 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
+from cStringIO import StringIO
 import logging
 import tempfile
+from unittest import TestCase
 
-from cStringIO import StringIO
 from hamcrest import assert_that, contains_string, equal_to, has_length
 from mock import Mock, patch
-from unittest import TestCase
 
 from xivo.xivo_logging import DEFAULT_LOG_FORMAT
 from xivo.xivo_logging import DEFAULT_LOG_LEVEL
-from xivo.xivo_logging import setup_logging
 from xivo.xivo_logging import get_log_level_by_name
+from xivo.xivo_logging import setup_logging
 
 
 @patch('xivo.xivo_logging.logging')
@@ -126,13 +126,13 @@ class TestLoggingOutput(TestCase):
         assert_that(stderr.getvalue(), has_length(0))
 
     def test_setup_logging_when_log_in_warning_level_then_log_in_stdout(self, stdout, stderr):
-        message = 'test warning'
+        message = ''
 
         setup_logging(self.file_name, foreground=True)
         logging.getLogger('test').warning(message)
 
         assert_that(stdout.getvalue(), contains_string(message))
-        assert_that(stderr.getvalue(), has_length(0))
+        assert_that(stderr.getvalue(), '')
 
     def test_setup_logging_when_log_in_error_level_then_log_in_stderr(self, stdout, stderr):
         message = 'test error'

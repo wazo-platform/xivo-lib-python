@@ -41,12 +41,12 @@ def setup_logging(log_file, foreground=False, debug=False, log_level=DEFAULT_LOG
 
     if foreground:
         stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.addFilter(_LogLevelFilter(lambda level: level <= logging.WARNING))
+        stdout_handler.addFilter(_LogLevelFilter(lambda level: level <= log_level))
         stdout_handler.setFormatter(formatter)
         root_logger.addHandler(stdout_handler)
 
         stderr_handler = logging.StreamHandler(sys.stderr)
-        stderr_handler.addFilter(_LogLevelFilter(lambda level: level > logging.WARNING))
+        stderr_handler.addFilter(_LogLevelFilter(lambda level: level > log_level))
         stderr_handler.setFormatter(formatter)
         root_logger.addHandler(stderr_handler)
 
