@@ -21,18 +21,41 @@ import string
 import tempfile
 import unittest
 
+from ..config_helper import parse_config_dir
 from ..config_helper import parse_config_file
 from hamcrest import assert_that
+from hamcrest import contains
 from hamcrest import equal_to
 from mock import patch
+from operator import itemgetter
 from yaml.parser import ParserError
+
+
+def _none_existent_filename():
+    while True:
+        filename = '{}-{}'.format(
+            os.path.dirname(__file__),
+            ''.join(random.choice(string.lowercase) for _ in xrange(3)))
+        if not os.path.exists(filename):
+            return filename
+
+
+def _new_tmp_dir():
+    while True:
+        suffix = ''.join(random.choice(string.lowercase) for _ in xrange(3))
+        dirname = os.path.join(tempfile.gettempdir(), suffix)
+        if not os.path.exists(dirname):
+            os.mkdir(dirname)
+            tempfile.tempdir = dirname
+            break
+    return dirname
 
 
 class TestParseConfigFile(unittest.TestCase):
 
     @patch('__builtin__.print')
     def test_empty_dict_when_no_file_or_directory(self, mocked_print):
-        no_such_file = self._none_existent_filename()
+        no_such_file = _none_existent_filename()
 
         result = parse_config_file(no_such_file)
 
@@ -64,10 +87,51 @@ class TestParseConfigFile(unittest.TestCase):
 
         assert_that(res, equal_to({'test': 'value'}))
 
-    def _none_existent_filename(self):
-        while True:
-            filename = '{}-{}'.format(
-                os.path.dirname(__file__),
-                ''.join(random.choice(string.lowercase) for _ in xrange(3)))
-            if not os.path.exists(filename):
-                return filename
+
+class TestParseConfigDir(unittest.TestCase):
+
+    @patch('__builtin__.print')
+    def test_no_such_directory(self, mocked_print):
+        dirname = _none_existent_filename()
+
+        result = parse_config_dir(dirname)
+
+        assert_that(result, contains())
+        printed_message = mocked_print.call_args_list[0]
+        assert_that(printed_message.startswith('Could not read config dir'))
+
+    def test_with_only_valid_configs(self):
+        dirname = _new_tmp_dir()
+
+        f1 = tempfile.NamedTemporaryFile()
+        f1.writelines('test: one')
+        f1.seek(0)
+        f2 = tempfile.NamedTemporaryFile()
+        f2.writelines('test: two')
+        f2.seek(0)
+
+        res = parse_config_dir(dirname)
+
+        sorted_files = sorted([{'file': f1.name,
+                                'content': {'test': 'one'}},
+                               {'file': f2.name,
+                                'content': {'test': 'two'}}], key=itemgetter('file'))
+        expected = [entry['content'] for entry in sorted_files]
+        assert_that(res, contains(*expected))
+
+    @patch('__builtin__.print')
+    def test_that_valid_configs_are_returned_when_one_fails(self, mocked_print):
+        dirname = _new_tmp_dir()
+
+        f1 = tempfile.NamedTemporaryFile()
+        f1.writelines('test: one')
+        f1.seek(0)
+        f2 = tempfile.NamedTemporaryFile()
+        f2.writelines('test: [:one :two]')
+        f2.seek(0)
+
+        res = parse_config_dir(dirname)
+
+        assert_that(res, contains({'test': 'one'}))
+        printed_message = mocked_print.call_args_list[0]
+        assert_that(printed_message.startswith('Could not read config dir'))

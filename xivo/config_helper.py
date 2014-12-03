@@ -34,6 +34,12 @@ def parse_config_file(config_file_name):
 
 
 def parse_config_dir(directory_name):
+    '''
+    Reads all files in directory_name and returns a list of dictionnaries containing
+    the parsed yaml content from these files.
+
+    Invalid files are ignored and a message is sent to stderr
+    '''
     full_path = partial(os.path.join, directory_name)
     try:
         extra_config_filenames = os.listdir(directory_name)
@@ -41,4 +47,11 @@ def parse_config_dir(directory_name):
         print('Could not read config dir {}: {}'.format(directory_name, e), file=sys.stderr)
         return []
 
-    return [parse_config_file(full_path(f)) for f in sorted(extra_config_filenames)]
+    def _config_generator():
+        for filename in sorted(extra_config_filenames):
+            try:
+                yield parse_config_file(full_path(filename))
+            except Exception as e:
+                print('Could not read config file {}: {}'.format(filename, e), file=sys.stderr)
+
+    return list(_config_generator())
