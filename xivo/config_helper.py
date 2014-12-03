@@ -35,7 +35,7 @@ def parse_config_file(config_file_name):
 
 def parse_config_dir(directory_name):
     '''
-    Reads all files in directory_name and returns a list of dictionnaries containing
+    Reads all files in directory_name and returns a list of dictionaries containing
     the parsed yaml content from these files.
 
     Invalid files are ignored and a message is sent to stderr
