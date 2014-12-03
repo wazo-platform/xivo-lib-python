@@ -46,10 +46,7 @@ class TestChainMap(unittest.TestCase):
         assert_that(m['key'], equal_to(2))
         assert_that(m['test'], equal_to(42))
 
-    def test_contains(self):
-        cli_config = {}
-        environment_config = {'key': 2}
+    def test_get_item_with_none_value(self):
+        m = ChainMap({'a': None})
 
-        m = ChainMap(cli_config, environment_config)
-
-        assert_that('key' in m, is_(True))
+        assert_that(m['a'] is None)
