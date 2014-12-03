@@ -37,7 +37,8 @@ def parse_config_dir(directory_name):
     full_path = partial(os.path.join, directory_name)
     try:
         extra_config_filenames = os.listdir(directory_name)
-    except OSError:
+    except OSError as e:
+        print('Could not read config dir {}: {}'.format(directory_name, e), file=sys.stderr)
         return []
 
     return [parse_config_file(full_path(f)) for f in sorted(extra_config_filenames)]
