@@ -23,6 +23,7 @@ import unittest
 
 from ..config_helper import parse_config_dir
 from ..config_helper import parse_config_file
+from ..config_helper import read_config_file_hierarchy
 from hamcrest import assert_that
 from hamcrest import contains
 from hamcrest import equal_to
@@ -135,3 +136,25 @@ class TestParseConfigDir(unittest.TestCase):
         assert_that(res, contains({'test': 'one'}))
         printed_message = mocked_print.call_args_list[0]
         assert_that(printed_message.startswith('Could not read config dir'))
+
+
+class TestReadConfigFileHierarchy(unittest.TestCase):
+
+    @patch('xivo.config_helper.parse_config_file')
+    @patch('xivo.config_helper.parse_config_dir')
+    def test_that_the_main_config_file_is_read(self, mocked_parse_config_dir, mocked_parse_config_file):
+        mocked_parse_config_file.return_value = {'extra_config_files': '/path/to/extra',
+                                                 'sentinel': 'from_main_file'}
+        mocked_parse_config_dir.return_value = [{'sentinel': 'from_extra_config'}]
+        cli_and_default_config = {
+            'config_file': '/path/to/config.yml',
+            'extra_config_files': '/original/path/to/extra',
+            'sentinel': 'from_default',
+        }
+
+        config = read_config_file_hierarchy(cli_and_default_config)
+
+        mocked_parse_config_file.assert_called_once_with('/path/to/config.yml')
+        mocked_parse_config_dir.assert_called_once_with('/path/to/extra')
+
+        assert_that(config['sentinel'], equal_to('from_extra_config'))
