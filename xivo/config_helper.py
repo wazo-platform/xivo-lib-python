@@ -60,11 +60,14 @@ def parse_config_dir(directory_name):
 
 def read_config_file_hierarchy(original_config, config_file_key='config_file', extra_config_dir_key='extra_config_files'):
     '''
-    Given a dictionnary with a key <filename> and <extra_config_files> this
-    function will read the main config file, update it's local copy of the
-    config with the content of the main config file, read all files in the
-    extra_config_files directory and return a ChainMap of the extra config
-    ordered alphabetically followed by the main config file.
+    Read a config file and an extra config directory, then return the whole
+    config with the following priority:
+
+    extra_config_directory (in alphabetical order)
+    config file
+
+    The config file name is taken from original_config[config_file_key].
+    The extra config directory name is taken from original_config[extra_config_files].
     '''
 
     main_config_filename = original_config[config_file_key]
