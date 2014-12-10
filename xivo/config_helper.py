@@ -67,7 +67,7 @@ def read_config_file_hierarchy(original_config, config_file_key='config_file', e
     config file
 
     The config file name is taken from original_config[config_file_key].
-    The extra config directory name is taken from original_config[extra_config_files].
+    The extra config directory name is taken from original_config[extra_config_dir_key].
     '''
 
     main_config_filename = original_config[config_file_key]
