@@ -144,7 +144,8 @@ class TestReadConfigFileHierarchy(unittest.TestCase):
     @patch('xivo.config_helper.parse_config_dir')
     def test_that_the_main_config_file_is_read(self, mocked_parse_config_dir, mocked_parse_config_file):
         mocked_parse_config_file.return_value = {'extra_config_files': '/path/to/extra',
-                                                 'sentinel': 'from_main_file'}
+                                                 'sentinel': 'from_main_file',
+                                                 'main_file_only': True}
         mocked_parse_config_dir.return_value = [{'sentinel': 'from_extra_config'}]
         cli_and_default_config = {
             'config_file': '/path/to/config.yml',
@@ -158,3 +159,4 @@ class TestReadConfigFileHierarchy(unittest.TestCase):
         mocked_parse_config_dir.assert_called_once_with('/path/to/extra')
 
         assert_that(config['sentinel'], equal_to('from_extra_config'))
+        assert_that(config['main_file_only'], equal_to(True))
