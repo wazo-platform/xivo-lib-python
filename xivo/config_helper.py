@@ -58,7 +58,7 @@ def parse_config_dir(directory_name):
     return list(_config_generator())
 
 
-def read_config_file_hierarchy(original_config, filename='config_file', extra_dir_name='extra_config_files'):
+def read_config_file_hierarchy(original_config, config_file_key='config_file', extra_config_dir_key='extra_config_files'):
     '''
     Given a dictionnary with a key <filename> and <extra_config_files> this
     function will read the main config file, update it's local copy of the
@@ -66,9 +66,10 @@ def read_config_file_hierarchy(original_config, filename='config_file', extra_di
     extra_config_files directory and return a ChainMap of the extra config
     ordered alphabetically followed by the main config file.
     '''
-    main_config_filename = original_config[filename]
+
+    main_config_filename = original_config[config_file_key]
     main_config = parse_config_file(main_config_filename)
-    extra_config_file_directory = ChainMap(main_config, original_config)[extra_dir_name]
+    extra_config_file_directory = ChainMap(main_config, original_config)[extra_config_dir_key]
     configs = parse_config_dir(extra_config_file_directory)
     configs.append(main_config)
 
