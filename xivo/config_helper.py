@@ -60,14 +60,15 @@ def parse_config_dir(directory_name):
 
 def read_config_file_hierarchy(original_config, config_file_key='config_file', extra_config_dir_key='extra_config_files'):
     '''
-    Read a config file and an extra config directory, then return the whole
-    config with the following priority:
+    Read a config file and an extra config directory, then return a dictionary
+    containing the config read, aggregated by the following priority:
 
-    extra_config_directory (in alphabetical order)
-    config file
+    1. extra config directory (in alphabetical order)
+    2. config file
 
     The config file name is taken from original_config[config_file_key].
-    The extra config directory name is taken from original_config[extra_config_dir_key].
+    The extra config directory name is taken from
+    config_file[extra_config_dir_key] else original_config[extra_config_dir_key].
     '''
 
     main_config_filename = original_config[config_file_key]
