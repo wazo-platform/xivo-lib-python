@@ -17,18 +17,20 @@
 
 from __future__ import print_function
 
-import sys
+from functools import partial
 import os
+import sys
+
 import yaml
 
 from .chain_map import ChainMap
-from functools import partial
 
 
 def parse_config_file(config_file_name):
     try:
         with open(config_file_name) as config_file:
-            return yaml.load(config_file)
+            data = yaml.load(config_file)
+        return data if data else {}
     except IOError as e:
         print('Could not read config file {}: {}'.format(config_file_name, e), file=sys.stderr)
         return {}

@@ -15,21 +15,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
+from operator import itemgetter
 import os
 import random
 import string
 import tempfile
 import unittest
 
-from ..config_helper import parse_config_dir
-from ..config_helper import parse_config_file
-from ..config_helper import read_config_file_hierarchy
 from hamcrest import assert_that
 from hamcrest import contains
 from hamcrest import equal_to
 from mock import patch
-from operator import itemgetter
 from yaml.parser import ParserError
+
+from ..config_helper import parse_config_dir
+from ..config_helper import parse_config_file
+from ..config_helper import read_config_file_hierarchy
 
 
 def _none_existent_filename():
@@ -87,6 +88,15 @@ class TestParseConfigFile(unittest.TestCase):
         res = parse_config_file(f.name)
 
         assert_that(res, equal_to({'test': 'value'}))
+
+    def test_empty_yaml_file(self):
+        f = tempfile.NamedTemporaryFile()
+        f.writelines('')
+        f.seek(0)
+
+        res = parse_config_file(f.name)
+
+        assert_that(res, equal_to({}))
 
 
 class TestParseConfigDir(unittest.TestCase):
