@@ -43,10 +43,10 @@ def protocol_interface_from_channel(channel):
     return ProtocolInterface(protocol, interface)
 
 
-def protocol_interface_from_hint(channel):
-    matches = hint_regexp.search(channel)
+def protocol_interface_from_hint(hint):
+    matches = hint_regexp.search(hint)
     if matches is None:
-        raise InvalidChannelError(channel)
+        raise InvalidChannelError(hint)
 
     protocol = matches.group(1)
     interface = matches.group(2)
