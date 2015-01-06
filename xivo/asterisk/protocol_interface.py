@@ -44,7 +44,7 @@ def protocol_interface_from_channel(channel):
 
 
 def protocol_interface_from_hint(hint):
-    matches = hint_regexp.search(hint)
+    matches = hint_regexp.match(hint)
     if matches is None:
         raise InvalidChannelError(hint)
 
