@@ -17,13 +17,22 @@
 
 import unittest
 
-from xivo.asterisk.protocol_interface import ProtocolInterface
-from xivo.asterisk.protocol_interface import InvalidChannelError
-from xivo.asterisk.protocol_interface import protocol_interface_from_channel
-from xivo.asterisk.protocol_interface import agent_id_from_channel
+from ..protocol_interface import ProtocolInterface
+from ..protocol_interface import InvalidChannelError
+from ..protocol_interface import protocol_interface_from_channel
+from ..protocol_interface import protocol_interface_from_hint
+from ..protocol_interface import agent_id_from_channel
 
 
 class TestProtocolInterface(unittest.TestCase):
+
+    def test_protocol_interface_from_hint(self):
+        hint = 'SIP/askdjhf'
+        expected_result = ProtocolInterface('SIP', 'askdjhf')
+
+        result = protocol_interface_from_hint(hint)
+
+        self.assertEquals(expected_result, result)
 
     def test_protocol_interface_from_channel_sip(self):
         channel = 'SIP/askdjhf-3216549'
