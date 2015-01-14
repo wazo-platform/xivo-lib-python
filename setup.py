@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from distutils.core import setup
+from setuptools import setup
+from setuptools import find_packages
 
 setup(
     name='xivo',
@@ -10,13 +11,5 @@ setup(
     author='Avencall',
     author_email='xivo-dev@lists.proformatique.com',
     url='http://projects.xivo.io/',
-    packages=[
-        'xivo',
-        'xivo.asterisk',
-        'xivo.cli',
-        'xivo.cli.command',
-        'xivo.cli.completion',
-        'xivo.cli.source',
-        'xivo.BackSQL',
-    ],
+    packages=find_packages(),
 )
