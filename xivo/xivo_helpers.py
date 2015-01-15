@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2008-2014 Avencall
+# Copyright (C) 2008-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,18 +17,15 @@
 
 """Helper functions for XIVO"""
 
-
 import re
 import sys
 import logging
-import ConfigParser
 
 from xivo import anysql
 from xivo.BackSQL import backpostgresql
 
 log = logging.getLogger("xivo.xivo_helpers")
 
-AGI_CONFFILE = "/etc/xivo/xivo-agid.conf"
 
 find_asterisk_pattern_char = re.compile('[[NXZ!.]').search
 
@@ -244,8 +241,6 @@ def speed_dial_key_extension(xleft, xright, fkext, monitoringext=None):
                                   monitoringext)
                      if c)
 
-db_conn = None
-
 
 def abort(message, show_tb=False):
     """
@@ -254,43 +249,3 @@ def abort(message, show_tb=False):
     """
     log.critical(message, exc_info=show_tb)
     sys.exit(1)
-
-
-def db_connect(db_uri=None):
-    """DataBase CONNECT
-
-    This function is a simple wrapper to connect to the database with error
-    handling.  If successful, it returns the connection object.  Otherwise
-    execution is aborted.
-
-    This module keeps a reference to the connection created, so the users
-    are permitted to call this function like :
-
-    cursor = xivo_helpers.db_connect().cursor()
-
-    If a previous connection was open when this function is called, its
-    changes are committed and the connection is closed before creating a
-    new one.
-    """
-    global db_conn
-    db_close()
-
-    if not db_uri:
-        conf_obj = ConfigParser.RawConfigParser()
-        conf_obj.readfp(open(AGI_CONFFILE))
-        db_uri = conf_obj.get('db', 'db_uri')
-
-    try:
-        db_conn = anysql.connect_by_uri(db_uri)
-    except:
-        abort("Unable to connect to %s" % db_uri, show_tb=True)
-
-    return db_conn
-
-
-def db_close():
-    global db_conn
-    if db_conn:
-        db_conn.commit()
-        db_conn.close()
-        db_conn = None
