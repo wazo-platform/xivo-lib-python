@@ -25,6 +25,7 @@ import unittest
 from hamcrest import assert_that
 from hamcrest import contains
 from hamcrest import equal_to
+from hamcrest import is_not
 from mock import patch
 from yaml.parser import ParserError
 
@@ -146,6 +147,20 @@ class TestParseConfigDir(unittest.TestCase):
         assert_that(res, contains({'test': 'one'}))
         printed_message = mocked_print.call_args_list[0]
         assert_that(printed_message.startswith('Could not read config dir'))
+
+    def test_ignore_dot_files(self):
+        dirname = _new_tmp_dir()
+        filename = os.path.join(dirname, '.foobar')
+
+        with open(filename, 'w') as fobj:
+            fobj.write('test: one\n')
+
+        try:
+            res = parse_config_dir(dirname)
+
+            assert_that(res, is_not(contains({'test': 'one'})))
+        finally:
+            os.unlink(filename)
 
 
 class TestReadConfigFileHierarchy(unittest.TestCase):

@@ -52,6 +52,9 @@ def parse_config_dir(directory_name):
 
     def _config_generator():
         for filename in sorted(extra_config_filenames):
+            if filename.startswith('.'):
+                continue
+
             try:
                 yield parse_config_file(full_path(filename))
             except Exception as e:
