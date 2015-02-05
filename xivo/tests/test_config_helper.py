@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 from operator import itemgetter
-import os
+import os.path
 import random
 import string
 import tempfile
@@ -27,11 +27,13 @@ from hamcrest import contains
 from hamcrest import equal_to
 from hamcrest import is_not
 from mock import patch
+from mock import Mock
+from mock import ANY
 from yaml.parser import ParserError
 
-from ..config_helper import parse_config_dir
-from ..config_helper import parse_config_file
-from ..config_helper import read_config_file_hierarchy
+from ..config_helper import ConfigParser
+from ..config_helper import ErrorHandler
+from ..config_helper import PrintErrorHandler
 
 
 def _none_existent_filename():
@@ -54,17 +56,41 @@ def _new_tmp_dir():
     return dirname
 
 
-class TestParseConfigFile(unittest.TestCase):
+class TestPrintErrorHandler(unittest.TestCase):
+
+    def setUp(self):
+        self.error_handler = PrintErrorHandler()
+        self.name = 'foobar'
+        self.e = EnvironmentError((42, 'Bah'))
 
     @patch('__builtin__.print')
-    def test_empty_dict_when_no_file_or_directory(self, mocked_print):
-        no_such_file = _none_existent_filename()
+    def test_on_parse_config_file_env_error(self, mocked_print):
+        self.error_handler.on_parse_config_file_env_error(self.name, self.e)
 
-        result = parse_config_file(no_such_file)
-
-        assert_that(result, equal_to({}))
         printed_message = mocked_print.call_args_list[0]
         assert_that(printed_message.startswith('Could not read config file'))
+
+    @patch('__builtin__.print')
+    def test_on_parse_config_dir_env_error(self, mocked_print):
+        self.error_handler.on_parse_config_dir_env_error(self.name, self.e)
+
+        printed_message = mocked_print.call_args_list[0]
+        assert_that(printed_message.startswith('Could not read config dir'))
+
+
+class TestParseConfigFile(unittest.TestCase):
+
+    def setUp(self):
+        self.error_handler = Mock(ErrorHandler)
+        self.parser = ConfigParser(self.error_handler)
+
+    def test_empty_dict_when_no_file_or_directory(self):
+        no_such_file = _none_existent_filename()
+
+        result = self.parser.parse_config_file(no_such_file)
+
+        assert_that(result, equal_to({}))
+        self.error_handler.on_parse_config_file_env_error.assert_called_once_with(no_such_file, ANY)
 
     def test_invalid_yaml_raises(self):
         content = """ \
@@ -75,7 +101,7 @@ class TestParseConfigFile(unittest.TestCase):
         f.writelines(content.split('\n'))
         f.seek(0)
 
-        self.assertRaises(ParserError, parse_config_file, f.name)
+        self.assertRaises(ParserError, self.parser.parse_config_file, f.name)
 
     def test_with_valid_yaml(self):
         content = """ \
@@ -86,7 +112,7 @@ class TestParseConfigFile(unittest.TestCase):
         f.writelines(content.split('\n'))
         f.seek(0)
 
-        res = parse_config_file(f.name)
+        res = self.parser.parse_config_file(f.name)
 
         assert_that(res, equal_to({'test': 'value'}))
 
@@ -95,22 +121,24 @@ class TestParseConfigFile(unittest.TestCase):
         f.writelines('')
         f.seek(0)
 
-        res = parse_config_file(f.name)
+        res = self.parser.parse_config_file(f.name)
 
         assert_that(res, equal_to({}))
 
 
 class TestParseConfigDir(unittest.TestCase):
 
-    @patch('__builtin__.print')
-    def test_no_such_directory(self, mocked_print):
+    def setUp(self):
+        self.error_handler = Mock(ErrorHandler)
+        self.parser = ConfigParser(self.error_handler)
+
+    def test_no_such_directory(self):
         dirname = _none_existent_filename()
 
-        result = parse_config_dir(dirname)
+        result = self.parser.parse_config_dir(dirname)
 
         assert_that(result, contains())
-        printed_message = mocked_print.call_args_list[0]
-        assert_that(printed_message.startswith('Could not read config dir'))
+        self.error_handler.on_parse_config_dir_env_error.assert_called_once_with(dirname, ANY)
 
     def test_with_only_valid_configs(self):
         dirname = _new_tmp_dir()
@@ -122,7 +150,7 @@ class TestParseConfigDir(unittest.TestCase):
         f2.writelines('test: two')
         f2.seek(0)
 
-        res = parse_config_dir(dirname)
+        res = self.parser.parse_config_dir(dirname)
 
         sorted_files = sorted([{'file': f1.name,
                                 'content': {'test': 'one'}},
@@ -131,8 +159,7 @@ class TestParseConfigDir(unittest.TestCase):
         expected = [entry['content'] for entry in sorted_files]
         assert_that(res, contains(*expected))
 
-    @patch('__builtin__.print')
-    def test_that_valid_configs_are_returned_when_one_fails(self, mocked_print):
+    def test_that_valid_configs_are_returned_when_one_fails(self):
         dirname = _new_tmp_dir()
 
         f1 = tempfile.NamedTemporaryFile()
@@ -142,11 +169,10 @@ class TestParseConfigDir(unittest.TestCase):
         f2.writelines('test: [:one :two]')
         f2.seek(0)
 
-        res = parse_config_dir(dirname)
+        res = self.parser.parse_config_dir(dirname)
 
         assert_that(res, contains({'test': 'one'}))
-        printed_message = mocked_print.call_args_list[0]
-        assert_that(printed_message.startswith('Could not read config dir'))
+        self.error_handler.on_parse_config_dir_parse_exception.assert_called_once_with(os.path.basename(f2.name), ANY)
 
     def test_ignore_dot_files(self):
         dirname = _new_tmp_dir()
@@ -156,7 +182,7 @@ class TestParseConfigDir(unittest.TestCase):
             fobj.write('test: one\n')
 
         try:
-            res = parse_config_dir(dirname)
+            res = self.parser.parse_config_dir(dirname)
 
             assert_that(res, is_not(contains({'test': 'one'})))
         finally:
@@ -165,23 +191,27 @@ class TestParseConfigDir(unittest.TestCase):
 
 class TestReadConfigFileHierarchy(unittest.TestCase):
 
-    @patch('xivo.config_helper.parse_config_file')
-    @patch('xivo.config_helper.parse_config_dir')
-    def test_that_the_main_config_file_is_read(self, mocked_parse_config_dir, mocked_parse_config_file):
-        mocked_parse_config_file.return_value = {'extra_config_files': '/path/to/extra',
-                                                 'sentinel': 'from_main_file',
-                                                 'main_file_only': True}
-        mocked_parse_config_dir.return_value = [{'sentinel': 'from_extra_config'}]
+    def setUp(self):
+        self.error_handler = Mock(ErrorHandler)
+        self.parser = ConfigParser(self.error_handler)
+
+    def test_that_the_main_config_file_is_read(self):
+        self.parser.parse_config_file = Mock()
+        self.parser.parse_config_file.return_value = {'extra_config_files': '/path/to/extra',
+                                                      'sentinel': 'from_main_file',
+                                                      'main_file_only': True}
+        self.parser.parse_config_dir = Mock()
+        self.parser.parse_config_dir.return_value = [{'sentinel': 'from_extra_config'}]
         cli_and_default_config = {
             'config_file': '/path/to/config.yml',
             'extra_config_files': '/original/path/to/extra',
             'sentinel': 'from_default',
         }
 
-        config = read_config_file_hierarchy(cli_and_default_config)
+        config = self.parser.read_config_file_hierarchy(cli_and_default_config)
 
-        mocked_parse_config_file.assert_called_once_with('/path/to/config.yml')
-        mocked_parse_config_dir.assert_called_once_with('/path/to/extra')
+        self.parser.parse_config_file.assert_called_once_with('/path/to/config.yml')
+        self.parser.parse_config_dir.assert_called_once_with('/path/to/extra')
 
         assert_that(config['sentinel'], equal_to('from_extra_config'))
         assert_that(config['main_file_only'], equal_to(True))
