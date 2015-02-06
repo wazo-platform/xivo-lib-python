@@ -12,5 +12,4 @@ setup(
     author_email='xivo-dev@lists.proformatique.com',
     url='http://projects.xivo.io/',
     packages=find_packages(),
-    install_requires=['pyaml'],
 )
