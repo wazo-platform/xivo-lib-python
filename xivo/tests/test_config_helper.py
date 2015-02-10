@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014 Avencall
+# Copyright (C) 2014-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -83,6 +83,60 @@ class TestParseConfigFile(unittest.TestCase):
     def setUp(self):
         self.error_handler = Mock(ErrorHandler)
         self.parser = ConfigParser(self.error_handler)
+
+    def test_exec_tag(self):
+        file_to_read = """\
+        foo: bar
+        bar: baz
+        """
+        other_file = tempfile.NamedTemporaryFile()
+        other_file.write(file_to_read)
+        other_file.seek(0)
+
+        config_file_content = """\
+        !exec
+        command: cat {}
+        """.format(other_file.name)
+        config_file = tempfile.NamedTemporaryFile()
+        config_file.write(config_file_content)
+        config_file.seek(0)
+
+        result = self.parser.parse_config_file(config_file.name)
+
+        assert_that(result, equal_to({'foo': 'bar',
+                                      'bar': 'baz'}))
+
+    def test_exec_tag_command_not_found(self):
+        config_file_content = """\
+        !exec
+        command: pouelle /tmp/test
+        """
+        config_file = tempfile.NamedTemporaryFile()
+        config_file.write(config_file_content)
+        config_file.seek(0)
+
+        result = self.parser.parse_config_file(config_file.name)
+
+        assert_that(result, equal_to({}))
+
+    def test_exec_tag_empty_result(self):
+        file_to_read = """\
+        """
+        other_file = tempfile.NamedTemporaryFile()
+        other_file.write(file_to_read)
+        other_file.seek(0)
+
+        config_file_content = """\
+        !exec
+        command: cat {}
+        """.format(other_file.name)
+        config_file = tempfile.NamedTemporaryFile()
+        config_file.write(config_file_content)
+        config_file.seek(0)
+
+        result = self.parser.parse_config_file(config_file.name)
+
+        assert_that(result, equal_to({}))
 
     def test_empty_dict_when_no_file_or_directory(self):
         no_such_file = _none_existent_filename()

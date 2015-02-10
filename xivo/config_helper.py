@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014 Avencall
+# Copyright (C) 2014-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +20,22 @@ from __future__ import print_function
 from functools import partial
 import os
 import sys
+import subprocess
 
 import yaml
 
 from .chain_map import ChainMap
+
+
+class _YAMLExecTag(yaml.YAMLObject):
+
+    yaml_tag = u'!exec'
+
+    @classmethod
+    def from_yaml(cls, loader, node):
+        for key, value in node.value:
+            if key.value == 'command':
+                return yaml.load(subprocess.check_output(value.value.split(' ')))
 
 
 class ErrorHandler(object):
