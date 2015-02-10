@@ -106,6 +106,38 @@ class TestParseConfigFile(unittest.TestCase):
         assert_that(result, equal_to({'foo': 'bar',
                                       'bar': 'baz'}))
 
+    def test_exec_tag_command_not_found(self):
+        config_file_content = """\
+        !exec
+        command: pouelle /tmp/test
+        """
+        config_file = tempfile.NamedTemporaryFile()
+        config_file.write(config_file_content)
+        config_file.seek(0)
+
+        result = self.parser.parse_config_file(config_file.name)
+
+        assert_that(result, equal_to({}))
+
+    def test_exec_tag_empty_result(self):
+        file_to_read = """\
+        """
+        other_file = tempfile.NamedTemporaryFile()
+        other_file.write(file_to_read)
+        other_file.seek(0)
+
+        config_file_content = """\
+        !exec
+        command: cat {}
+        """.format(other_file.name)
+        config_file = tempfile.NamedTemporaryFile()
+        config_file.write(config_file_content)
+        config_file.seek(0)
+
+        result = self.parser.parse_config_file(config_file.name)
+
+        assert_that(result, equal_to({}))
+
     def test_empty_dict_when_no_file_or_directory(self):
         no_such_file = _none_existent_filename()
 
