@@ -17,7 +17,7 @@
 
 import re
 
-COMPLETE_CALLER_ID_PATTERN = re.compile('\"(.*)\" \<(\d+)\>')
+COMPLETE_CALLER_ID_PATTERN = re.compile('\"(.*)\" \<(\+?\d+)\>')
 
 
 def build_caller_id(caller_id, name, number):
