@@ -59,6 +59,13 @@ class TestCallerID(unittest.TestCase):
 
         self.assertEqual(ret, '1001')
 
+    def test_extract_number_leading_plus(self):
+        caller_id = '"User 1" <+1001>'
+
+        ret = extract_number(caller_id)
+
+        self.assertEqual(ret, '+1001')
+
     def test_extract_number_not_a_caller_id(self):
         self.assertRaises(ValueError, extract_number, '1001')
 
