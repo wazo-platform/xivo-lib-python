@@ -19,7 +19,7 @@ import unittest
 
 from hamcrest import assert_that, equal_to
 from xivo import caller_id
-from xivo.caller_id import build_caller_id, _complete_caller_id, extract_number, \
+from xivo.caller_id import build_caller_id, is_complete_caller_id, extract_number, \
     extract_displayname
 
 
@@ -47,10 +47,15 @@ class TestCallerID(unittest.TestCase):
         self.assertEqual(cid_name, name)
         self.assertEqual(cid_number, number)
 
-    def test_complete_caller_id(self):
+    def test_is_complete_caller_id(self):
         cid = '"User One" <1234>'
 
-        self.assertTrue(_complete_caller_id(cid))
+        self.assertTrue(is_complete_caller_id(cid))
+
+    def test_is_complete_caller_id_false(self):
+        cid = '1234'
+
+        self.assertFalse(is_complete_caller_id(cid))
 
     def test_extract_number(self):
         caller_id = '"User 1" <1001>'

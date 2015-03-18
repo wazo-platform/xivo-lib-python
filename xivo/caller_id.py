@@ -21,15 +21,15 @@ COMPLETE_CALLER_ID_PATTERN = re.compile('\"(.*)\" \<(\+?\d+)\>')
 
 
 def build_caller_id(caller_id, name, number):
-    if _complete_caller_id(caller_id):
+    if is_complete_caller_id(caller_id):
         cid_name, cid_number = COMPLETE_CALLER_ID_PATTERN.search(caller_id).groups()
         return caller_id, cid_name, cid_number
     else:
         return '"%s" <%s>' % (name, number), name, number
 
 
-def _complete_caller_id(caller_id):
-    return True if COMPLETE_CALLER_ID_PATTERN.match(caller_id) else False
+def is_complete_caller_id(caller_id):
+    return bool(COMPLETE_CALLER_ID_PATTERN.match(caller_id))
 
 
 def extract_number(caller_id):
