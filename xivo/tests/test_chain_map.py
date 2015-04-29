@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014 Avencall
+# Copyright (C) 2014-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,3 +50,30 @@ class TestChainMap(unittest.TestCase):
         m = ChainMap({'a': None})
 
         assert_that(m['a'] is None)
+
+    def test_overriding_nested_field(self):
+        default_config = {
+            'key': {
+                'host': 'localhost',
+                'port': 1234,
+                'username': 'admin',
+                'password': 'secret',
+            }
+        }
+        file_config = {
+            'key': {'host': 'other-host',
+                    'password': 'not-secret'}
+        }
+        cli_config = {
+            'key': {'host': 'test-host'},
+        }
+
+        m = ChainMap(cli_config, file_config, default_config)
+
+        expected = {'key': {'host': 'test-host',
+                            'port': 1234,
+                            'username': 'admin',
+                            'password': 'not-secret'}}
+
+        assert_that(m, equal_to(expected))
+        assert_that(cli_config, equal_to({'key': {'host': 'test-host'}}))
