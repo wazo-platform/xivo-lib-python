@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014 Avencall
+# Copyright (C) 2014-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,28 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
+from copy import copy
+from UserDict import UserDict
 
-# This is a simplified of the ChainMap available in python3.3
-class ChainMap(object):
 
-    _not_found = object()
+class ChainMap(UserDict):
 
     def __init__(self, *dicts):
-        self._dicts = list(dicts)
+        self.data = {}
+        for d in dicts:
+            self.data = self._deep_update(self.data, d)
 
-    def __getitem__(self, key):
-        v = self.get(key, self._not_found)
-        if v is self._not_found:
-            raise KeyError('{key} not found'.format(key=key))
+    def _deep_update(self, original, new):
+        updated = copy(original)
 
-        return v
+        for key, value in new.iteritems():
+            if key not in updated:
+                updated[key] = copy(value)
+            elif isinstance(value, dict):
+                updated[key] = self._deep_update(updated[key], value)
 
-    def __contains__(self, key):
-        return self.get(key, self._not_found) is not self._not_found
-
-    def get(self, key, default=None):
-        for d in self._dicts:
-            if key in d:
-                return d[key]
-
-        return default
+        return updated
