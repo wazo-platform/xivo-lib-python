@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014 Avencall
+# Copyright (C) 2014-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,11 +24,14 @@ from xivo.xivo_helpers import abort
 
 def change_user(user):
     try:
-        uid = getpwnam(user).pw_uid
+        user = getpwnam(user)
+        uid = user.pw_uid
+        gid = user.pw_gid
     except KeyError:
         abort('Unknown user {user}'.format(user=user))
 
     try:
+        os.setgid(gid)
         os.setuid(uid)
     except OSError as e:
         abort('Could not change owner to user {user}: {error}'.format(user=user, error=e))
