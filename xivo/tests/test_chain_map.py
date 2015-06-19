@@ -21,6 +21,7 @@ import unittest
 from ..chain_map import ChainMap
 from hamcrest import assert_that
 from hamcrest import equal_to
+from hamcrest import has_entry
 from hamcrest import is_
 from hamcrest import none
 
@@ -77,3 +78,11 @@ class TestChainMap(unittest.TestCase):
 
         assert_that(m, equal_to(expected))
         assert_that(cli_config, equal_to({'key': {'host': 'test-host'}}))
+
+    def test_overriding_none_with_dict_gives_none(self):
+        original = {'key': None}
+        new_dict = {'key': {'subkey': 'value'}}
+
+        m = ChainMap(original, new_dict)
+
+        assert_that(m, has_entry('key', None))
