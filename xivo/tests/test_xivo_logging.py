@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014 Avencall
+# Copyright (C) 2014-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,14 +17,21 @@
 
 from cStringIO import StringIO
 import logging
+import sys
 import tempfile
 from unittest import TestCase
 
-from hamcrest import assert_that, contains_string, equal_to, has_length
+from hamcrest import assert_that
+from hamcrest import contains_string
+from hamcrest import equal_to
+from hamcrest import has_length
+from hamcrest import is_
+from hamcrest import is_not
 from mock import Mock, patch
 
 from xivo.xivo_logging import DEFAULT_LOG_FORMAT
 from xivo.xivo_logging import DEFAULT_LOG_LEVEL
+from xivo.xivo_logging import excepthook
 from xivo.xivo_logging import get_log_level_by_name
 from xivo.xivo_logging import setup_logging
 
@@ -108,6 +115,15 @@ class TestLogging(TestCase):
         setup_logging(log_file, log_format=log_format)
 
         logging.Formatter.assert_called_once_with(log_format)
+
+    def test_that_setup_logging_adds_excepthook(self, logging):
+        log_file = Mock()
+
+        with patch('sys.excepthook') as new_hook:
+            setup_logging(log_file)
+
+            assert_that(sys.excepthook, is_not(new_hook))
+            assert_that(sys.excepthook, is_(excepthook))
 
 
 @patch('sys.stderr', new_callable=StringIO)
