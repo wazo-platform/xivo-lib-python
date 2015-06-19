@@ -32,7 +32,7 @@ class ChainMap(UserDict):
         for key, value in new.iteritems():
             if key not in updated:
                 updated[key] = copy(value)
-            elif isinstance(value, dict):
+            elif isinstance(updated[key], dict) and isinstance(value, dict):
                 updated[key] = self._deep_update(updated[key], value)
 
         return updated
