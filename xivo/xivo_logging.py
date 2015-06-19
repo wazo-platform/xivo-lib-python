@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014 Avencall
+# Copyright (C) 2014-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,6 +53,12 @@ def setup_logging(log_file, foreground=False, debug=False, log_level=DEFAULT_LOG
     if debug:
         log_level = logging.DEBUG
     root_logger.setLevel(log_level)
+
+    sys.excepthook = excepthook
+
+
+def excepthook(exception_class, exception_instance, traceback):
+    logging.getLogger().critical(exception_instance, exc_info=(exception_class, exception_instance, traceback))
 
 
 def get_log_level_by_name(log_level_name):
