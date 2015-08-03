@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2014 Avencall
+# Copyright (C) 2013-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,9 @@
 from __future__ import unicode_literals
 
 import unittest
-from hamcrest import assert_that, equal_to
+from hamcrest import assert_that
+from hamcrest import equal_to
+from hamcrest import contains_inanyorder
 from mock import Mock
 from xivo.cli.exception import CommandAlreadyRegisteredError, NoMatchingCommandError
 from xivo.cli.registry import CommandRegistry
@@ -71,7 +73,7 @@ class TestCommandRegistry(unittest.TestCase):
 
         words = self.command_registry.complete_next_word([])
 
-        assert_that(words, equal_to(['agents', 'users']))
+        assert_that(words, contains_inanyorder('agents', 'users'))
 
     def test_complete_next_word_when_unknown_word(self):
         command1 = self._new_command()
@@ -95,7 +97,7 @@ class TestCommandRegistry(unittest.TestCase):
 
         words = self.command_registry.complete_next_word(['users'])
 
-        assert_that(words, equal_to(['add', 'list']))
+        assert_that(words, contains_inanyorder('add', 'list'))
 
     def test_register_command_raise_error_if_already_registered(self):
         self.command_registry.register_command('foo bar', self.command)
