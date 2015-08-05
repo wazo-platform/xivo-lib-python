@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2014 Avencall
+# Copyright (C) 2013-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,8 +37,19 @@ class UnicodeDictReader(csv.DictReader):
                 for field in csv.DictReader.fieldnames.fget(self)]
 
     def next(self):
-        return dict((key, val.decode(self._encoding))
-                    for (key, val) in csv.DictReader.next(self).iteritems())
+        next = csv.DictReader.next(self).items()
+        return dict((key, self._deep_decode(val))
+                    for (key, val) in next)
+
+    def _deep_decode(self, value):
+        if hasattr(value, 'decode'):
+            return value.decode(self._encoding)
+        try:
+            iter(value)
+        except TypeError:
+            return value
+        else:
+            return [self._deep_decode(item) for item in value]
 
 
 class UnicodeDictWriter(csv.DictWriter):

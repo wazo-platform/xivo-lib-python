@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2014 Avencall
+# Copyright (C) 2013-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,18 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-from hamcrest import *
+from hamcrest import assert_that
+from hamcrest import equal_to
+from hamcrest import instance_of
+from hamcrest import only_contains
 from StringIO import StringIO
 from unittest import TestCase
+
 from xivo.unicode_csv import UnicodeDictReader, UnicodeDictWriter
 
 
 class TestUnicodeDictReader(TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
     def test_read_utf8(self):
         csv_data = ['firstname,lastname', 'Père,Noël', 'fírstnámé,lástnámé']
@@ -48,6 +47,43 @@ class TestUnicodeDictReader(TestCase):
         for result in results:
             assert_that(result.keys(), only_contains(instance_of(unicode)))
             assert_that(result.values(), only_contains(instance_of(unicode)))
+
+    def test_read_utf8_with_superfluous_fields(self):
+        csv_data = ['firstname,lastname', 'Père,Noël,et,son,renne,Léon', 'fírstnámé,lástnámé']
+        reader = UnicodeDictReader(csv_data, delimiter=',')
+        expected_result = [
+            {
+                'firstname': u'Père',
+                'lastname': u'Noël',
+                None: ['et', 'son', 'renne', u'Léon'],
+            },
+            {
+                'firstname': u'fírstnámé',
+                'lastname': u'lástnámé'
+            }
+        ]
+
+        results = [result for result in reader]
+
+        assert_that(results, equal_to(expected_result))
+
+    def test_read_utf8_with_missing_fields(self):
+        csv_data = ['firstname,lastname', 'Père', 'fírstnámé,lástnámé']
+        reader = UnicodeDictReader(csv_data, delimiter=',')
+        expected_result = [
+            {
+                'firstname': u'Père',
+                'lastname': None,
+            },
+            {
+                'firstname': u'fírstnámé',
+                'lastname': u'lástnámé'
+            }
+        ]
+
+        results = [result for result in reader]
+
+        assert_that(results, equal_to(expected_result))
 
 
 class TestUnicodeDictWriter(TestCase):
