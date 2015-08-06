@@ -87,13 +87,8 @@ class TestUnicodeDictReader(TestCase):
 
 
 class TestUnicodeDictWriter(TestCase):
-    def setUp(self):
-        pass
 
-    def tearDown(self):
-        pass
-
-    def test_write_utf8(self):
+    def test_writerow_utf8(self):
         first_row = {
             'firstname': u'Père',
             'lastname': u'Noël'
@@ -109,5 +104,23 @@ class TestUnicodeDictWriter(TestCase):
 
         writer.writerow(first_row)
         writer.writerow(second_row)
+
+        assert_that(result.getvalue(), equal_to(expected_result))
+
+    def test_writerows_utf8(self):
+        first_row = {
+            'firstname': u'Père',
+            'lastname': u'Noël'
+        }
+        second_row = {
+            'firstname': u'fírstnámé',
+            'lastname': u'lástnámé'
+        }
+        expected_result = 'Père,Noël\r\nfírstnámé,lástnámé\r\n'
+        result = StringIO()
+        fieldnames = ['firstname', 'lastname']
+        writer = UnicodeDictWriter(result, fieldnames=fieldnames)
+
+        writer.writerows((first_row, second_row))
 
         assert_that(result.getvalue(), equal_to(expected_result))
