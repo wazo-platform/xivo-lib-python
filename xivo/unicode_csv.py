@@ -60,3 +60,7 @@ class UnicodeDictWriter(csv.DictWriter):
 
     def writerow(self, row):
         csv.DictWriter.writerow(self, dict((key, unicode(val).encode(self._encoding)) for (key, val) in row.iteritems()))
+
+    def writerows(self, rows):
+        for row in rows:
+            self.writerow(row)
