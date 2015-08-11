@@ -17,7 +17,7 @@
 
 import urllib
 
-from flask import request, current_app
+from flask import current_app, request
 
 
 def add_logger(app, logger):
