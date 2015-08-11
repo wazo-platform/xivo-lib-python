@@ -20,12 +20,12 @@ import urllib
 from flask import request, current_app
 
 
+def add_logger(app, logger):
+    for handler in logger.handlers:
+        app.logger.addHandler(handler)
+
+
 def log_request(response):
     url = urllib.unquote(request.url)
     current_app.logger.info('(%s) %s %s %s', request.remote_addr, request.method, url, response.status_code)
     return response
-
-
-def add_logger(app, logger):
-    for handler in logger.handlers:
-        app.logger.addHandler(handler)
