@@ -57,6 +57,12 @@ def setup_logging(log_file, foreground=False, debug=False, log_level=DEFAULT_LOG
     sys.excepthook = excepthook
 
 
+def silence_loggers(logger_names, level):
+    for name in logger_names:
+        logger = logging.getLogger(name)
+        logger.setLevel(level)
+
+
 def excepthook(exception_class, exception_instance, traceback):
     logging.getLogger().critical(exception_instance, exc_info=(exception_class, exception_instance, traceback))
 
