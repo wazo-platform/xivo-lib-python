@@ -22,6 +22,7 @@ import tempfile
 from unittest import TestCase
 
 from hamcrest import assert_that
+from hamcrest import contains_inanyorder
 from hamcrest import contains_string
 from hamcrest import equal_to
 from hamcrest import has_length
@@ -34,6 +35,7 @@ from xivo.xivo_logging import DEFAULT_LOG_LEVEL
 from xivo.xivo_logging import excepthook
 from xivo.xivo_logging import get_log_level_by_name
 from xivo.xivo_logging import setup_logging
+from xivo.xivo_logging import silence_loggers
 
 
 @patch('xivo.xivo_logging.logging')
@@ -179,3 +181,24 @@ class TestLogLevelByName(TestCase):
         assert_that(get_log_level_by_name('warning'), equal_to(logging.WARNING))
         assert_that(get_log_level_by_name('error'), equal_to(logging.ERROR))
         assert_that(get_log_level_by_name('critical'), equal_to(logging.CRITICAL))
+
+
+class TestSilenceLoggers(TestCase):
+
+    @patch('xivo.xivo_logging.logging')
+    def test_that_loggers_are_leveled_down(self, mocked_logging):
+        loggers = {}
+        to_silence = ['one', 'two', 'three']
+
+        def get_loggers(logger_name):
+            loggers[logger_name] = logger = Mock()
+            return logger
+
+        mocked_logging.getLogger = get_loggers
+
+        silence_loggers(to_silence, logging.ERROR)
+
+        for logger in loggers.itervalues():
+            logger.setLevel.assert_called_once_with(logging.ERROR)
+
+        assert_that(loggers.keys(), contains_inanyorder(*to_silence))
