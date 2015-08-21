@@ -17,7 +17,11 @@
 
 import urllib
 
+from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter
 from flask import current_app, request
+from OpenSSL import SSL
+
+DEFAULT_CIPHERS = 'ALL:!aNULL:!eNULL:!LOW:!EXP:!RC4:!3DES:!SEED:+HIGH:+MEDIUM'
 
 
 def add_logger(app, logger):
@@ -29,3 +33,15 @@ def log_request(response):
     url = urllib.unquote(request.url)
     current_app.logger.info('(%s) %s %s %s', request.remote_addr, request.method, url, response.status_code)
     return response
+
+
+def ssl_adapter(certificate, private_key, ciphers):
+    adapter = pyOpenSSLAdapter(certificate, private_key)
+    adapter.context = SSL.Context(SSL.SSLv23_METHOD)
+    adapter.context.set_options(SSL.OP_NO_SSLv2)
+    adapter.context.set_options(SSL.OP_NO_SSLv3)
+    # adapter.context.set_options(SSL.OP_NO_COMPRESSION)  # Python 2.7.9+ only
+    adapter.context.use_certificate_file(certificate)
+    adapter.context.use_privatekey_file(private_key)
+    adapter.context.set_cipher_list(ciphers)
+    return adapter
