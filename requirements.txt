@@ -1,4 +1,1 @@
-psycopg2
-flup
-pyaml
-pyopenssl==0.13
+-e .

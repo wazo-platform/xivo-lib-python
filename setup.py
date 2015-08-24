@@ -4,6 +4,13 @@
 from setuptools import setup
 from setuptools import find_packages
 
+requirements = [
+    "psycopg2",
+    "flup",
+    "pyaml",
+    "pyopenssl==0.13",
+]
+
 setup(
     name='xivo',
     version='1.0',
@@ -12,4 +19,5 @@ setup(
     author_email='xivo-dev@lists.proformatique.com',
     url='http://projects.xivo.io/',
     packages=find_packages(),
+    install_requires=requirements
 )
