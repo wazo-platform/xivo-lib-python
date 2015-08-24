@@ -1,3 +1,9 @@
+xivo-lib-python (15.15~20150820.181932.e0c7a7b-3) xivo-dev; urgency=medium
+
+  * Force rebuild
+
+ -- Sylvain Boily <sboily@avencall.com>  Mon, 24 Aug 2015 11:08:04 -0400
+
 xivo-lib-python (15.15~20150820.181932.e0c7a7b-2) xivo-dev; urgency=low
 
   * force rebuild
