@@ -1,3 +1,9 @@
+xivo-lib-python (15.15~20150820.181932.e0c7a7b-2) xivo-dev; urgency=low
+
+  * force rebuild
+
+ -- Sebastien Duthil <sduthil@avencall.com>  Mon, 24 Aug 2015 10:08:20 -0400
+
 xivo-lib-python (12.22~20121107.160154.caae793-1) squeeze-xivo-skaro-dev; urgency=low
 
   * rename package 
