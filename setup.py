@@ -7,7 +7,7 @@ from setuptools import find_packages
 requirements = [
     "psycopg2",
     "flup",
-    "pyaml",
+    "pyyaml",
     "pyopenssl==0.13",
 ]
 
