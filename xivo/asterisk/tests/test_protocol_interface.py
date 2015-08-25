@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2014 Avencall
+# Copyright (C) 2013-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -99,3 +99,12 @@ class TestProtocolInterface(unittest.TestCase):
         channel = 'asjasldfkjag\'fghdfl48u4'
 
         self.assertRaises(InvalidChannelError, agent_id_from_channel, channel)
+
+    def test_dash_in_trunk_name(self):
+        channel = 'SIP/test-my-trunk-00b167'
+
+        expected_result = ProtocolInterface('SIP', 'test-my-trunk')
+
+        result = protocol_interface_from_channel(channel)
+
+        self.assertEquals(result, expected_result)
