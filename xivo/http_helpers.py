@@ -45,3 +45,13 @@ def ssl_adapter(certificate, private_key, ciphers):
     adapter.context.use_privatekey_file(private_key)
     adapter.context.set_cipher_list(ciphers)
     return adapter
+
+
+def list_routes(app):
+    output = []
+    for rule in app.url_map.iter_rules():
+        methods = ','.join(rule.methods)
+        line = "{:50s} {:20s} {}".format(rule.endpoint, methods, rule)
+        output.append(line)
+
+    return output
