@@ -197,10 +197,10 @@ class TestParseConfigDir(unittest.TestCase):
     def test_with_only_valid_configs(self):
         dirname = _new_tmp_dir()
 
-        f1 = tempfile.NamedTemporaryFile()
+        f1 = tempfile.NamedTemporaryFile(suffix='.yml')
         f1.writelines('test: one')
         f1.seek(0)
-        f2 = tempfile.NamedTemporaryFile()
+        f2 = tempfile.NamedTemporaryFile(suffix='.yml')
         f2.writelines('test: two')
         f2.seek(0)
 
@@ -216,10 +216,10 @@ class TestParseConfigDir(unittest.TestCase):
     def test_that_valid_configs_are_returned_when_one_fails(self):
         dirname = _new_tmp_dir()
 
-        f1 = tempfile.NamedTemporaryFile()
+        f1 = tempfile.NamedTemporaryFile(suffix='.yml')
         f1.writelines('test: one')
         f1.seek(0)
-        f2 = tempfile.NamedTemporaryFile()
+        f2 = tempfile.NamedTemporaryFile(suffix='.yml')
         f2.writelines('test: [:one :two]')
         f2.seek(0)
 
@@ -239,6 +239,20 @@ class TestParseConfigDir(unittest.TestCase):
             res = self.parser.parse_config_dir(dirname)
 
             assert_that(res, is_not(contains({'test': 'one'})))
+        finally:
+            os.unlink(filename)
+
+    def test_ignore_not_yaml_files(self):
+        dirname = _new_tmp_dir()
+        filename = os.path.join(dirname, 'foobar.yml.dpkg-old')
+
+        with open(filename, 'w') as fobj:
+            fobj.write('test: two\n')
+
+        try:
+            res = self.parser.parse_config_dir(dirname)
+
+            assert_that(res, is_not(contains({'test': 'two'})))
         finally:
             os.unlink(filename)
 

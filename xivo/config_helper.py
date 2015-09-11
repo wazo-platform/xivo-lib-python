@@ -94,6 +94,8 @@ class ConfigParser(object):
             for filename in sorted(extra_config_filenames):
                 if filename.startswith('.'):
                     continue
+                if not filename.endswith('.yml'):
+                    continue
 
                 try:
                     yield self.parse_config_file(full_path(filename))
