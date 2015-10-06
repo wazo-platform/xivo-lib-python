@@ -19,6 +19,7 @@ import logging
 import uuid
 
 from consul import Check, Consul
+from xivo_bus.resources.services import event
 
 
 class MissingConfigurationError(LookupError):
@@ -72,29 +73,67 @@ class Registerer(object):
         _, services = self._client.catalog.service(self._service_name)
         return any(service['ServiceID'] == self._service_id for service in services)
 
-    @classmethod
-    def from_config(cls, service_name, config):
+    @staticmethod
+    def _canonicalize_config(service_name, config):
         try:
             uuid = config['uuid']
-            host = config['consul']['host']
-            port = config['consul']['port']
-            token = config['consul']['token']
-            advertise_addr = config['consul']['advertise_address']
-            advertise_port = config['consul']['advertise_port']
-            check_url = config['consul']['check_url']
-            check_url_timeout = config['consul']['check_url_timeout']
-            tags = config['consul'].get('extra_tags', []) + [service_name,  uuid]
+            return dict(
+                host=config['consul']['host'],
+                port=config['consul']['port'],
+                token=config['consul']['token'],
+                advertise_address=config['consul']['advertise_address'],
+                advertise_port=config['consul']['advertise_port'],
+                check_url=config['consul']['check_url'],
+                check_url_timeout=config['consul']['check_url_timeout'],
+                service_tags=config['consul'].get('extra_tags', []) + [service_name,  uuid],
+            )
         except KeyError as e:
             raise MissingConfigurationError(str(e))
 
+    @classmethod
+    def from_config(cls, service_name, config):
+        canonicalized_config = cls._canonicalize_config(service_name, config)
         return cls(
             name=service_name,
-            host=host,
-            port=port,
-            token=token,
-            advertise_address=advertise_addr,
-            advertise_port=advertise_port,
-            check_url=check_url,
-            check_url_timeout=check_url_timeout,
-            service_tags=tags,
+            **canonicalized_config
         )
+
+
+class NotifyingRegisterer(Registerer):
+
+    def __init__(self, name, publisher, host, port, token,
+                 advertise_address, advertise_port,
+                 check_url, check_url_timeout, service_tags):
+        self._publisher = publisher
+        super(NotifyingRegisterer, self).__init__(name, host, port, token,
+                                                  advertise_address, advertise_port,
+                                                  check_url, check_url_timeout, service_tags)
+
+    def register(self):
+        super(NotifyingRegisterer, self).register()
+        if super(NotifyingRegisterer, self).is_registered():
+            msg = self._new_registered_event()
+            self._publisher.publish(msg)
+
+    def deregister(self):
+        if super(NotifyingRegisterer, self).is_registered():
+            super(NotifyingRegisterer, self).deregister()
+            msg = self._new_deregistered_event()
+            self._publisher.publish(msg)
+
+    def _new_deregistered_event(self):
+        return event.ServiceDeregisteredEvent(self._service_name,
+                                              self._service_id,
+                                              self._tags)
+
+    def _new_registered_event(self):
+        return event.ServiceRegisteredEvent(self._service_name,
+                                            self._service_id,
+                                            self._advertise_address,
+                                            self._advertise_port,
+                                            self._tags)
+
+    @classmethod
+    def from_config(cls, service_name, publisher, config):
+        canonicalized_config = cls._canonicalize_config(service_name, config)
+        return cls(service_name, publisher, **canonicalized_config)

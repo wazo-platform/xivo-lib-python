@@ -18,9 +18,78 @@
 import unittest
 
 from hamcrest import assert_that, contains_inanyorder, equal_to
-from mock import ANY, patch, sentinel as s
+from mock import ANY, patch, Mock, sentinel as s
+from xivo_bus import Publisher
+from xivo_bus.resources.services import event
 
-from ..consul_helpers import MissingConfigurationError, Registerer
+
+from ..consul_helpers import MissingConfigurationError, NotifyingRegisterer, Registerer
+
+
+class TestNotifyingRegisterer(unittest.TestCase):
+
+    def setUp(self):
+        self.publisher = Mock(Publisher)
+        self.service_name = 'foobar'
+        self.registerer = NotifyingRegisterer(name=self.service_name,
+                                              publisher=self.publisher,
+                                              host=s.consul_host,
+                                              port=s.consul_port,
+                                              token=s.consul_token,
+                                              advertise_address=s.advertise_address,
+                                              advertise_port=s.advertise_port,
+                                              check_url=s.check_url,
+                                              check_url_timeout=s.check_url_timeout,
+                                              service_tags=[s.uuid, s.service_name])
+        self.service_id = self.registerer._service_id
+
+    @patch('xivo.consul_helpers.Consul')
+    def test_that_register_sends_a_service_registered_event_when_registered(self, Consul):
+        consul_client = Consul.return_value
+        consul_client.catalog.service.return_value = (s.index, [{'ServiceName': self.service_name,
+                                                                 'ServiceID': self.service_id}])
+
+        self.registerer.register()
+
+        expected_message = event.ServiceRegisteredEvent(self.service_name,
+                                                        self.service_id,
+                                                        s.advertise_address,
+                                                        s.advertise_port,
+                                                        [s.uuid, s.service_name])
+
+        self.publisher.publish.assert_called_once_with(expected_message)
+
+    @patch('xivo.consul_helpers.Consul')
+    def test_that_register_sends_a_service_registered_event_when_not_registered(self, Consul):
+        consul_client = Consul.return_value
+        consul_client.catalog.service.return_value = (s.index, [])
+
+        self.registerer.register()
+
+        assert_that(self.publisher.publish.call_count, equal_to(0))
+
+    @patch('xivo.consul_helpers.Consul')
+    def test_that_deregister_sends_a_service_deregistered_event_when_registered(self, Consul):
+        consul_client = Consul.return_value
+        consul_client.catalog.service.return_value = (s.index, [{'ServiceName': self.service_name,
+                                                                 'ServiceID': self.service_id}])
+
+        self.registerer.deregister()
+
+        expected_message = event.ServiceDeregisteredEvent(self.service_name,
+                                                          self.service_id,
+                                                          [s.uuid, s.service_name])
+
+        self.publisher.publish.assert_called_once_with(expected_message)
+
+    @patch('xivo.consul_helpers.Consul')
+    def test_that_deregister_sends_a_service_deregistered_event_when_not_registered(self, Consul):
+        consul_client = Consul.return_value
+        consul_client.catalog.service.return_value = (s.index, [])
+
+        self.registerer.deregister()
+
+        assert_that(self.publisher.publish.call_count, equal_to(0))
 
 
 class TestConsulRegisterer(unittest.TestCase):
@@ -83,28 +152,41 @@ class TestConsulRegisterer(unittest.TestCase):
 
         assert_that(result, equal_to(True))
 
-    def test_from_config(self):
-        service_name = 'my-service'
-        config = {'consul': {'advertise_address': s.advertise_address,
-                             'advertise_port': s.advertise_port,
-                             'extra_tags': ['Paris'],
-                             'host': s.consul_host,
-                             'port': s.consul_port,
-                             'token': s.consul_token,
-                             'check_url': s.check_url,
-                             'check_url_timeout': s.check_url_timeout},
-                  'uuid': s.uuid}
 
-        registerer = Registerer.from_config(service_name, config)
+class TestFromConfigFactory(unittest.TestCase):
 
-        assert_that(registerer._service_name, equal_to(service_name))
+    def setUp(self):
+        self.service_name = 'foobar'
+        self.config = {'consul': {'advertise_address': s.advertise_address,
+                                  'advertise_port': s.advertise_port,
+                                  'extra_tags': ['Paris'],
+                                  'host': s.consul_host,
+                                  'port': s.consul_port,
+                                  'token': s.consul_token,
+                                  'check_url': s.check_url,
+                                  'check_url_timeout': s.check_url_timeout},
+                       'uuid': s.uuid}
+
+    def test_registered_from_config(self):
+        registerer = Registerer.from_config(self.service_name, self.config)
+
+        self.assert_that_config_is_applied(registerer)
+
+    def test_notifying_registered_from_config(self):
+        registerer = NotifyingRegisterer.from_config(self.service_name, s.publisher, self.config)
+
+        assert_that(registerer._publisher, equal_to(s.publisher))
+        self.assert_that_config_is_applied(registerer)
+
+    def test_from_config_missing_config(self):
+        self.assertRaises(MissingConfigurationError, Registerer.from_config, 'foobar', {})
+
+    def assert_that_config_is_applied(self, registerer):
+        assert_that(registerer._service_name, equal_to(self.service_name))
         assert_that(registerer._advertise_address, equal_to(s.advertise_address))
         assert_that(registerer._advertise_port, equal_to(s.advertise_port))
-        assert_that(registerer._tags, contains_inanyorder('Paris', service_name, s.uuid))
+        assert_that(registerer._tags, contains_inanyorder('Paris', self.service_name, s.uuid))
         assert_that(registerer._consul_host, equal_to(s.consul_host))
         assert_that(registerer._consul_port, equal_to(s.consul_port))
         assert_that(registerer._check_url, equal_to(s.check_url))
         assert_that(registerer._check_url_timeout, equal_to(s.check_url_timeout))
-
-    def test_from_config_missing_config(self):
-        self.assertRaises(MissingConfigurationError, Registerer.from_config, 'foobar', {})
