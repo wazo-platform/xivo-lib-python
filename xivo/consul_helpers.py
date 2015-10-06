@@ -19,10 +19,15 @@ import logging
 import uuid
 
 from consul import Check, Consul
+from requests.exceptions import ConnectionError
 from xivo_bus.resources.services import event
 
 
-class MissingConfigurationError(LookupError):
+class RegistererError(BaseException):
+    pass
+
+
+class MissingConfigurationError(RegistererError):
     pass
 
 
@@ -54,23 +59,33 @@ class Registerer(object):
                           self._advertise_address,
                           self._advertise_port)
 
-        http_check = Check.http(self._check_url, self._check_url_timeout)
-        self._client.agent.service.register(self._service_name,
-                                            service_id=self._service_id,
-                                            address=self._advertise_address,
-                                            port=self._advertise_port,
-                                            check=http_check,
-                                            tags=self._tags)
+        try:
+            http_check = Check.http(self._check_url, self._check_url_timeout)
+            self._client.agent.service.register(self._service_name,
+                                                service_id=self._service_id,
+                                                address=self._advertise_address,
+                                                port=self._advertise_port,
+                                                check=http_check,
+                                                tags=self._tags)
+        except ConnectionError as e:
+            raise RegistererError(str(e))
 
     def deregister(self):
         self._logger.info('Deregistering %s from Consul services: %s',
                           self._service_name,
                           self._service_id)
 
-        self._client.agent.service.deregister(self._service_id)
+        try:
+            self._client.agent.service.deregister(self._service_id)
+        except ConnectionError as e:
+            raise RegistererError(str(e))
 
     def is_registered(self):
-        _, services = self._client.catalog.service(self._service_name)
+        try:
+            _, services = self._client.catalog.service(self._service_name)
+        except ConnectionError as e:
+            raise RegistererError(str(e))
+
         return any(service['ServiceID'] == self._service_id for service in services)
 
     @staticmethod
