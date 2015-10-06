@@ -17,10 +17,10 @@
 
 import unittest
 
-from hamcrest import assert_that, equal_to
+from hamcrest import assert_that, contains_inanyorder, equal_to
 from mock import ANY, patch, sentinel as s
 
-from ..consul_helpers import Registerer
+from ..consul_helpers import MissingConfigurationError, Registerer
 
 
 class TestConsulRegisterer(unittest.TestCase):
@@ -82,3 +82,29 @@ class TestConsulRegisterer(unittest.TestCase):
         result = self.registerer.is_registered()
 
         assert_that(result, equal_to(True))
+
+    def test_from_config(self):
+        service_name = 'my-service'
+        config = {'consul': {'advertise_address': s.advertise_address,
+                             'advertise_port': s.advertise_port,
+                             'extra_tags': ['Paris'],
+                             'host': s.consul_host,
+                             'port': s.consul_port,
+                             'token': s.consul_token,
+                             'check_url': s.check_url,
+                             'check_url_timeout': s.check_url_timeout},
+                  'uuid': s.uuid}
+
+        registerer = Registerer.from_config(service_name, config)
+
+        assert_that(registerer._service_name, equal_to(service_name))
+        assert_that(registerer._advertise_address, equal_to(s.advertise_address))
+        assert_that(registerer._advertise_port, equal_to(s.advertise_port))
+        assert_that(registerer._tags, contains_inanyorder('Paris', service_name, s.uuid))
+        assert_that(registerer._consul_host, equal_to(s.consul_host))
+        assert_that(registerer._consul_port, equal_to(s.consul_port))
+        assert_that(registerer._check_url, equal_to(s.check_url))
+        assert_that(registerer._check_url_timeout, equal_to(s.check_url_timeout))
+
+    def test_from_config_missing_config(self):
+        self.assertRaises(MissingConfigurationError, Registerer.from_config, 'foobar', {})

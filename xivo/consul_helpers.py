@@ -21,10 +21,14 @@ import uuid
 from consul import Check, Consul
 
 
+class MissingConfigurationError(LookupError):
+    pass
+
+
 class Registerer(object):
 
     def __init__(self, name, host, port, token, advertise_address, advertise_port,
-                 check_url, check_url_timeout, service_tags, **kwargs):
+                 check_url, check_url_timeout, service_tags):
         self._service_id = str(uuid.uuid4())
         self._service_name = name
         self._advertise_address = advertise_address
@@ -67,3 +71,30 @@ class Registerer(object):
     def is_registered(self):
         _, services = self._client.catalog.service(self._service_name)
         return any(service['ServiceID'] == self._service_id for service in services)
+
+    @classmethod
+    def from_config(cls, service_name, config):
+        try:
+            uuid = config['uuid']
+            host = config['consul']['host']
+            port = config['consul']['port']
+            token = config['consul']['token']
+            advertise_addr = config['consul']['advertise_address']
+            advertise_port = config['consul']['advertise_port']
+            check_url = config['consul']['check_url']
+            check_url_timeout = config['consul']['check_url_timeout']
+            tags = config['consul'].get('extra_tags', []) + [service_name,  uuid]
+        except KeyError as e:
+            raise MissingConfigurationError(str(e))
+
+        return cls(
+            name=service_name,
+            host=host,
+            port=port,
+            token=token,
+            advertise_address=advertise_addr,
+            advertise_port=advertise_port,
+            check_url=check_url,
+            check_url_timeout=check_url_timeout,
+            service_tags=tags,
+        )
