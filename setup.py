@@ -8,7 +8,7 @@ requirements = [
     "psycopg2==2.4.5",
     "pyyaml==3.10",
     "pyopenssl==0.13",
-    "consul",
+    "python-consul",
 ]
 
 setup(
