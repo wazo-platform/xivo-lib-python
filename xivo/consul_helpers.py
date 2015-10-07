@@ -18,7 +18,7 @@
 import logging
 import uuid
 
-from consul import Check, Consul
+from consul import Check, Consul, ConsulException
 from requests.exceptions import ConnectionError
 from xivo_bus.resources.services import event
 
@@ -67,7 +67,7 @@ class Registerer(object):
                                                 port=self._advertise_port,
                                                 check=http_check,
                                                 tags=self._tags)
-        except ConnectionError as e:
+        except (ConnectionError, ConsulException) as e:
             raise RegistererError(str(e))
 
     def deregister(self):
@@ -77,13 +77,13 @@ class Registerer(object):
 
         try:
             self._client.agent.service.deregister(self._service_id)
-        except ConnectionError as e:
+        except (ConnectionError, ConsulException) as e:
             raise RegistererError(str(e))
 
     def is_registered(self):
         try:
             _, services = self._client.catalog.service(self._service_name)
-        except ConnectionError as e:
+        except (ConnectionError, ConsulException) as e:
             raise RegistererError(str(e))
 
         return any(service['ServiceID'] == self._service_id for service in services)
