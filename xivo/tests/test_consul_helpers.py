@@ -138,19 +138,6 @@ class TestConsulRegisterer(unittest.TestCase):
         Consul.assert_called_once_with(s.consul_host, s.consul_port, s.consul_token)
         consul_client.agent.service.deregister.assert_called_once_with(self.registerer._service_id)
 
-    @patch('xivo.consul_helpers.Consul')
-    def test_is_registered(self, Consul):
-        consul_client = Consul.return_value
-
-        service_id = self.registerer._service_id
-
-        consul_client.catalog.service.return_value = (s.index, [{'ServiceName': self.service_name,
-                                                                 'ServiceID': service_id}])
-
-        result = self.registerer.is_registered()
-
-        assert_that(result, equal_to(True))
-
 
 class TestFromConfigFactory(unittest.TestCase):
 

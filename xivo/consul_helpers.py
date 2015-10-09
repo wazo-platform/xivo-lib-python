@@ -87,14 +87,6 @@ class Registerer(object):
         except (ConnectionError, ConsulException) as e:
             raise RegistererError(str(e))
 
-    def is_registered(self):
-        try:
-            _, services = self._client.catalog.service(self._service_name)
-        except (ConnectionError, ConsulException) as e:
-            raise RegistererError(str(e))
-
-        return any(service['ServiceID'] == self._service_id for service in services)
-
     @staticmethod
     def _canonicalize_config(service_name, config):
         try:
