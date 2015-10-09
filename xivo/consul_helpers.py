@@ -112,10 +112,7 @@ class Registerer(object):
     @classmethod
     def from_config(cls, service_name, config):
         canonicalized_config = cls._canonicalize_config(service_name, config)
-        return cls(
-            name=service_name,
-            **canonicalized_config
-        )
+        return cls(service_name, **canonicalized_config)
 
 
 class NotifyingRegisterer(Registerer):
