@@ -65,12 +65,15 @@ class Registerer(object):
 
         try:
             http_check = Check.http(self._check_url, self._check_url_timeout)
-            self._client.agent.service.register(self._service_name,
-                                                service_id=self._service_id,
-                                                address=self._advertise_address,
-                                                port=self._advertise_port,
-                                                check=http_check,
-                                                tags=self._tags)
+            registered = self._client.agent.service.register(self._service_name,
+                                                             service_id=self._service_id,
+                                                             address=self._advertise_address,
+                                                             port=self._advertise_port,
+                                                             check=http_check,
+                                                             tags=self._tags)
+            if not registered:
+                raise RegistererError('{} registration on Consul failed'.format(self._service_name))
+
         except (ConnectionError, ConsulException) as e:
             raise RegistererError(str(e))
 
@@ -127,9 +130,8 @@ class NotifyingRegisterer(Registerer):
 
     def register(self):
         super(NotifyingRegisterer, self).register()
-        if super(NotifyingRegisterer, self).is_registered():
-            msg = self._new_registered_event()
-            self._publisher.publish(msg)
+        msg = self._new_registered_event()
+        self._publisher.publish(msg)
 
     def deregister(self):
         if super(NotifyingRegisterer, self).is_registered():

@@ -23,7 +23,7 @@ from xivo_bus import Publisher
 from xivo_bus.resources.services import event
 
 
-from ..consul_helpers import MissingConfigurationError, NotifyingRegisterer, Registerer
+from ..consul_helpers import MissingConfigurationError, NotifyingRegisterer, Registerer, RegistererError
 
 
 class TestNotifyingRegisterer(unittest.TestCase):
@@ -43,12 +43,8 @@ class TestNotifyingRegisterer(unittest.TestCase):
                                               service_tags=[s.uuid, s.service_name])
         self.service_id = self.registerer._service_id
 
-    @patch('xivo.consul_helpers.Consul')
-    def test_that_register_sends_a_service_registered_event_when_registered(self, Consul):
-        consul_client = Consul.return_value
-        consul_client.catalog.service.return_value = (s.index, [{'ServiceName': self.service_name,
-                                                                 'ServiceID': self.service_id}])
-
+    @patch('xivo.consul_helpers.Consul', Mock())
+    def test_that_register_sends_a_service_registered_event_when_registered(self):
         self.registerer.register()
 
         expected_message = event.ServiceRegisteredEvent(self.service_name,
@@ -58,15 +54,6 @@ class TestNotifyingRegisterer(unittest.TestCase):
                                                         [s.uuid, s.service_name])
 
         self.publisher.publish.assert_called_once_with(expected_message)
-
-    @patch('xivo.consul_helpers.Consul')
-    def test_that_register_sends_a_service_registered_event_when_not_registered(self, Consul):
-        consul_client = Consul.return_value
-        consul_client.catalog.service.return_value = (s.index, [])
-
-        self.registerer.register()
-
-        assert_that(self.publisher.publish.call_count, equal_to(0))
 
     @patch('xivo.consul_helpers.Consul')
     def test_that_deregister_sends_a_service_deregistered_event_when_registered(self, Consul):
@@ -108,6 +95,19 @@ class TestConsulRegisterer(unittest.TestCase):
         self.registerer.register()
 
         Consul.assert_called_once_with(s.consul_host, s.consul_port, s.consul_token)
+        consul_client.agent.service.register.assert_called_once_with(self.service_name,
+                                                                     service_id=ANY,
+                                                                     port=s.advertise_port,
+                                                                     address=s.advertise_address,
+                                                                     check=ANY, tags=s.tags)
+
+    @patch('xivo.consul_helpers.Consul')
+    def test_that_register_raises_if_register_fails(self, Consul):
+        consul_client = Consul.return_value
+        consul_client.agent.service.register.return_value = False
+
+        self.assertRaises(RegistererError, self.registerer.register)
+
         consul_client.agent.service.register.assert_called_once_with(self.service_name,
                                                                      service_id=ANY,
                                                                      port=s.advertise_port,
