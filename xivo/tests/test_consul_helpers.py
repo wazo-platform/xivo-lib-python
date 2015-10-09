@@ -40,6 +40,7 @@ class TestNotifyingRegisterer(unittest.TestCase):
                                               advertise_port=s.advertise_port,
                                               check_url=s.check_url,
                                               check_url_timeout=s.check_url_timeout,
+                                              check_url_interval=s.check_url_interval,
                                               service_tags=[s.uuid, s.service_name])
         self.service_id = self.registerer._service_id
 
@@ -85,7 +86,8 @@ class TestConsulRegisterer(unittest.TestCase):
         self.registerer = Registerer(name=self.service_name, host=s.consul_host, port=s.consul_port,
                                      token=s.consul_token, advertise_address=s.advertise_address,
                                      advertise_port=s.advertise_port, check_url=s.check_url,
-                                     check_url_timeout=s.check_url_timeout, service_tags=s.tags)
+                                     check_url_timeout=s.check_url_timeout,
+                                     check_url_interval=s.check_url_interval, service_tags=s.tags)
 
     @patch('xivo.consul_helpers.Consul')
     def test_that_register_calls_agent_register(self, Consul):
@@ -121,7 +123,7 @@ class TestConsulRegisterer(unittest.TestCase):
 
         self.registerer.register()
 
-        Check.http.assert_called_once_with(s.check_url, s.check_url_timeout)
+        Check.http.assert_called_once_with(s.check_url, s.check_url_interval, timeout=s.check_url_timeout)
         consul_client.agent.service.register.assert_called_once_with(self.service_name,
                                                                      service_id=ANY,
                                                                      port=ANY,
@@ -150,7 +152,8 @@ class TestFromConfigFactory(unittest.TestCase):
                                   'port': s.consul_port,
                                   'token': s.consul_token,
                                   'check_url': s.check_url,
-                                  'check_url_timeout': s.check_url_timeout},
+                                  'check_url_timeout': s.check_url_timeout,
+                                  'check_url_interval': s.check_url_interval},
                        'uuid': s.uuid}
 
     def test_registered_from_config(self):

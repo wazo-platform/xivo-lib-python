@@ -38,7 +38,7 @@ class MissingConfigurationError(RegistererError):
 class Registerer(object):
 
     def __init__(self, name, host, port, token, advertise_address, advertise_port,
-                 check_url, check_url_timeout, service_tags):
+                 check_url, check_url_timeout, check_url_interval, service_tags):
         self._service_id = str(uuid.uuid4())
         self._service_name = name
         self._advertise_address = advertise_address
@@ -49,6 +49,7 @@ class Registerer(object):
         self._consul_token = token
         self._check_id = str(uuid.uuid4())
         self._check_url = check_url
+        self._check_url_interval = check_url_interval
         self._check_url_timeout = check_url_timeout
         self._logger = logging.getLogger(name)
 
@@ -64,7 +65,7 @@ class Registerer(object):
                           self._advertise_port)
 
         try:
-            http_check = Check.http(self._check_url, self._check_url_timeout)
+            http_check = Check.http(self._check_url, self._check_url_interval, timeout=self._check_url_timeout)
             registered = self._client.agent.service.register(self._service_name,
                                                              service_id=self._service_id,
                                                              address=self._advertise_address,
@@ -99,6 +100,7 @@ class Registerer(object):
                 advertise_port=config['consul']['advertise_port'],
                 check_url=config['consul']['check_url'],
                 check_url_timeout=config['consul']['check_url_timeout'],
+                check_url_interval=config['consul']['check_url_interval'],
                 service_tags=config['consul'].get('extra_tags', []) + [service_name,  uuid],
             )
         except KeyError as e:
@@ -114,11 +116,12 @@ class NotifyingRegisterer(Registerer):
 
     def __init__(self, name, publisher, host, port, token,
                  advertise_address, advertise_port,
-                 check_url, check_url_timeout, service_tags):
+                 check_url, check_url_timeout, check_url_interval, service_tags):
         self._publisher = publisher
         super(NotifyingRegisterer, self).__init__(name, host, port, token,
                                                   advertise_address, advertise_port,
-                                                  check_url, check_url_timeout, service_tags)
+                                                  check_url, check_url_timeout, check_url_interval,
+                                                  service_tags)
 
     def register(self):
         super(NotifyingRegisterer, self).register()
