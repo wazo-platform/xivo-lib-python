@@ -83,7 +83,7 @@ class Registerer(object):
                           self._service_id)
 
         try:
-            self._client.agent.service.deregister(self._service_id)
+            return self._client.agent.service.deregister(self._service_id)
         except (ConnectionError, ConsulException) as e:
             raise RegistererError(str(e))
 
@@ -134,10 +134,11 @@ class NotifyingRegisterer(Registerer):
         self._publisher.publish(msg)
 
     def deregister(self):
-        if super(NotifyingRegisterer, self).is_registered():
-            super(NotifyingRegisterer, self).deregister()
+        was_registered = super(NotifyingRegisterer, self).deregister()
+        if was_registered:
             msg = self._new_deregistered_event()
             self._publisher.publish(msg)
+        return was_registered
 
     def _new_deregistered_event(self):
         return event.ServiceDeregisteredEvent(self._service_name,

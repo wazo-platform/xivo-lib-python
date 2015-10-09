@@ -58,8 +58,7 @@ class TestNotifyingRegisterer(unittest.TestCase):
     @patch('xivo.consul_helpers.Consul')
     def test_that_deregister_sends_a_service_deregistered_event_when_registered(self, Consul):
         consul_client = Consul.return_value
-        consul_client.catalog.service.return_value = (s.index, [{'ServiceName': self.service_name,
-                                                                 'ServiceID': self.service_id}])
+        consul_client.agent.service.deregister.return_value = True
 
         self.registerer.deregister()
 
@@ -72,7 +71,7 @@ class TestNotifyingRegisterer(unittest.TestCase):
     @patch('xivo.consul_helpers.Consul')
     def test_that_deregister_sends_a_service_deregistered_event_when_not_registered(self, Consul):
         consul_client = Consul.return_value
-        consul_client.catalog.service.return_value = (s.index, [])
+        consul_client.agent.service.deregister.return_value = False
 
         self.registerer.deregister()
 
