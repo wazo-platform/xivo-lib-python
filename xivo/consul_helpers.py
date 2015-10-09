@@ -20,7 +20,11 @@ import uuid
 
 from consul import Check, Consul, ConsulException
 from requests.exceptions import ConnectionError
-from xivo_bus.resources.services import event
+try:
+    # xivo_bus is an optional dependency
+    from xivo_bus.resources.services import event
+except ImportError:
+    pass
 
 
 class RegistererError(BaseException):
