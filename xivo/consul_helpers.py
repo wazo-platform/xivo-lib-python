@@ -37,16 +37,14 @@ class MissingConfigurationError(RegistererError):
 
 class Registerer(object):
 
-    def __init__(self, name, host, port, token, advertise_address, advertise_port,
+    def __init__(self, name, consul_config, advertise_address, advertise_port,
                  check_url, check_url_timeout, check_url_interval, service_tags):
         self._service_id = str(uuid.uuid4())
         self._service_name = name
         self._advertise_address = advertise_address
         self._advertise_port = advertise_port
         self._tags = service_tags
-        self._consul_host = host
-        self._consul_port = port
-        self._consul_token = token
+        self._consul_config = consul_config
         self._check_id = str(uuid.uuid4())
         self._check_url = check_url
         self._check_url_interval = check_url_interval
@@ -55,7 +53,7 @@ class Registerer(object):
 
     @property
     def _client(self):
-        return Consul(self._consul_host, self._consul_port, self._consul_token)
+        return Consul(**self._consul_config)
 
     def register(self):
         self._logger.info('Registering %s on Consul as %s with %s:%s',
@@ -92,16 +90,18 @@ class Registerer(object):
     def _canonicalize_config(service_name, config):
         try:
             uuid = config['uuid']
+            consul_config = config['consul']
+            service_discovery_config = config['service_discovery']
+            original_tags = service_discovery_config.get('extra_tags', [])
+            service_discovery_config['extra_tags'] = original_tags + [service_name, uuid]
             return dict(
-                host=config['consul']['host'],
-                port=config['consul']['port'],
-                token=config['consul']['token'],
-                advertise_address=config['consul']['advertise_address'],
-                advertise_port=config['consul']['advertise_port'],
-                check_url=config['consul']['check_url'],
-                check_url_timeout=config['consul']['check_url_timeout'],
-                check_url_interval=config['consul']['check_url_interval'],
-                service_tags=config['consul'].get('extra_tags', []) + [service_name,  uuid],
+                consul_config=consul_config,
+                advertise_address=service_discovery_config['advertise_address'],
+                advertise_port=service_discovery_config['advertise_port'],
+                check_url=service_discovery_config['check_url'],
+                check_url_timeout=service_discovery_config['check_url_timeout'],
+                check_url_interval=service_discovery_config['check_url_interval'],
+                service_tags=service_discovery_config['extra_tags'],
             )
         except KeyError as e:
             raise MissingConfigurationError(str(e))
@@ -114,11 +114,11 @@ class Registerer(object):
 
 class NotifyingRegisterer(Registerer):
 
-    def __init__(self, name, publisher, host, port, token,
+    def __init__(self, name, publisher, consul_config,
                  advertise_address, advertise_port,
                  check_url, check_url_timeout, check_url_interval, service_tags):
         self._publisher = publisher
-        super(NotifyingRegisterer, self).__init__(name, host, port, token,
+        super(NotifyingRegisterer, self).__init__(name, consul_config,
                                                   advertise_address, advertise_port,
                                                   check_url, check_url_timeout, check_url_interval,
                                                   service_tags)
