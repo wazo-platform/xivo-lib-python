@@ -31,11 +31,12 @@ class TestNotifyingRegisterer(unittest.TestCase):
     def setUp(self):
         self.publisher = Mock(Publisher)
         self.service_name = 'foobar'
+        consul_config = {'host': s.consul_host,
+                         'port': s.consul_port,
+                         'token': s.consul_token}
         self.registerer = NotifyingRegisterer(name=self.service_name,
                                               publisher=self.publisher,
-                                              host=s.consul_host,
-                                              port=s.consul_port,
-                                              token=s.consul_token,
+                                              consul_config=consul_config,
                                               advertise_address=s.advertise_address,
                                               advertise_port=s.advertise_port,
                                               check_url=s.check_url,
@@ -83,8 +84,11 @@ class TestConsulRegisterer(unittest.TestCase):
 
     def setUp(self):
         self.service_name = 'my-service'
-        self.registerer = Registerer(name=self.service_name, host=s.consul_host, port=s.consul_port,
-                                     token=s.consul_token, advertise_address=s.advertise_address,
+        consul_config = {'host': s.consul_host,
+                         'port': s.consul_port,
+                         'token': s.consul_token}
+        self.registerer = Registerer(name=self.service_name, consul_config=consul_config,
+                                     advertise_address=s.advertise_address,
                                      advertise_port=s.advertise_port, check_url=s.check_url,
                                      check_url_timeout=s.check_url_timeout,
                                      check_url_interval=s.check_url_interval, service_tags=s.tags)
@@ -95,7 +99,7 @@ class TestConsulRegisterer(unittest.TestCase):
 
         self.registerer.register()
 
-        Consul.assert_called_once_with(s.consul_host, s.consul_port, s.consul_token)
+        Consul.assert_called_once_with(host=s.consul_host, port=s.consul_port, token=s.consul_token)
         consul_client.agent.service.register.assert_called_once_with(self.service_name,
                                                                      service_id=ANY,
                                                                      port=s.advertise_port,
@@ -137,7 +141,7 @@ class TestConsulRegisterer(unittest.TestCase):
 
         self.registerer.deregister()
 
-        Consul.assert_called_once_with(s.consul_host, s.consul_port, s.consul_token)
+        Consul.assert_called_once_with(host=s.consul_host, port=s.consul_port, token=s.consul_token)
         consul_client.agent.service.deregister.assert_called_once_with(self.registerer._service_id)
 
 
@@ -145,15 +149,15 @@ class TestFromConfigFactory(unittest.TestCase):
 
     def setUp(self):
         self.service_name = 'foobar'
-        self.config = {'consul': {'advertise_address': s.advertise_address,
-                                  'advertise_port': s.advertise_port,
-                                  'extra_tags': ['Paris'],
-                                  'host': s.consul_host,
+        self.config = {'consul': {'host': s.consul_host,
                                   'port': s.consul_port,
-                                  'token': s.consul_token,
-                                  'check_url': s.check_url,
-                                  'check_url_timeout': s.check_url_timeout,
-                                  'check_url_interval': s.check_url_interval},
+                                  'token': s.consul_token},
+                       'service_discovery': {'advertise_address': s.advertise_address,
+                                             'advertise_port': s.advertise_port,
+                                             'extra_tags': ['Paris'],
+                                             'check_url': s.check_url,
+                                             'check_url_timeout': s.check_url_timeout,
+                                             'check_url_interval': s.check_url_interval},
                        'uuid': s.uuid}
 
     def test_registered_from_config(self):
@@ -175,7 +179,8 @@ class TestFromConfigFactory(unittest.TestCase):
         assert_that(registerer._advertise_address, equal_to(s.advertise_address))
         assert_that(registerer._advertise_port, equal_to(s.advertise_port))
         assert_that(registerer._tags, contains_inanyorder('Paris', self.service_name, s.uuid))
-        assert_that(registerer._consul_host, equal_to(s.consul_host))
-        assert_that(registerer._consul_port, equal_to(s.consul_port))
         assert_that(registerer._check_url, equal_to(s.check_url))
         assert_that(registerer._check_url_timeout, equal_to(s.check_url_timeout))
+        assert_that(registerer._consul_config, equal_to({'host': s.consul_host,
+                                                         'port': s.consul_port,
+                                                         'token': s.consul_token}))
