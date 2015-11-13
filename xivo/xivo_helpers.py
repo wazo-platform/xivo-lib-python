@@ -21,9 +21,6 @@ import re
 import sys
 import logging
 
-from xivo import anysql
-from xivo.BackSQL import backpostgresql
-
 log = logging.getLogger("xivo.xivo_helpers")
 
 
