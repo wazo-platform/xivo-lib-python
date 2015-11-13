@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-"""Helper functions for XIVO"""
-
 import re
 import sys
 import logging
@@ -66,7 +64,7 @@ def split_extension(exten):
     i = 1
 
     if not isinstance(exten, str):
-        raise ValueError, "exten argument must be a string"
+        raise ValueError("exten argument must be a string")
 
     for x in exten:
         if flag == 2:
@@ -76,13 +74,13 @@ def split_extension(exten):
                     flag = 0
                     cur += '*'
                 else:
-                    raise ValueError, "Wrong digit: %d, excepted: %d" % (x, i)
+                    raise ValueError("Wrong digit: %d, excepted: %d" % (x, i))
             elif x == '*':
                 ret.append(cur)
                 cur = ""
                 i += 1
             else:
-                raise ValueError, "Wrong value: %r, excepted digit or asterisk!" % x
+                raise ValueError("Wrong value: %r, excepted digit or asterisk!" % x)
         elif x == '*':
             flag += 1
         elif flag == 1:
@@ -109,7 +107,7 @@ def unsplit_extension(xlist):
     cur = ""
 
     if not isinstance(xlist, (tuple, list)):
-        raise ValueError, "Argument must be a tuple or list"
+        raise ValueError("Argument must be a tuple or list")
 
     for i, x in enumerate(xlist):
         i += 1
