@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2014 Avencall
+# Copyright (C) 2007-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -449,21 +449,6 @@ def ipv4_from_macaddr(macaddr, exc_info=True, ifname_match_func=lambda x: True, 
         if result:
             return result.strip()
     return None
-
-
-def macaddr_from_ipv4(ipv4, exc_info=True, ifname_match_func=lambda x: True, arping_cmd_list=None, arping_sleep_us=150000):
-    """
-    ipv4_from_macaddr() is indeed a symetrical fonction that can be
-    used to retrieve an ipv4 address from a given mac address.  This
-    function just call the former.
-
-    WARNING: this is of course ipv4_from_macaddr() implementation dependent
-    """
-    return ipv4_from_macaddr(ipv4,
-                             exc_info=exc_info,
-                             ifname_match_func=ifname_match_func,
-                             arping_cmd_list=arping_cmd_list,
-                             arping_sleep_us=arping_sleep_us)
 
 
 def parse_ipv4(straddr):
