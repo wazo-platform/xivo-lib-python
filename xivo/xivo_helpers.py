@@ -137,29 +137,6 @@ def fkey_extension(funckey_prefix, funckey_args):
     return clean_extension(funckey_prefix) + unsplit_extension(components)
 
 
-def speed_dial_key_components(xleft, xright, fkext, _monitoringext):
-    """
-    Return a list of strings that compose the different parts of an
-    extension
-    """
-    if xleft:
-        xleft = clean_extension(xleft)
-    else:
-        xleft = ""
-    components = [xleft]
-    if xright and fkext:
-        raise ValueError("(xright, fkext) == `(%s, %s)` but both shall not be set", xright, fkext)
-    elif xright:
-        right_part = str(xright)
-    elif fkext:
-        right_part = str(fkext)
-    else:
-        right_part = ""
-    if right_part:
-        components.append(str(right_part))
-    return components
-
-
 def abort(message, show_tb=False):
     """
     Log @message at critical level (including a backtrace
