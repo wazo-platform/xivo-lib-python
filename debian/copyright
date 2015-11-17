@@ -1,32 +1,12 @@
 ﻿This package was first debianized by Corentin Le Gall
 <clegall@proformatique.com> on Tue, 15 May 2007 16:13:37 +0200.
 
-Licence (ifacenames.c):
-
-	Copyright (C) 2007-2012  Avencall
-
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-License (OrderedConf.py, ThreadingHTTPServer.py, Enum.py):
+License (OrderedConf.py, ThreadingHTTPServer.py):
 
 	OrderedConf.py derives from the ConfigParser module distributed in
 	Python 2.4.4.
 	ThreadingHTTPServer.py derives from parts of the BaseHTTPServer
 	module distributed in Python 2.4.4.
-	Enum.py derives from http://code.activestate.com/recipes/413486/
-	and, as stated in http://code.activestate.com/help/terms/ , is under
-	the Python 2.4 license.
 	They are distributed under the PSF LICENSE AGREEMENT FOR PYTHON 2.4
 	(included under in this file).
 
@@ -57,8 +37,8 @@ License (agi.py):
 
 License (everything else):
 
-        pf-xivo-lib-python is a collection of useful python libs for XIVO.
-        Copyright (C) 2007-2012  Avencall
+        xivo-lib-python is a collection of useful python libs for XIVO.
+        Copyright (C) 2007-2015  Avencall
 
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2014 Avencall
+# Copyright (C) 2007-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,10 +32,8 @@ import socket
 import struct
 import math
 
-from xivo import StreamedLines
 
-
-log = logging.getLogger("xivo.network") # pylint: disable-msg=C0103
+log = logging.getLogger("xivo.network")  # pylint: disable-msg=C0103
 
 
 # CONFIG
@@ -416,54 +414,6 @@ def normalize_mac_address(macaddr):
     if len(macaddr_split) != 6:
         raise ValueError, "Bad format for mac address " + macaddr
     return ':'.join([('%02X' % int(s, 16)) for s in macaddr_split])
-
-
-def ipv4_from_macaddr(macaddr, exc_info=True, ifname_match_func=lambda x: True, arping_cmd_list=None, arping_sleep_us=150000):
-    """
-    Given a mac address, get an IPv4 address for an host living on the
-    LAN.  This makes use of the tool "arping".  Of course the remote peer
-    must respond to ping broadcasts.  Out of the box, some stupid phones
-    from well known stupid and expensive brands don't.
-    """
-    if arping_cmd_list is None:
-        arping_cmd_list = ['sudo', 'arping']
-
-    # -r : will only display the IP address on stdout, or nothing
-    # -c 1 : ping once
-    # -w <xxx> : wait for the answer during <xxx> microsec after the ping
-    # -I <netiface> : the network interface to use is <netiface>
-    #    -I is an undocumented option like -i but it works
-    #    with alias interfaces too
-    for iface in sorted_lst_lexdec(get_filtered_ifnames(ifname_match_func)):
-        result = None
-        try:
-            child = subprocess.Popen(arping_cmd_list + ["-r", "-c", "1", "-w", str(arping_sleep_us), '-I', iface, macaddr],
-                                     bufsize=0, stdout=subprocess.PIPE, close_fds=True)
-            StreamedLines.makeNonBlocking(child.stdout)
-            for (result,) in StreamedLines.rxStreamedLines(fobjs=(child.stdout,), timeout=arping_sleep_us * 10. / 1000000.):
-                break
-        except Exception:
-            result = None
-            if exc_info:
-                log.exception("ipv4 / macaddr lookup failed for %r", macaddr)
-        if result:
-            return result.strip()
-    return None
-
-
-def macaddr_from_ipv4(ipv4, exc_info=True, ifname_match_func=lambda x: True, arping_cmd_list=None, arping_sleep_us=150000):
-    """
-    ipv4_from_macaddr() is indeed a symetrical fonction that can be
-    used to retrieve an ipv4 address from a given mac address.  This
-    function just call the former.
-
-    WARNING: this is of course ipv4_from_macaddr() implementation dependent
-    """
-    return ipv4_from_macaddr(ipv4,
-                             exc_info=exc_info,
-                             ifname_match_func=ifname_match_func,
-                             arping_cmd_list=arping_cmd_list,
-                             arping_sleep_us=arping_sleep_us)
 
 
 def parse_ipv4(straddr):
