@@ -15,39 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-import re
 import sys
 import logging
 
 log = logging.getLogger("xivo.xivo_helpers")
-
-
-find_asterisk_pattern_char = re.compile('[[NXZ!.]').search
-
-
-def position_of_asterisk_pattern_char(ast_pattern):
-    mo = find_asterisk_pattern_char(ast_pattern)
-    if not mo:
-        return None
-    return mo.start()
-
-
-def clean_extension(exten):
-    """
-    Return an extension from an Asterisk extension pattern.
-    """
-    if exten is None:
-        return ""
-
-    exten = str(exten)
-
-    if exten.startswith('_'):
-        exten = exten[1:]
-        e = position_of_asterisk_pattern_char(exten)
-        if e is not None:
-            exten = exten[:e]
-
-    return exten
 
 
 def split_extension(exten):
@@ -124,15 +95,9 @@ def unsplit_extension(xlist):
 
 
 def fkey_extension(funckey_prefix, funckey_args):
-    components = []
+    components = filter(None, funckey_args)
 
-    for x in funckey_args:
-        x = clean_extension(x)
-
-        if x:
-            components.append(x)
-
-    return clean_extension(funckey_prefix) + unsplit_extension(components)
+    return funckey_prefix + unsplit_extension(components)
 
 
 def abort(message, show_tb=False):
