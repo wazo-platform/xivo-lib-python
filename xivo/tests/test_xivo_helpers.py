@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2015 Avencall
+# Copyright (C) 2013-2014 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,17 +22,17 @@ from xivo import xivo_helpers
 
 class TestXivoHelpers(unittest.TestCase):
 
-    PREFIX = '*735'
+    PREFIX = '_*735.'
 
     def test_fkey_extension_unc_fwd_with_destination(self):
-        arguments = ('123', '*21', '1002')
+        arguments = ('123', '_*21.', '1002')
 
         result = xivo_helpers.fkey_extension(self.PREFIX, arguments)
 
         self.assertEqual(result, '*735123***221*1002')
 
     def test_fkey_extension_unc_fwd_without_destination(self):
-        arguments = ('123', '*21', '')
+        arguments = ('123', '_*21.', '')
 
         result = xivo_helpers.fkey_extension(self.PREFIX, arguments)
 
