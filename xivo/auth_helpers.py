@@ -25,6 +25,7 @@ class TokenRenewer(object):
 
     DEFAULT_EXPIRATION = 6 * 3600
     DEFAULT_BACKEND = 'xivo_service'
+    _RENEW_TIME_COEFFICIENT = 0.8
     _RENEW_TIME_FAILED = 20
 
     def __init__(self, auth_client, backend=DEFAULT_BACKEND, expiration=DEFAULT_EXPIRATION):
@@ -72,7 +73,7 @@ class TokenRenewer(object):
             logger.warning('create token with xivo-auth failed', exc_info=True)
             self._renew_time = self._RENEW_TIME_FAILED
         else:
-            self._renew_time = 0.8 * self._expiration
+            self._renew_time = self._RENEW_TIME_COEFFICIENT * self._expiration
             self._notify_all(token['token'])
 
     def _notify_all(self, token_id):
