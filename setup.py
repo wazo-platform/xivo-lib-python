@@ -5,10 +5,10 @@ from setuptools import setup
 from setuptools import find_packages
 
 requirements = [
-    "psycopg2==2.4.5",
-    "pyyaml==3.10",
-    "pyopenssl==0.13",
-    "python-consul",
+    "psycopg2==2.5.4",
+    "pyyaml==3.11",
+    "pyopenssl==0.14",
+    "python-consul==0.4.7",
 ]
 
 setup(
