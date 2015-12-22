@@ -617,9 +617,6 @@ def force_shutdown(phy):
 
 
 def ifplugd_start():
-    """
-    /etc/init.d/ifplugd start
-    """
     try:
         status = subprocess.call(IFPLUGD_START, close_fds=True)
     except OSError:
