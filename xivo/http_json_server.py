@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2014 Avencall
+# Copyright (C) 2007-2015 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -435,6 +435,7 @@ def sigterm_handler(signum, stack_frame):
     # pylint: disable-msg=W0613
     global _killed
     _killed = True
+    raise SystemExit()
 
 
 def run(options):
