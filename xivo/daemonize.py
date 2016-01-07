@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2014 Avencall
+# Copyright (C) 2007-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -201,6 +201,7 @@ def daemonize():
     try:
         pid = os.fork()
         if pid > 0:
+            os.waitpid(pid, 0)
             os._exit(0)  # pylint: disable-msg=W0212
     except OSError, e:
         log.exception("first fork() failed: %d (%s)", e.errno, e.strerror)
