@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2015 Avencall
+# Copyright (C) 2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,6 +36,9 @@ def log_request(response):
 
 
 def ssl_adapter(certificate, private_key, ciphers):
+    _check_file_readable(certificate)
+    _check_file_readable(private_key)
+
     adapter = pyOpenSSLAdapter(certificate, private_key)
     adapter.context = SSL.Context(SSL.SSLv23_METHOD)
     adapter.context.set_options(SSL.OP_NO_SSLv2)
@@ -45,6 +48,11 @@ def ssl_adapter(certificate, private_key, ciphers):
     adapter.context.use_privatekey_file(private_key)
     adapter.context.set_cipher_list(ciphers)
     return adapter
+
+
+def _check_file_readable(file_path):
+    with open(file_path, 'r'):
+        pass
 
 
 def list_routes(app):
