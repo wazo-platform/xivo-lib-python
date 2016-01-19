@@ -5,10 +5,13 @@ from setuptools import setup
 from setuptools import find_packages
 
 requirements = [
+    "flask==0.10.1",
     "psycopg2==2.5.4",
     "pyyaml==3.11",
     "pyopenssl==0.14",
     "python-consul==0.4.7",
+    "stevedore==0.14.1",
+    "xivo-auth-client",
 ]
 
 setup(
