@@ -148,23 +148,26 @@ class AuthVerifier(object):
         self._auth_config.pop('password', None)
         self._auth_config.pop('key_file', None)
 
+    def set_client(self, auth_client):
+        self._auth_client = auth_client
+
     def verify_token(self, func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            assert self._auth_config, 'AuthVerifier is not configured'
+            assert self._auth_config or self._auth_client, 'AuthVerifier is not configured'
 
             token = self.token()
             required_acl = self.acl(func, *args, **kwargs)
 
             try:
-                token_is_valid = self._client().token.is_valid(token, required_acl)
+                token_is_valid = self.client().token.is_valid(token, required_acl)
             except requests.RequestException as e:
-                raise AuthServerUnreachable(self._auth_config['host'], self._auth_config['port'], e)
+                return self.handle_unreachable(e)
 
             if token_is_valid:
                 return func(*args, **kwargs)
 
-            raise Unauthorized(token)
+            return self.handle_unauthorized(token)
         return wrapper
 
     def token(self):
@@ -173,7 +176,13 @@ class AuthVerifier(object):
     def acl(self, decorated_function, *args, **kwargs):
         return getattr(decorated_function, 'acl', '').format(**kwargs)
 
-    def _client(self):
+    def handle_unreachable(self, error):
+        raise AuthServerUnreachable(self._auth_config['host'], self._auth_config['port'], error)
+
+    def handle_unauthorized(self, token):
+        raise Unauthorized(token)
+
+    def client(self):
         if not self._auth_client:
             self._auth_client = Client(**self._auth_config)
         return self._auth_client
