@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2015 Avencall
+# Copyright (C) 2015-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 import logging
 import uuid
 
-from consul import Check, Consul, ConsulException
+from consul import Consul, ConsulException
 from requests.exceptions import ConnectionError
 try:
     # xivo_bus is an optional dependency
@@ -37,18 +37,13 @@ class MissingConfigurationError(RegistererError):
 
 class Registerer(object):
 
-    def __init__(self, name, consul_config, advertise_address, advertise_port,
-                 check_url, check_url_timeout, check_url_interval, service_tags):
+    def __init__(self, name, consul_config, advertise_address, advertise_port, service_tags):
         self._service_id = str(uuid.uuid4())
         self._service_name = name
         self._advertise_address = advertise_address
         self._advertise_port = advertise_port
         self._tags = service_tags
         self._consul_config = consul_config
-        self._check_id = str(uuid.uuid4())
-        self._check_url = check_url
-        self._check_url_interval = check_url_interval
-        self._check_url_timeout = check_url_timeout
         self._logger = logging.getLogger(name)
 
     @property
@@ -63,12 +58,10 @@ class Registerer(object):
                           self._advertise_port)
 
         try:
-            http_check = Check.http(self._check_url, self._check_url_interval, timeout=self._check_url_timeout)
             registered = self._client.agent.service.register(self._service_name,
                                                              service_id=self._service_id,
                                                              address=self._advertise_address,
                                                              port=self._advertise_port,
-                                                             check=http_check,
                                                              tags=self._tags)
             if not registered:
                 raise RegistererError('{} registration on Consul failed'.format(self._service_name))
@@ -98,9 +91,6 @@ class Registerer(object):
                 consul_config=consul_config,
                 advertise_address=service_discovery_config['advertise_address'],
                 advertise_port=service_discovery_config['advertise_port'],
-                check_url=service_discovery_config['check_url'],
-                check_url_timeout=service_discovery_config['check_url_timeout'],
-                check_url_interval=service_discovery_config['check_url_interval'],
                 service_tags=service_discovery_config['extra_tags'],
             )
         except KeyError as e:
@@ -116,11 +106,10 @@ class NotifyingRegisterer(Registerer):
 
     def __init__(self, name, publisher, consul_config,
                  advertise_address, advertise_port,
-                 check_url, check_url_timeout, check_url_interval, service_tags):
+                 service_tags):
         self._publisher = publisher
         super(NotifyingRegisterer, self).__init__(name, consul_config,
                                                   advertise_address, advertise_port,
-                                                  check_url, check_url_timeout, check_url_interval,
                                                   service_tags)
 
     def register(self):
