@@ -39,6 +39,7 @@ class TestNotifyingRegisterer(unittest.TestCase):
                                               consul_config=consul_config,
                                               advertise_address=s.advertise_address,
                                               advertise_port=s.advertise_port,
+                                              ttl_interval=30,
                                               service_tags=[s.uuid, s.service_name])
         self.service_id = self.registerer._service_id
 
@@ -87,6 +88,7 @@ class TestConsulRegisterer(unittest.TestCase):
         self.registerer = Registerer(name=self.service_name, consul_config=consul_config,
                                      advertise_address=s.advertise_address,
                                      advertise_port=s.advertise_port,
+                                     ttl_interval=30,
                                      service_tags=s.tags)
 
     @patch('xivo.consul_helpers.Consul')
@@ -100,6 +102,7 @@ class TestConsulRegisterer(unittest.TestCase):
                                                                      service_id=ANY,
                                                                      port=s.advertise_port,
                                                                      address=s.advertise_address,
+                                                                     check=ANY,
                                                                      tags=s.tags)
 
     @patch('xivo.consul_helpers.Consul')
@@ -113,16 +116,18 @@ class TestConsulRegisterer(unittest.TestCase):
                                                                      service_id=ANY,
                                                                      port=s.advertise_port,
                                                                      address=s.advertise_address,
+                                                                     check=ANY,
                                                                      tags=s.tags)
 
     @patch('xivo.consul_helpers.Consul')
-    def test_that_deregister_calls_agent_deregister_service(self, Consul):
+    def test_that_deregister_calls_agent_deregister_service_and_check(self, Consul):
         consul_client = Consul.return_value
 
         self.registerer.deregister()
 
         Consul.assert_called_once_with(host=s.consul_host, port=s.consul_port, token=s.consul_token)
-        consul_client.agent.service.deregister.assert_called_once_with(self.registerer._service_id)
+        consul_client.agent.service.deregister.assert_called_with(self.registerer._service_id)
+        consul_client.agent.check.deregister.assert_called_with(self.registerer._check_id)
 
 
 class TestFromConfigFactory(unittest.TestCase):
@@ -134,6 +139,7 @@ class TestFromConfigFactory(unittest.TestCase):
                                   'token': s.consul_token},
                        'service_discovery': {'advertise_address': s.advertise_address,
                                              'advertise_port': s.advertise_port,
+                                             'ttl_interval': s.ttl_interval,
                                              'extra_tags': ['Paris']},
                        'uuid': s.uuid}
 

@@ -16,15 +16,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import logging
+import threading
 import uuid
 
-from consul import Consul, ConsulException
+from consul import Check, Consul, ConsulException
 from requests.exceptions import ConnectionError
+
 try:
     # xivo_bus is an optional dependency
     from xivo_bus.resources.services import event
 except ImportError:
     pass
+
+logger = logging.getLogger('service_discovery')
 
 
 class RegistererError(BaseException):
@@ -35,33 +39,107 @@ class MissingConfigurationError(RegistererError):
     pass
 
 
+class ServiceCatalogRegistration(object):
+
+    def __init__(self, service_name, config, publisher, check=None):
+        self._check = check or self._default_check
+        self._registerer = NotifyingRegisterer.from_config(service_name, publisher, config)
+
+        self._retry_interval = config['service_discovery']['retry_interval']
+        self._refresh_interval = config['service_discovery']['refresh_interval']
+
+        self._thread = threading.Thread(target=self._loop)
+        self._sleep_event = threading.Event()
+        self._thread.daemon = True
+        self._thread.name = 'ServiceDiscoveryThread'
+
+        self._done = False
+        self._registered = False
+
+    def __enter__(self):
+        self._thread.start()
+        return self
+
+    def __exit__(self, _, __, ___):
+        if self._thread.is_alive():
+            logger.debug('waiting for the service discovery thread to complete')
+            self._done = True
+            self._wake()
+            self._thread.join()
+
+        try:
+            self._registerer.deregister()
+        except Exception:
+            logger.exception('failed to deregister')
+
+    def _loop(self):
+        while not self._done:
+            service_ready = self._check()
+            if service_ready:
+                self._success()
+            else:
+                self._fail()
+
+    def _sleep(self, interval):
+        self._sleep_event.wait(interval)
+
+    def _wake(self):
+        self._sleep_event.set()
+
+    def _success(self):
+        if not self._registered:
+            try:
+                self._registerer.register()
+                self._registered = True
+            except RegistererError:
+                logger.exception('failed to register service')
+                logger.info('registration failed, retrying in %s seconds', self._retry_interval)
+                self._sleep(self._retry_interval)
+
+        if self._registered:
+            updated = self._registerer.send_ttl()
+            if updated:
+                self._sleep(self._refresh_interval)
+            else:
+                self._sleep(self._retry_interval)
+
+    def _fail(self):
+        self._sleep(self._retry_interval)
+
+    def _default_check(self):
+        return True
+
+
 class Registerer(object):
 
-    def __init__(self, name, consul_config, advertise_address, advertise_port, service_tags):
+    def __init__(self, name, consul_config, advertise_address, advertise_port, ttl_interval, service_tags):
         self._service_id = str(uuid.uuid4())
         self._service_name = name
         self._advertise_address = advertise_address
         self._advertise_port = advertise_port
         self._tags = service_tags
         self._consul_config = consul_config
-        self._logger = logging.getLogger(name)
+        self._ttl_interval = '{}s'.format(ttl_interval)
+        self._check_id = 'service:{}'.format(self._service_id)
 
     @property
     def _client(self):
         return Consul(**self._consul_config)
 
     def register(self):
-        self._logger.info('Registering %s on Consul as %s with %s:%s',
-                          self._service_name,
-                          self._service_id,
-                          self._advertise_address,
-                          self._advertise_port)
+        logger.info('Registering %s on Consul as %s with %s:%s',
+                    self._service_name,
+                    self._service_id,
+                    self._advertise_address,
+                    self._advertise_port)
 
         try:
+            ttl_check = Check.ttl(self._ttl_interval)
             registered = self._client.agent.service.register(self._service_name,
                                                              service_id=self._service_id,
                                                              address=self._advertise_address,
                                                              port=self._advertise_port,
+                                                             check=ttl_check,
                                                              tags=self._tags)
             if not registered:
                 raise RegistererError('{} registration on Consul failed'.format(self._service_name))
@@ -69,13 +147,21 @@ class Registerer(object):
         except (ConnectionError, ConsulException) as e:
             raise RegistererError(str(e))
 
+    def send_ttl(self):
+        result = self._client.agent.check.ttl_pass(self._check_id)
+        if not result:
+            logger('ttl pass failed')
+        return result
+
     def deregister(self):
-        self._logger.info('Deregistering %s from Consul services: %s',
-                          self._service_name,
-                          self._service_id)
+        logger.info('Deregistering %s from Consul services: %s',
+                    self._service_name,
+                    self._service_id)
 
         try:
-            return self._client.agent.service.deregister(self._service_id)
+            client = self._client
+            client.agent.check.deregister(self._check_id)
+            return client.agent.service.deregister(self._service_id)
         except (ConnectionError, ConsulException) as e:
             raise RegistererError(str(e))
 
@@ -91,6 +177,7 @@ class Registerer(object):
                 consul_config=consul_config,
                 advertise_address=service_discovery_config['advertise_address'],
                 advertise_port=service_discovery_config['advertise_port'],
+                ttl_interval=service_discovery_config['ttl_interval'],
                 service_tags=service_discovery_config['extra_tags'],
             )
         except KeyError as e:
@@ -106,11 +193,11 @@ class NotifyingRegisterer(Registerer):
 
     def __init__(self, name, publisher, consul_config,
                  advertise_address, advertise_port,
-                 service_tags):
+                 ttl_interval, service_tags):
         self._publisher = publisher
         super(NotifyingRegisterer, self).__init__(name, consul_config,
                                                   advertise_address, advertise_port,
-                                                  service_tags)
+                                                  ttl_interval, service_tags)
 
     def register(self):
         super(NotifyingRegisterer, self).register()
