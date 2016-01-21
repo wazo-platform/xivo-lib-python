@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import logging
+import netifaces
 import threading
 import uuid
 
@@ -157,17 +158,30 @@ class Registerer(object):
         except (ConnectionError, ConsulException) as e:
             raise RegistererError(str(e))
 
-    @staticmethod
-    def _canonicalize_config(service_name, config):
+    @classmethod
+    def _find_address(cls, config):
+        advertise_address = config['service_discovery']['advertise_address']
+        if advertise_address != 'auto':
+            return advertise_address
+
+        iface = config['service_discovery']['advertise_address_interface']
+        try:
+            return netifaces.ifaddresses(iface)[2][0]['addr']
+        except ValueError as e:
+            raise RegistererError('{}: {}'.format(str(e), iface))
+
+    @classmethod
+    def _canonicalize_config(cls, service_name, config):
         try:
             uuid = config['uuid']
             consul_config = config['consul']
             service_discovery_config = config['service_discovery']
             original_tags = service_discovery_config.get('extra_tags', [])
             service_discovery_config['extra_tags'] = original_tags + [service_name, uuid]
+            advertise_address = cls._find_address(config)
             return dict(
                 consul_config=consul_config,
-                advertise_address=service_discovery_config['advertise_address'],
+                advertise_address=advertise_address,
                 advertise_port=service_discovery_config['advertise_port'],
                 ttl_interval=service_discovery_config['ttl_interval'],
                 service_tags=service_discovery_config['extra_tags'],
