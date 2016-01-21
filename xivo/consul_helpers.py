@@ -74,11 +74,15 @@ class ServiceCatalogRegistration(object):
 
     def _loop(self):
         while not self._done:
-            service_ready = self._check()
-            if service_ready:
-                self._success()
+            if not self._registered:
+                service_ready = self._check()
+                if service_ready:
+                    self._register()
+
+            if self._registered and self._registerer.send_ttl():
+                self._sleep(self._refresh_interval)
             else:
-                self._fail()
+                self._sleep(self._retry_interval)
 
     def _sleep(self, interval):
         self._sleep_event.wait(interval)
@@ -86,25 +90,13 @@ class ServiceCatalogRegistration(object):
     def _wake(self):
         self._sleep_event.set()
 
-    def _success(self):
-        if not self._registered:
-            try:
-                self._registerer.register()
-                self._registered = True
-            except RegistererError:
-                logger.exception('failed to register service')
-                logger.info('registration failed, retrying in %s seconds', self._retry_interval)
-                self._sleep(self._retry_interval)
-
-        if self._registered:
-            updated = self._registerer.send_ttl()
-            if updated:
-                self._sleep(self._refresh_interval)
-            else:
-                self._sleep(self._retry_interval)
-
-    def _fail(self):
-        self._sleep(self._retry_interval)
+    def _register(self):
+        try:
+            self._registerer.register()
+            self._registered = True
+        except RegistererError:
+            logger.exception('failed to register service')
+            logger.info('registration failed, retrying in %s seconds', self._retry_interval)
 
     def _default_check(self):
         return True
