@@ -19,7 +19,8 @@ Depends: ${python:Depends},
          python-consul,
          python-openssl (>= 0.14),
          python-psycopg2,
-         python-yaml
+         python-yaml,
+         xivo-auth-client
 Description: XIVO Python libraries
  XIVO is a system based on a powerful IPBX, to bring an easy to
  install solution for telephony and related services.
