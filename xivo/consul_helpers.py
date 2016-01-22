@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import logging
-import netifaces
 import threading
 import uuid
 
@@ -24,10 +23,15 @@ from consul import Check, Consul, ConsulException
 from requests.exceptions import ConnectionError
 
 try:
-    # xivo_bus is an optional dependency
+    import netifaces
+except ImportError:
+    pass
+
+try:
     from xivo_bus.resources.services import event
 except ImportError:
     pass
+
 
 logger = logging.getLogger('service_discovery')
 
