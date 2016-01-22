@@ -1,0 +1,29 @@
+myservice:
+  image: myservice
+  expose:
+    - "6262"
+  links:
+    - rabbitmq
+    - consul
+rabbitmq:
+  image: rabbitmq
+  expose:
+    - "5672"
+  ports:
+    - "5672:5672"
+consul:
+  image: progrium/consul
+  expose:
+    - "8500"
+  ports:
+    - "8500:8500"
+  volumes:
+    - "./etc/consul/config.json:/etc/consul/config.json"
+  command: "-client 0.0.0.0 -config-dir /etc/consul"
+sync:
+  image: n3llyb0y/wait
+  links:
+    - rabbitmq
+    - consul
+  environment:
+    PORTS: "5672 8500"
