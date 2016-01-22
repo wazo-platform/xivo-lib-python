@@ -61,7 +61,10 @@ class ServiceCatalogRegistration(object):
         self._thread.start()
         return self
 
-    def __exit__(self, _, __, ___):
+    def __exit__(self, type, value, traceback):
+        if type:
+            logger.debug('An error occured: %s %s %s', type, value, traceback)
+
         if self._thread.is_alive():
             logger.debug('waiting for the service discovery thread to complete')
             self._done = True
