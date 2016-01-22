@@ -1,1 +1,2 @@
+git+https://github.com/xivo-pbx/xivo-auth-client.git
 -e .
