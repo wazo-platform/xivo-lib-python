@@ -1,2 +1,2 @@
-git+https://github.com/xivo-pbx/xivo-auth-client.git
+--process-dependency-links
 -e .
