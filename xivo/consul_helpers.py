@@ -173,7 +173,7 @@ class Registerer(object):
 
         iface = config['service_discovery']['advertise_address_interface']
         try:
-            return netifaces.ifaddresses(iface)[2][0]['addr']
+            return netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
         except ValueError as e:
             raise RegistererError('{}: {}'.format(str(e), iface))
 
