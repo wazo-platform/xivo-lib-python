@@ -11,7 +11,6 @@ requirements = [
     "pyopenssl==0.14",
     "python-consul==0.4.7",
     "stevedore==0.14.1",
-    "xivo-auth-client",
 ]
 
 setup(
