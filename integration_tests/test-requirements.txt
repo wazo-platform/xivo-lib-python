@@ -1,0 +1,5 @@
+xivo-test-helpers>=0.1.4
+nose
+kombu
+pyhamcrest
+python-consul

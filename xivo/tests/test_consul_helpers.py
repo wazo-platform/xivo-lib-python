@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2015 Avencall
+# Copyright (C) 2015-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,9 +39,7 @@ class TestNotifyingRegisterer(unittest.TestCase):
                                               consul_config=consul_config,
                                               advertise_address=s.advertise_address,
                                               advertise_port=s.advertise_port,
-                                              check_url=s.check_url,
-                                              check_url_timeout=s.check_url_timeout,
-                                              check_url_interval=s.check_url_interval,
+                                              ttl_interval=30,
                                               service_tags=[s.uuid, s.service_name])
         self.service_id = self.registerer._service_id
 
@@ -89,9 +87,9 @@ class TestConsulRegisterer(unittest.TestCase):
                          'token': s.consul_token}
         self.registerer = Registerer(name=self.service_name, consul_config=consul_config,
                                      advertise_address=s.advertise_address,
-                                     advertise_port=s.advertise_port, check_url=s.check_url,
-                                     check_url_timeout=s.check_url_timeout,
-                                     check_url_interval=s.check_url_interval, service_tags=s.tags)
+                                     advertise_port=s.advertise_port,
+                                     ttl_interval=30,
+                                     service_tags=s.tags)
 
     @patch('xivo.consul_helpers.Consul')
     def test_that_register_calls_agent_register(self, Consul):
@@ -104,7 +102,8 @@ class TestConsulRegisterer(unittest.TestCase):
                                                                      service_id=ANY,
                                                                      port=s.advertise_port,
                                                                      address=s.advertise_address,
-                                                                     check=ANY, tags=s.tags)
+                                                                     check=ANY,
+                                                                     tags=s.tags)
 
     @patch('xivo.consul_helpers.Consul')
     def test_that_register_raises_if_register_fails(self, Consul):
@@ -117,32 +116,18 @@ class TestConsulRegisterer(unittest.TestCase):
                                                                      service_id=ANY,
                                                                      port=s.advertise_port,
                                                                      address=s.advertise_address,
-                                                                     check=ANY, tags=s.tags)
+                                                                     check=ANY,
+                                                                     tags=s.tags)
 
     @patch('xivo.consul_helpers.Consul')
-    @patch('xivo.consul_helpers.Check')
-    def test_that_register_calls_adds_a_check(self, Check, Consul):
-        consul_client = Consul.return_value
-        http_check = Check.http.return_value
-
-        self.registerer.register()
-
-        Check.http.assert_called_once_with(s.check_url, s.check_url_interval, timeout=s.check_url_timeout)
-        consul_client.agent.service.register.assert_called_once_with(self.service_name,
-                                                                     service_id=ANY,
-                                                                     port=ANY,
-                                                                     address=ANY,
-                                                                     check=http_check,
-                                                                     tags=ANY)
-
-    @patch('xivo.consul_helpers.Consul')
-    def test_that_deregister_calls_agent_deregister_service(self, Consul):
+    def test_that_deregister_calls_agent_deregister_service_and_check(self, Consul):
         consul_client = Consul.return_value
 
         self.registerer.deregister()
 
         Consul.assert_called_once_with(host=s.consul_host, port=s.consul_port, token=s.consul_token)
-        consul_client.agent.service.deregister.assert_called_once_with(self.registerer._service_id)
+        consul_client.agent.service.deregister.assert_called_with(self.registerer._service_id)
+        consul_client.agent.check.deregister.assert_called_with(self.registerer._check_id)
 
 
 class TestFromConfigFactory(unittest.TestCase):
@@ -154,10 +139,8 @@ class TestFromConfigFactory(unittest.TestCase):
                                   'token': s.consul_token},
                        'service_discovery': {'advertise_address': s.advertise_address,
                                              'advertise_port': s.advertise_port,
-                                             'extra_tags': ['Paris'],
-                                             'check_url': s.check_url,
-                                             'check_url_timeout': s.check_url_timeout,
-                                             'check_url_interval': s.check_url_interval},
+                                             'ttl_interval': s.ttl_interval,
+                                             'extra_tags': ['Paris']},
                        'uuid': s.uuid}
 
     def test_registered_from_config(self):
@@ -179,8 +162,6 @@ class TestFromConfigFactory(unittest.TestCase):
         assert_that(registerer._advertise_address, equal_to(s.advertise_address))
         assert_that(registerer._advertise_port, equal_to(s.advertise_port))
         assert_that(registerer._tags, contains_inanyorder('Paris', self.service_name, s.uuid))
-        assert_that(registerer._check_url, equal_to(s.check_url))
-        assert_that(registerer._check_url_timeout, equal_to(s.check_url_timeout))
         assert_that(registerer._consul_config, equal_to({'host': s.consul_host,
                                                          'port': s.consul_port,
                                                          'token': s.consul_token}))
