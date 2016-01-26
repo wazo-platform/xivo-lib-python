@@ -150,7 +150,7 @@ class Registerer(object):
     def send_ttl(self):
         result = self._client.agent.check.ttl_pass(self._check_id)
         if not result:
-            logger('ttl pass failed')
+            logger.info('ttl pass failed')
         return result
 
     def deregister(self):
