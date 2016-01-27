@@ -1,0 +1,6 @@
+myservice:
+  image: myservice
+  expose:
+    - "6262"
+sync:
+  image: n3llyb0y/wait
