@@ -76,6 +76,7 @@ def main():
 
     signal.signal(signal.SIGTERM, handler)
     with Connection(bus_url) as bus_connection:
+        bus_connection.ensure_connection()
         bus_exchange = Exchange('xivo', type='topic')
         bus_producer = Producer(bus_connection, exchange=bus_exchange, auto_declare=True)
         bus_marshaler = Marshaler(UUID)
