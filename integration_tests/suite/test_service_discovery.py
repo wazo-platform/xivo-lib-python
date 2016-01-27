@@ -19,6 +19,7 @@ import kombu
 import threading
 import json
 import requests
+import time
 
 from consul import Consul
 from contextlib import contextmanager
@@ -81,8 +82,11 @@ class TestServiceDiscoveryDisabled(_BaseTest):
     def test_that_my_service_can_start_when_service_disc_is_disabled(self):
         with self.myservice(enabled=False) as ip:
             url = 'http://{}:{}/0.1/infos'.format(ip, 6262)
+            for _ in xrange(5):
+                if requests.get(url).status_code == 200:
+                    break
+                time.sleep(1)
             assert_that(self.service_logs(), contains_string('service discovery has been disabled'))
-            assert_that(requests.get(url).status_code, equal_to(200))
 
 
 class TestServiceDiscovery(_BaseTest):
