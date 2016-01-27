@@ -22,7 +22,7 @@ import requests
 
 from consul import Consul
 from contextlib import contextmanager
-from hamcrest import assert_that, contains_inanyorder, equal_to
+from hamcrest import assert_that, contains_inanyorder, contains_string, equal_to
 from Queue import Empty, Queue
 from kombu.mixins import ConsumerMixin
 from xivo_test_helpers.asset_launching_test_case import AssetLaunchingTestCase
@@ -55,6 +55,7 @@ class ServiceConsumer(ConsumerMixin):
 class _BaseTest(AssetLaunchingTestCase):
 
     assets_root = ASSET_ROOT
+    service = 'myservice'
 
     @contextmanager
     def myservice(self, ip=None, enabled=True):
@@ -79,6 +80,7 @@ class TestServiceDiscoveryDisabled(_BaseTest):
     def test_that_my_service_can_start_when_service_disc_is_disabled(self):
         with self.myservice(enabled=False) as ip:
             url = 'http://{}:{}/0.1/infos'.format(ip, 6262)
+            assert_that(self.service_logs(), contains_string('service discovery has been disabled'))
             assert_that(requests.get(url).status_code, equal_to(200))
 
 
