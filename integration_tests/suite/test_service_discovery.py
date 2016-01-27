@@ -17,7 +17,6 @@
 import os
 import kombu
 import threading
-import subprocess
 import json
 import requests
 
@@ -60,17 +59,17 @@ class _BaseTest(AssetLaunchingTestCase):
     @contextmanager
     def myservice(self, ip=None, enabled=True):
         if not enabled:
-            _run_cmd('docker-compose run -d -e DISABLED=1 myservice')
+            self._run_cmd('docker-compose run -d -e DISABLED=1 myservice')
         elif not ip:
-            _run_cmd('docker-compose run -d myservice')
+            self._run_cmd('docker-compose run -d myservice')
         else:
-            _run_cmd('docker-compose run -d -e ADVERTISE_ADDR={} myservice'.format(ip))
+            self._run_cmd('docker-compose run -d -e ADVERTISE_ADDR={} myservice'.format(ip))
         status = self.service_status('myservice')
 
         yield ip or status['NetworkSettings']['IPAddress']
 
         id_ = status['Id']
-        _run_cmd('docker stop {}'.format(id_))
+        self._run_cmd('docker stop {}'.format(id_))
 
 
 class TestServiceDiscoveryDisabled(_BaseTest):
@@ -178,9 +177,3 @@ class TestServiceDiscovery(_BaseTest):
             self.fail('Should have received a message')
 
         return json.loads(raw)
-
-
-def _run_cmd(cmd):
-    process = subprocess.Popen(cmd.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    out, _ = process.communicate()
-    return out
