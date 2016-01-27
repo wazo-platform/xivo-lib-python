@@ -149,7 +149,7 @@ class TestServiceDiscovery(_BaseTest):
 
     def test_that_the_bus_message_is_received_on_stop_when_rabbitmq_is_restarted(self):
         with self.myservice():
-            _run_cmd('docker-compose restart rabbitmq')
+            self._run_cmd('docker-compose restart rabbitmq')
             self.empty_message_queue()
         self.assert_deregistered_msg_received()
 
