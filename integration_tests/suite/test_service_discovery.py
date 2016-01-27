@@ -83,8 +83,11 @@ class TestServiceDiscoveryDisabled(_BaseTest):
         with self.myservice(enabled=False) as ip:
             url = 'http://{}:{}/0.1/infos'.format(ip, 6262)
             for _ in xrange(5):
-                if requests.get(url).status_code == 200:
-                    break
+                try:
+                    if requests.get(url).status_code == 200:
+                        break
+                except Exception:
+                    pass
                 time.sleep(1)
             assert_that(self.service_logs(), contains_string('service discovery has been disabled'))
 
