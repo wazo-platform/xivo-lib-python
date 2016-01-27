@@ -56,6 +56,7 @@ def main():
     advertise_address = os.getenv('ADVERTISE_ADDR', 'auto')
     enabled = os.getenv('DISABLED', '0') == '0'
     logger.debug('advertise addr: %s', advertise_address)
+    logger.debug('enabled: %s', enabled)
     bus_url = 'amqp://{username}:{password}@{host}:{port}//'.format(username='guest',
                                                                     password='guest',
                                                                     host='rabbitmq',

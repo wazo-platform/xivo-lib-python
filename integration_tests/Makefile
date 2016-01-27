@@ -1,7 +1,7 @@
 .PHONY: test-setup test myservice
 
 myservice:
-	docker build -t myservice -f assets/common/Dockerfile_myservice assets/common
+	docker build -t myservice -f assets/common/Dockerfile_myservice ..
 
 test-setup: myservice
 	docker pull n3llyb0y/wait

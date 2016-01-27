@@ -1,13 +1,15 @@
 from python:2.7
 
-COPY /bin /usr/local/bin
+COPY integration_tests/assets/common/bin /usr/local/bin
+COPY . /tmp/xivo
 
 RUN pip install \
     kombu \
     flask \
-    https://github.com/xivo-pbx/xivo-lib-python/archive/master.zip \
     https://github.com/xivo-pbx/xivo-bus/archive/master.zip \
     python-consul \
     netifaces
+
+RUN cd /tmp/xivo && python setup.py install
 
 CMD ["myservice.py"]
