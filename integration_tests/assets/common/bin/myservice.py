@@ -54,7 +54,9 @@ def handler(signum, frame):
 
 def main():
     advertise_address = os.getenv('ADVERTISE_ADDR', 'auto')
+    enabled = os.getenv('DISABLED', '0') == '0'
     logger.debug('advertise addr: %s', advertise_address)
+    logger.debug('enabled: %s', enabled)
     bus_url = 'amqp://{username}:{password}@{host}:{port}//'.format(username='guest',
                                                                     password='guest',
                                                                     host='rabbitmq',
@@ -69,9 +71,12 @@ def main():
                                     'refresh_interval': 27,
                                     'retry_interval': 2},
               'uuid': UUID}
+    if not enabled:
+        config['service_discovery']['enabled'] = False
 
     signal.signal(signal.SIGTERM, handler)
     with Connection(bus_url) as bus_connection:
+        bus_connection.ensure_connection()
         bus_exchange = Exchange('xivo', type='topic')
         bus_producer = Producer(bus_connection, exchange=bus_exchange, auto_declare=True)
         bus_marshaler = Marshaler(UUID)

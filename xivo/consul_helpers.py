@@ -47,6 +47,11 @@ class MissingConfigurationError(RegistererError):
 class ServiceCatalogRegistration(object):
 
     def __init__(self, service_name, config, publisher, check=None):
+        self._enabled = config['service_discovery'].get('enabled', True)
+        if not self._enabled:
+            logger.debug('service discovery has been disabled')
+            return
+
         self._check = check or self._default_check
         self._registerer = NotifyingRegisterer.from_config(service_name, publisher, config)
 
@@ -62,12 +67,16 @@ class ServiceCatalogRegistration(object):
         self._registered = False
 
     def __enter__(self):
-        self._thread.start()
+        if self._enabled:
+            self._thread.start()
         return self
 
     def __exit__(self, type, value, traceback):
         if type:
             logger.debug('An error occured: %s %s %s', type, value, traceback)
+
+        if not self._enabled:
+            return
 
         if self._thread.is_alive():
             logger.debug('waiting for the service discovery thread to complete')

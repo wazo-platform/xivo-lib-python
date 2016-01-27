@@ -17,12 +17,12 @@
 import os
 import kombu
 import threading
-import subprocess
 import json
+import requests
 
 from consul import Consul
 from contextlib import contextmanager
-from hamcrest import assert_that, contains_inanyorder, equal_to
+from hamcrest import assert_that, contains_inanyorder, contains_string, equal_to
 from Queue import Empty, Queue
 from kombu.mixins import ConsumerMixin
 from xivo_test_helpers.asset_launching_test_case import AssetLaunchingTestCase
@@ -52,7 +52,39 @@ class ServiceConsumer(ConsumerMixin):
         return self._received_messages.get()
 
 
-class TestServiceDiscovery(AssetLaunchingTestCase):
+class _BaseTest(AssetLaunchingTestCase):
+
+    assets_root = ASSET_ROOT
+    service = 'myservice'
+
+    @contextmanager
+    def myservice(self, ip=None, enabled=True):
+        if not enabled:
+            self._run_cmd('docker-compose run -d -e DISABLED=1 myservice')
+        elif not ip:
+            self._run_cmd('docker-compose run -d myservice')
+        else:
+            self._run_cmd('docker-compose run -d -e ADVERTISE_ADDR={} myservice'.format(ip))
+        status = self.service_status('myservice')
+
+        yield ip or status['NetworkSettings']['IPAddress']
+
+        id_ = status['Id']
+        self._run_cmd('docker stop {}'.format(id_))
+
+
+class TestServiceDiscoveryDisabled(_BaseTest):
+
+    asset = 'service_discovery_disabled'
+
+    def test_that_my_service_can_start_when_service_disc_is_disabled(self):
+        with self.myservice(enabled=False) as ip:
+            url = 'http://{}:{}/0.1/infos'.format(ip, 6262)
+            assert_that(self.service_logs(), contains_string('service discovery has been disabled'))
+            assert_that(requests.get(url).status_code, equal_to(200))
+
+
+class TestServiceDiscovery(_BaseTest):
 
     assets_root = ASSET_ROOT
     asset = 'service_discovery'
@@ -78,19 +110,6 @@ class TestServiceDiscovery(AssetLaunchingTestCase):
     def empty_message_queue(self):
         while not self.messages.empty():
             print 'removing', self.messages.get_nowait()
-
-    @contextmanager
-    def myservice(self, ip=None):
-        if not ip:
-            _run_cmd('docker-compose run -d myservice')
-        else:
-            _run_cmd('docker-compose run -d -e ADVERTISE_ADDR={} myservice'.format(ip))
-        status = self.service_status('myservice')
-
-        yield ip or status['NetworkSettings']['IPAddress']
-
-        id_ = status['Id']
-        _run_cmd('docker stop {}'.format(id_))
 
     def test_that_the_bus_message_is_received_on_start_and_stop_with_auth(self):
         with self.myservice() as ip:
@@ -160,9 +179,3 @@ class TestServiceDiscovery(AssetLaunchingTestCase):
             self.fail('Should have received a message')
 
         return json.loads(raw)
-
-
-def _run_cmd(cmd):
-    process = subprocess.Popen(cmd.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    out, _ = process.communicate()
-    return out

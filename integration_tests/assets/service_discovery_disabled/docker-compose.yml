@@ -1,0 +1,16 @@
+myservice:
+  image: myservice
+  links:
+    - rabbitmq
+rabbitmq:
+  image: rabbitmq
+  expose:
+    - "5672"
+  ports:
+    - "5672:5672"
+sync:
+  image: n3llyb0y/wait
+  links:
+    - rabbitmq
+  environment:
+    PORT: 5672
