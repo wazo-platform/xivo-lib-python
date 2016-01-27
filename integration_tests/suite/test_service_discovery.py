@@ -147,6 +147,12 @@ class TestServiceDiscovery(_BaseTest):
             self.assert_registered_on_the_catalog(address)
         self.assert_deregistered_from_the_catalog(address)
 
+    def test_that_the_bus_message_is_received_on_stop_when_rabbitmq_is_restarted(self):
+        with self.myservice():
+            _run_cmd('docker-compose restart rabbitmq')
+            self.empty_message_queue()
+        self.assert_deregistered_msg_received()
+
     def _wait_for_registered_message(self, timeout):
         self.messages.get(timeout=timeout)
 
