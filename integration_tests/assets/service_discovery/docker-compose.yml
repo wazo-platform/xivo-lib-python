@@ -1,7 +1,5 @@
 myservice:
   image: myservice
-  expose:
-    - "6262"
   links:
     - rabbitmq
     - consul

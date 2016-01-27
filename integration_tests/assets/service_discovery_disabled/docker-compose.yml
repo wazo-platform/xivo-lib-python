@@ -2,8 +2,6 @@ myservice:
   image: myservice
   links:
     - rabbitmq
-  expose:
-    - "6262"
 rabbitmq:
   image: rabbitmq
   expose:
