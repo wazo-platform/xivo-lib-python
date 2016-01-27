@@ -67,10 +67,11 @@ class _BaseTest(AssetLaunchingTestCase):
             self._run_cmd('docker-compose run -d -e ADVERTISE_ADDR={} myservice'.format(ip))
         status = self.service_status('myservice')
 
-        yield ip or status['NetworkSettings']['IPAddress']
-
-        id_ = status['Id']
-        self._run_cmd('docker stop {}'.format(id_))
+        try:
+            yield ip or status['NetworkSettings']['IPAddress']
+        finally:
+            id_ = status['Id']
+            self._run_cmd('docker stop {}'.format(id_))
 
 
 class TestServiceDiscoveryDisabled(_BaseTest):
