@@ -26,6 +26,7 @@ from contextlib import contextmanager
 from hamcrest import assert_that, contains_inanyorder, contains_string, equal_to
 from Queue import Empty, Queue
 from kombu.mixins import ConsumerMixin
+from xivo_test_helpers import until
 from xivo_test_helpers.asset_launching_test_case import AssetLaunchingTestCase
 
 ASSET_ROOT = os.path.join(os.path.dirname(__file__), '..', 'assets')
@@ -82,16 +83,18 @@ class TestServiceDiscoveryDisabled(_BaseTest):
     asset = 'service_discovery_disabled'
 
     def test_that_my_service_can_start_when_service_disc_is_disabled(self):
-        with self.myservice(enabled=False) as ip:
+
+        def logs_says_disabled():
             url = 'http://{}:{}/0.1/infos'.format(ip, 6262)
-            for _ in xrange(5):
-                try:
-                    if requests.get(url).status_code == 200:
-                        break
-                except Exception:
-                    pass
-                time.sleep(1)
+            try:
+                r = requests.get(url)
+            except Exception:
+                raise AssertionError('service is not available')
+            assert_that(r.status_code, equal_to(200))
             assert_that(self.service_logs(), contains_string('service discovery has been disabled'))
+
+        with self.myservice(enabled=False) as ip:
+            until.assert_(logs_says_disabled, tries=10)
 
 
 class TestServiceDiscovery(_BaseTest):
