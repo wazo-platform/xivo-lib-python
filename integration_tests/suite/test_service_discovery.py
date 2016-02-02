@@ -59,6 +59,9 @@ class _BaseTest(AssetLaunchingTestCase):
 
     @contextmanager
     def myservice(self, ip=None, enabled=True):
+        self._run_cmd('docker-compose stop myservice')
+        self._run_cmd('docker-compose rm -f myservice')
+
         if not enabled:
             self._run_cmd('docker-compose run -d -e DISABLED=1 myservice')
         elif not ip:
