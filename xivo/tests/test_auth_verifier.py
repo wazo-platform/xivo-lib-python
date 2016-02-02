@@ -26,49 +26,9 @@ from mock import Mock
 from mock import patch
 from mock import sentinel as s
 
-from ..auth_helpers import AuthServerUnreachable
-from ..auth_helpers import AuthVerifier
-from ..auth_helpers import TokenRenewer
-from ..auth_helpers import Unauthorized
-
-
-class TestTokenRenewer(unittest.TestCase):
-
-    def setUp(self):
-        self.token_id = 'some-token-id'
-        self.token = {'token': self.token_id}
-        self.auth_client = Mock()
-        self.backend = 'foo-backend'
-        self.expiration = 30
-        self.token_renewer = TokenRenewer(self.auth_client, self.backend, self.expiration)
-
-    def test_subscribe_to_token_change(self):
-        callback = Mock()
-
-        self.token_renewer.subscribe_to_token_change(callback)
-
-        callback.assert_called_once_with(None)
-
-    def test_renew_token_success(self):
-        callback = Mock()
-        self.auth_client.token.new.return_value = self.token
-        self.token_renewer.subscribe_to_token_change(callback)
-        callback.reset_mock()
-
-        self.token_renewer._renew_token()
-
-        self.auth_client.token.new.assert_called_once_with(self.backend, expiration=self.expiration)
-        callback.assert_called_once_with(self.token_id)
-
-    def test_renew_token_failure(self):
-        callback = Mock()
-        self.auth_client.token.new.side_effect = Exception()
-        self.token_renewer.subscribe_to_token_change(callback)
-        callback.reset_mock()
-
-        self.token_renewer._renew_token()
-
-        assert_that(callback.called, equal_to(False))
+from ..auth_verifier import AuthServerUnreachable
+from ..auth_verifier import AuthVerifier
+from ..auth_verifier import Unauthorized
 
 
 class StubVerifier(AuthVerifier):
@@ -95,7 +55,7 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(auth_verifier.client(), equal_to(s.client))
 
-    @patch('xivo.auth_helpers.Client')
+    @patch('xivo.auth_verifier.Client')
     def test_set_config(self, auth_client_init):
         auth_verifier = AuthVerifier()
         config = {'host': s.host,
@@ -173,7 +133,7 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(result, equal_to(s.unauthorized))
 
-    @patch('xivo.auth_helpers.request')
+    @patch('xivo.auth_verifier.request')
     def test_token_empty(self, request):
         request.headers = {}
         auth_verifier = AuthVerifier()
@@ -182,7 +142,7 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(token, equal_to(''))
 
-    @patch('xivo.auth_helpers.request')
+    @patch('xivo.auth_verifier.request')
     def test_token_not_empty(self, request):
         request.headers = {'X-Auth-Token': s.token}
         auth_verifier = AuthVerifier()
