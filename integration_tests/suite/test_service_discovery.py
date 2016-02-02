@@ -46,7 +46,6 @@ class ServiceConsumer(ConsumerMixin):
 
     def on_message(self, body, message):
         self._received_messages.put_nowait(body)
-        print body
         message.ack()
 
     def get_message(self):
