@@ -1,1 +1,7 @@
--e .
+flask==0.10.1
+git+https://github.com/xivo-pbx/xivo-auth-client.git
+psycopg2==2.5.4
+pyyaml==3.11
+pyopenssl==0.14
+python-consul==0.4.7
+stevedore==0.14.1
