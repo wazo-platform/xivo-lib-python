@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2014 Avencall
+# Copyright (C) 2013-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ def compute_ids(command_arg):
         if not sep:
             ids.append(int(id_item))
         else:
-            ids.extend(xrange(int(start), int(end) + 1))
+            ids.extend(range(int(start), int(end) + 1))
     return ids
 
 

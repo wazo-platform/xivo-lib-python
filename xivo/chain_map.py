@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014-2015 Avencall
+# Copyright (C) 2014-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 from copy import copy
-from UserDict import UserDict
+
+from six import iteritems
+from six.moves import UserDict
 
 
 class ChainMap(UserDict):
@@ -29,7 +31,7 @@ class ChainMap(UserDict):
     def _deep_update(self, original, new):
         updated = copy(original)
 
-        for key, value in new.iteritems():
+        for key, value in iteritems(new):
             if key not in updated:
                 updated[key] = copy(value)
             elif isinstance(updated[key], dict) and isinstance(value, dict):

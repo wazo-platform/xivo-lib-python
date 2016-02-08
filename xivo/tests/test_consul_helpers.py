@@ -25,6 +25,8 @@ from xivo_bus.resources.services import event
 
 from ..consul_helpers import MissingConfigurationError, NotifyingRegisterer, Registerer, RegistererError
 
+UUID = 'mocked-uuid'
+SERVICE_NAME = 'mocked-service-name'
 
 class TestNotifyingRegisterer(unittest.TestCase):
 
@@ -40,7 +42,7 @@ class TestNotifyingRegisterer(unittest.TestCase):
                                               advertise_address=s.advertise_address,
                                               advertise_port=s.advertise_port,
                                               ttl_interval=30,
-                                              service_tags=[s.uuid, s.service_name])
+                                              service_tags=[UUID, SERVICE_NAME])
         self.service_id = self.registerer._service_id
 
     @patch('xivo.consul_helpers.Consul', Mock())
@@ -51,7 +53,7 @@ class TestNotifyingRegisterer(unittest.TestCase):
                                                         self.service_id,
                                                         s.advertise_address,
                                                         s.advertise_port,
-                                                        [s.uuid, s.service_name])
+                                                        [UUID, SERVICE_NAME])
 
         self.publisher.publish.assert_called_once_with(expected_message)
 
@@ -64,7 +66,7 @@ class TestNotifyingRegisterer(unittest.TestCase):
 
         expected_message = event.ServiceDeregisteredEvent(self.service_name,
                                                           self.service_id,
-                                                          [s.uuid, s.service_name])
+                                                          [UUID, SERVICE_NAME])
 
         self.publisher.publish.assert_called_once_with(expected_message)
 
@@ -141,7 +143,7 @@ class TestFromConfigFactory(unittest.TestCase):
                                              'advertise_port': s.advertise_port,
                                              'ttl_interval': s.ttl_interval,
                                              'extra_tags': ['Paris']},
-                       'uuid': s.uuid}
+                       'uuid': UUID}
 
     def test_registered_from_config(self):
         registerer = Registerer.from_config(self.service_name, self.config)
@@ -161,7 +163,7 @@ class TestFromConfigFactory(unittest.TestCase):
         assert_that(registerer._service_name, equal_to(self.service_name))
         assert_that(registerer._advertise_address, equal_to(s.advertise_address))
         assert_that(registerer._advertise_port, equal_to(s.advertise_port))
-        assert_that(registerer._tags, contains_inanyorder('Paris', self.service_name, s.uuid))
+        assert_that(registerer._tags, contains_inanyorder('Paris', self.service_name, UUID))
         assert_that(registerer._consul_config, equal_to({'host': s.consul_host,
                                                          'port': s.consul_port,
                                                          'token': s.consul_token}))

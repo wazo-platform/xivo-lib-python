@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2014 Avencall
+# Copyright (C) 2007-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@ Copyright (C) 2007-2010  Avencall
 """
 
 import time
-import thread
 import threading
 
 
@@ -171,7 +170,7 @@ class RWLock:
         """
         Release the currently held lock.
 
-        In case the current thread holds no lock, a thread.error
+        In case the current thread holds no lock, a RuntimeError
         is thrown.
         """
         me = threading.currentThread()
@@ -189,6 +188,6 @@ class RWLock:
                     if not self.__readers:
                         self.__condition.notifyAll()
             else:
-                raise thread.error, "release unlocked lock"
+                raise RuntimeError("release unlocked lock")
         finally:
             self.__condition.release()

@@ -3,9 +3,10 @@ Section: python
 Priority: extra
 Maintainer: XiVO Dev Team <dev@avencall.com>
 Uploaders: XiVO Builder Team <release@xivo.io>
-Build-Depends: debhelper (>= 9), dh-python, python-all (>= 2.7), python-setuptools
+Build-Depends: debhelper (>= 9), dh-python, python-all (>= 2.7), python-setuptools, python3-all, python3-setuptools
 Standards-Version: 3.9.4
 X-Python-Version: >= 2.7
+X-Python3-Version: >= 3.4
 Homepage: http://xivo.io/
 
 Package: xivo-lib-python
@@ -19,8 +20,26 @@ Depends: ${python:Depends},
          python-consul,
          python-openssl (>= 0.14),
          python-psycopg2,
+         python-six,
          python-yaml
-Description: XIVO Python libraries
+Description: XIVO Python libraries - Python 2
+ XIVO is a system based on a powerful IPBX, to bring an easy to
+ install solution for telephony and related services.
+ .
+ These are useful python libraries to be used with XIVO code.
+ .
+
+Package: xivo-lib-python-python3
+Architecture: all
+Depends: ${python3:Depends},
+         ${misc:Depends},
+         ifplugd (>= 0.28),
+         python3-consul,
+         python3-openssl (>= 0.14),
+         python3-psycopg2,
+         python3-six,
+         python3-yaml
+Description: XIVO Python libraries - Python 3
  XIVO is a system based on a powerful IPBX, to bring an easy to
  install solution for telephony and related services.
  .

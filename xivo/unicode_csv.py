@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2015 Avencall
+# Copyright (C) 2013-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import csv
+
+import six
 
 
 # The CSV lib always yields binary data; we will only use Unicode down the
@@ -64,3 +66,8 @@ class UnicodeDictWriter(csv.DictWriter):
     def writerows(self, rows):
         for row in rows:
             self.writerow(row)
+
+
+if six.PY3:
+    UnicodeDictReader = csv.DictReader
+    UnicodeDictWriter = csv.DictWriter

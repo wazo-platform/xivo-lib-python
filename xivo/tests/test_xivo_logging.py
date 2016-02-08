@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014-2015 Avencall
+# Copyright (C) 2014-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-from cStringIO import StringIO
 import logging
 import sys
 import tempfile
@@ -29,6 +28,7 @@ from hamcrest import has_length
 from hamcrest import is_
 from hamcrest import is_not
 from mock import Mock, patch
+from six import StringIO
 
 from xivo.xivo_logging import DEFAULT_LOG_FORMAT
 from xivo.xivo_logging import DEFAULT_LOG_LEVEL
@@ -198,7 +198,7 @@ class TestSilenceLoggers(TestCase):
 
         silence_loggers(to_silence, logging.ERROR)
 
-        for logger in loggers.itervalues():
+        for logger in loggers.values():
             logger.setLevel.assert_called_once_with(logging.ERROR)
 
         assert_that(loggers.keys(), contains_inanyorder(*to_silence))

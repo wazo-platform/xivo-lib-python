@@ -49,7 +49,7 @@ def remove_if_stale_pidfile(pidfile):
     try:
         try:
             pid_maydaemon = int(file(pidfile).readline().strip())
-        except IOError, e:
+        except IOError as e:
             if e.errno == errno.ENOENT:
                 return  # nothing to suppress, so do nothing...
             raise
@@ -59,7 +59,7 @@ def remove_if_stale_pidfile(pidfile):
             other_cmdline = file(os.path.join(SLASH_PROC, str(pid_maydaemon), PROG_CMDLN)).read().split('\0')
             if len(other_cmdline) and other_cmdline[-1] == "":
                 other_cmdline.pop()
-        except IOError, e:
+        except IOError as e:
             if e.errno == errno.ENOENT:
                 # no process with the PID extracted from the
                 # pidfile, so no problem to remove the latter
@@ -78,7 +78,7 @@ def remove_if_stale_pidfile(pidfile):
         try:
             full_pgm = os.readlink(os.path.join(SLASH_PROC, str(pid_maydaemon), PROG_SLINK))
             lock_pgm = os.path.basename(full_pgm)
-        except OSError, e:
+        except OSError as e:
             if e.errno == errno.EACCES:
                 # We consider it's ok not being able to access
                 # "/proc/<pid>/exe" if we could previously access
@@ -124,7 +124,7 @@ def take_file_lock(own_file, lock_file, own_content):
             os.link(own_file, lock_file)
         finally:
             os.unlink(own_file)
-    except OSError, e:
+    except OSError as e:
         if e.errno == errno.EEXIST:
             log.warning("The lock file %r already exists - won't "
                         "overwrite it.  An other instance of ourself "
@@ -181,7 +181,7 @@ def unlock_pidfile(pidfile):
             os.unlink(pidfile)
         else:
             log.error("can not force unlock the pidfile of others")
-    except (IOError, OSError), e:
+    except (IOError, OSError) as e:
         log.error("%s: %s", type(e).__name__, e)
 
 
@@ -203,7 +203,7 @@ def daemonize():
         if pid > 0:
             os.waitpid(pid, 0)
             os._exit(0)  # pylint: disable-msg=W0212
-    except OSError, e:
+    except OSError as e:
         log.exception("first fork() failed: %d (%s)", e.errno, e.strerror)
         sys.exit(1)
 
@@ -215,7 +215,7 @@ def daemonize():
         pid = os.fork()
         if pid > 0:
             os._exit(0)  # pylint: disable-msg=W0212
-    except OSError, e:
+    except OSError as e:
         log.exception("second fork() failed: %d (%s)", e.errno, e.strerror)
         sys.exit(1)
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2015 Avencall
+# Copyright (C) 2013-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ from hamcrest import assert_that
 from hamcrest import equal_to
 from hamcrest import instance_of
 from hamcrest import only_contains
-from StringIO import StringIO
+from six import StringIO, text_type
 from unittest import TestCase
 
 from xivo.unicode_csv import UnicodeDictReader, UnicodeDictWriter
@@ -45,8 +45,8 @@ class TestUnicodeDictReader(TestCase):
 
         assert_that(results, equal_to(expected_result))
         for result in results:
-            assert_that(result.keys(), only_contains(instance_of(unicode)))
-            assert_that(result.values(), only_contains(instance_of(unicode)))
+            assert_that(result.keys(), only_contains(instance_of(text_type)))
+            assert_that(result.values(), only_contains(instance_of(text_type)))
 
     def test_read_utf8_with_superfluous_fields(self):
         csv_data = ['firstname,lastname', 'Père,Noël,et,son,renne,Léon', 'fírstnámé,lástnámé']

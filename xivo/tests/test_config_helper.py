@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014-2015 Avencall
+# Copyright (C) 2014-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,14 +40,14 @@ def _none_existent_filename():
     while True:
         filename = '{}-{}'.format(
             os.path.dirname(__file__),
-            ''.join(random.choice(string.lowercase) for _ in xrange(3)))
+            ''.join(random.choice(string.ascii_lowercase) for _ in range(3)))
         if not os.path.exists(filename):
             return filename
 
 
 def _new_tmp_dir():
     while True:
-        suffix = ''.join(random.choice(string.lowercase) for _ in xrange(3))
+        suffix = ''.join(random.choice(string.ascii_lowercase) for _ in range(3))
         dirname = os.path.join(tempfile.gettempdir(), suffix)
         if not os.path.exists(dirname):
             os.mkdir(dirname)
@@ -63,14 +63,14 @@ class TestPrintErrorHandler(unittest.TestCase):
         self.name = 'foobar'
         self.e = EnvironmentError((42, 'Bah'))
 
-    @patch('__builtin__.print')
+    @patch('six.moves.builtins.print')
     def test_on_parse_config_file_env_error(self, mocked_print):
         self.error_handler.on_parse_config_file_env_error(self.name, self.e)
 
         printed_message = mocked_print.call_args_list[0]
         assert_that(printed_message.startswith('Could not read config file'))
 
-    @patch('__builtin__.print')
+    @patch('six.moves.builtins.print')
     def test_on_parse_config_dir_env_error(self, mocked_print):
         self.error_handler.on_parse_config_dir_env_error(self.name, self.e)
 
@@ -89,7 +89,7 @@ class TestParseConfigFile(unittest.TestCase):
         foo: bar
         bar: baz
         """
-        other_file = tempfile.NamedTemporaryFile()
+        other_file = tempfile.NamedTemporaryFile('w+t')
         other_file.write(file_to_read)
         other_file.seek(0)
 
@@ -97,7 +97,7 @@ class TestParseConfigFile(unittest.TestCase):
         !exec
         command: cat {}
         """.format(other_file.name)
-        config_file = tempfile.NamedTemporaryFile()
+        config_file = tempfile.NamedTemporaryFile('w+t')
         config_file.write(config_file_content)
         config_file.seek(0)
 
@@ -111,7 +111,7 @@ class TestParseConfigFile(unittest.TestCase):
         !exec
         command: pouelle /tmp/test
         """
-        config_file = tempfile.NamedTemporaryFile()
+        config_file = tempfile.NamedTemporaryFile('w+t')
         config_file.write(config_file_content)
         config_file.seek(0)
 
@@ -122,7 +122,7 @@ class TestParseConfigFile(unittest.TestCase):
     def test_exec_tag_empty_result(self):
         file_to_read = """\
         """
-        other_file = tempfile.NamedTemporaryFile()
+        other_file = tempfile.NamedTemporaryFile('w+t')
         other_file.write(file_to_read)
         other_file.seek(0)
 
@@ -130,7 +130,7 @@ class TestParseConfigFile(unittest.TestCase):
         !exec
         command: cat {}
         """.format(other_file.name)
-        config_file = tempfile.NamedTemporaryFile()
+        config_file = tempfile.NamedTemporaryFile('w+t')
         config_file.write(config_file_content)
         config_file.seek(0)
 
@@ -151,7 +151,7 @@ class TestParseConfigFile(unittest.TestCase):
         test: [:one :two :3]'
         """
 
-        f = tempfile.NamedTemporaryFile()
+        f = tempfile.NamedTemporaryFile('w+t')
         f.writelines(content.split('\n'))
         f.seek(0)
 
@@ -162,7 +162,7 @@ class TestParseConfigFile(unittest.TestCase):
         test: value
         """
 
-        f = tempfile.NamedTemporaryFile()
+        f = tempfile.NamedTemporaryFile('w+t')
         f.writelines(content.split('\n'))
         f.seek(0)
 
@@ -197,10 +197,10 @@ class TestParseConfigDir(unittest.TestCase):
     def test_with_only_valid_configs(self):
         dirname = _new_tmp_dir()
 
-        f1 = tempfile.NamedTemporaryFile(suffix='.yml')
+        f1 = tempfile.NamedTemporaryFile('w+t', suffix='.yml')
         f1.writelines('test: one')
         f1.seek(0)
-        f2 = tempfile.NamedTemporaryFile(suffix='.yml')
+        f2 = tempfile.NamedTemporaryFile('w+t', suffix='.yml')
         f2.writelines('test: two')
         f2.seek(0)
 
@@ -216,10 +216,10 @@ class TestParseConfigDir(unittest.TestCase):
     def test_that_valid_configs_are_returned_when_one_fails(self):
         dirname = _new_tmp_dir()
 
-        f1 = tempfile.NamedTemporaryFile(suffix='.yml')
+        f1 = tempfile.NamedTemporaryFile('w+t', suffix='.yml')
         f1.writelines('test: one')
         f1.seek(0)
-        f2 = tempfile.NamedTemporaryFile(suffix='.yml')
+        f2 = tempfile.NamedTemporaryFile('w+t', suffix='.yml')
         f2.writelines('test: [:one :two]')
         f2.seek(0)
 
