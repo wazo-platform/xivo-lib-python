@@ -9,9 +9,9 @@ Running unit tests
 ------------------
 
 ```
-apt-get install libpq-dev python-dev libffi-dev libyaml-dev
+apt-get install libpq-dev python-dev libffi-dev libyaml-dev python3.4-dev
 pip install tox
-tox --recreate -e py27
+tox --recreate -e py27,py34
 ```
 
 
