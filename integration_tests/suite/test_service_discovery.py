@@ -73,7 +73,7 @@ class _BaseTest(AssetLaunchingTestCase):
             yield ip or status['NetworkSettings']['IPAddress']
         finally:
             id_ = status['Id']
-            self._run_cmd('docker stop {}'.format(id_))
+            self._run_cmd('docker stop --time 20 {}'.format(id_))
 
 
 class TestServiceDiscoveryDisabled(_BaseTest):
@@ -106,6 +106,9 @@ class TestServiceDiscovery(_BaseTest):
 
     def setUp(self):
         self.messages = Queue()
+        self.start_listening()
+
+    def start_listening(self):
         self._bus_thread = threading.Thread(target=self._start_consuming)
         self._bus_thread.start()
 
@@ -115,6 +118,9 @@ class TestServiceDiscovery(_BaseTest):
             self._consumer.run()
 
     def tearDown(self):
+        self.stop_listening()
+
+    def stop_listening(self):
         self._consumer.should_stop = True
         self._bus_thread.join()
 
@@ -148,9 +154,11 @@ class TestServiceDiscovery(_BaseTest):
         self.assert_deregistered_from_the_catalog(address)
 
     def test_that_the_bus_message_is_received_on_stop_when_rabbitmq_is_restarted(self):
-        with self.myservice():
+        with self.myservice() as ip:
+            self.assert_registered_msg_received(ip)  # to remove the message from the queue
             self._run_cmd('docker-compose restart rabbitmq')
-            self.empty_message_queue()
+            self.stop_listening()
+            self.start_listening()
         self.assert_deregistered_msg_received()
 
     def _wait_for_registered_message(self, timeout):

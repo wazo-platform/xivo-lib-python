@@ -215,11 +215,21 @@ class NotifyingRegisterer(Registerer):
         self._send_msg(msg)
 
     def deregister(self):
-        was_registered = super(NotifyingRegisterer, self).deregister()
-        if was_registered:
+        exception = None
+        try:
+            should_send_msg = super(NotifyingRegisterer, self).deregister()
+        except RegistererError as e:
+            should_send_msg = True
+            exception = e
+
+        if should_send_msg:
             msg = self._new_deregistered_event()
             self._send_msg(msg)
-        return was_registered
+
+        if exception:
+            raise exception
+
+        return should_send_msg
 
     def _send_msg(self, msg):
         try:
@@ -228,9 +238,10 @@ class NotifyingRegisterer(Registerer):
                                     self._bus_config['exchange_type'])
                 producer = Producer(conn, exchange=exchange, auto_declare=True)
                 publisher = Publisher(producer, self._marshaler)
-                publisher.publish(msg)
+                publish = conn.ensure(publisher, publisher.publish, max_retries=2)
+                publish(msg)
         except socket.error:
-            raise RegistererError('failed to publish on rabbitq')
+            raise RegistererError('failed to publish on rabbitmq')
 
     def _new_deregistered_event(self):
         return event.ServiceDeregisteredEvent(self._service_name,
