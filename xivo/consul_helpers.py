@@ -238,8 +238,7 @@ class NotifyingRegisterer(Registerer):
                                     self._bus_config['exchange_type'])
                 producer = Producer(conn, exchange=exchange, auto_declare=True)
                 publisher = Publisher(producer, self._marshaler)
-                publish = conn.ensure(publisher, publisher.publish, max_retries=2)
-                publish(msg)
+                publisher.publish(msg)
         except socket.error:
             raise RegistererError('failed to publish on rabbitmq')
 
