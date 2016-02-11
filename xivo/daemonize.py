@@ -17,12 +17,8 @@
 
 """Transforms a process into a daemon from hell
 
-Copyright (C) 2007-2010  Avencall
-
 WARNING: Linux specific module, needs /proc/
 """
-
-__version__ = "$Revision$ $Date$"
 
 import os
 import re
@@ -48,7 +44,7 @@ def remove_if_stale_pidfile(pidfile):
     c14n_prog_name = lambda arg: os.path.basename(re.sub(r'\.py$', '', arg))
     try:
         try:
-            pid_maydaemon = int(file(pidfile).readline().strip())
+            pid_maydaemon = int(open(pidfile).readline().strip())
         except IOError as e:
             if e.errno == errno.ENOENT:
                 return  # nothing to suppress, so do nothing...
@@ -56,7 +52,7 @@ def remove_if_stale_pidfile(pidfile):
         # Who are we?
         i_am = c14n_prog_name(sys.argv[0])
         try:
-            other_cmdline = file(os.path.join(SLASH_PROC, str(pid_maydaemon), PROG_CMDLN)).read().split('\0')
+            other_cmdline = open(os.path.join(SLASH_PROC, str(pid_maydaemon), PROG_CMDLN)).read().split('\0')
             if len(other_cmdline) and other_cmdline[-1] == "":
                 other_cmdline.pop()
         except IOError as e:
@@ -132,7 +128,7 @@ def take_file_lock(own_file, lock_file, own_content):
             return False
         else:
             raise
-    content = file(lock_file).read(len(own_content) + 1)
+    content = open(lock_file).read(len(own_content) + 1)
     if content != own_content:
         log.warning("I thought I successfully took the lock file %r but "
                     "it does not contain what was expected.  Somebody is "
@@ -176,7 +172,7 @@ def unlock_pidfile(pidfile):
     """
     try:
         pid = "%s\n" % os.getpid()
-        content = file(pidfile).read(len(pid) + 1)
+        content = open(pidfile).read(len(pid) + 1)
         if content == pid:
             os.unlink(pidfile)
         else:
