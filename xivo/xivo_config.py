@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2014 Avencall
+# Copyright (C) 2007-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1095,7 +1095,7 @@ def transactional_generation(store_base, store_subs, gen_base, gen_subs, generat
         try:
             generation_func(gen_tmp, previously_generated, store_new)
 
-        except Exception, ex:
+        except Exception as ex:
             log.exception("Error during generation - cancelling transaction")
 
             system.rm_rf(store_failed)
@@ -1368,7 +1368,7 @@ def add_vlan(conf, vsTag, vlanId):
     """
     vs = conf['vlans'][vsTag]
     if vlanId in vs:
-        raise AlreadyExist, "VLan %d already exists in %s" % (vlanId, vsTag)
+        raise AlreadyExist("VLan %d already exists in %s" % (vlanId, vsTag))
     vs[vlanId] = "void"
 
 
@@ -1469,14 +1469,14 @@ class EthernetRenamer(object):
         self.config = load_current_configuration()
         for pure_dst in pure_dst_set:
             if not phy_free_in_conf(self.config, pure_dst):
-                raise ValueError, "Target interface name busy in XIVO configuration: %r" % pure_dst
+                raise ValueError("Target interface name busy in XIVO configuration: %r" % pure_dst)
         for src, dst in src_dst_lst:
             if src not in self.config['netIfaces']:
-                raise ValueError, "Source interface name does not exist in XIVO configuration: %r" % src
+                raise ValueError("Source interface name does not exist in XIVO configuration: %r" % src)
             if not netif_source_name(src):
-                raise ValueError, "Invalid source interface name %r" % src
+                raise ValueError("Invalid source interface name %r" % src)
             if not netif_target_name(dst):
-                raise ValueError, "Invalid target interface name %r" % dst
+                raise ValueError("Invalid target interface name %r" % dst)
         self.src_dst_lst = src_dst_lst
         self.pure_dst_set = pure_dst_set
 

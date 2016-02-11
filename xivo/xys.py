@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2008-2014 Avencall
+# Copyright (C) 2008-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -209,7 +209,7 @@ def _maybe_int(s):
 def _split_params(tag_prefix, tag_suffix):
     "Split comma-separated tag_suffix[:-1] and map with _maybe_int"
     if tag_suffix[-1:] != ')':
-        raise ValueError, "unbalanced parenthesis in type %s%s" % (tag_prefix, tag_suffix)
+        raise ValueError("unbalanced parenthesis in type %s%s" % (tag_prefix, tag_suffix))
     return map(_maybe_int, tag_suffix[:-1].split(','))
 
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2014 Avencall
+# Copyright (C) 2013-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -98,10 +98,11 @@ def scanvars(reader, frame, lcals):
     return xvars
 
 
-def text((etype, evalue, etb), context=5):
+def text(value, context=5):
     """Return a plain text document describing a given traceback."""
     import os, types, time, traceback, linecache, inspect, pydoc
 
+    etype, evalue, etb = value
     if type(etype) is types.ClassType:
         etype = etype.__name__
     pyver = 'Python ' + sys.version.split()[0] + ': ' + sys.executable

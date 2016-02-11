@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2014 Avencall
+# Copyright (C) 2007-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -358,7 +358,7 @@ def split_authority(authority):
                 host = '[' + m.group(1) + ']'
                 port = m.group(2)[1:]
             else:
-                raise InvalidIPLiteralError, "Highly invalid IP-literal detected in URI authority %r" % (authority,)
+                raise InvalidIPLiteralError("Highly invalid IP-literal detected in URI authority %r" % (authority,))
         elif ':' in hostport:
             host, port = hostport.split(':', 1)
         else:
@@ -388,7 +388,8 @@ def unsplit_query(query):
     Create a query string using the tuple query with a format as the one
     returned by split_query()
     """
-    def unsplit_assignment((x, y)):
+    def unsplit_assignment(value):
+        x, y = value
         if (x is not None) and (y is not None):
             return x + '=' + y
         elif x is not None:
@@ -457,7 +458,7 @@ def uri_tree_normalize(uri_tree):
     if authority and (filter(bool, authority) == ()):
         authority = None
     if query:
-        query = filter(lambda (x, y): bool(x) or bool(y), query)
+        query = filter(lambda x, y: bool(x) or bool(y), query)
     return (scheme or None, authority or None, path or None,
             query or None, fragment or None)
 
@@ -493,34 +494,34 @@ def uri_tree_validate(uri_tree):
     scheme, authority, path, query, fragment = uri_tree
     if scheme:
         if not valid_scheme(scheme):
-            raise InvalidSchemeError, "Invalid scheme %r" % (scheme,)
+            raise InvalidSchemeError("Invalid scheme %r" % (scheme,))
     if authority:
         user, passwd, host, port = authority
         if user and not __all_in(user, USER_CHAR):
-            raise InvalidUserError, "Invalid user %r" % (user,)
+            raise InvalidUserError("Invalid user %r" % (user,))
         if passwd and not __all_in(passwd, PASSWD_CHAR):
-            raise InvalidPasswdError, "Invalid passwd %r" % (passwd,)
+            raise InvalidPasswdError("Invalid passwd %r" % (passwd,))
         if host:
             type_host = host_type(host)
             if type_host == HOST_REG_NAME:
                 if not __all_in(host, REG_NAME_CHAR):
-                    raise InvalidRegNameError, "Invalid reg-name %r" % (host,)
+                    raise InvalidRegNameError("Invalid reg-name %r" % (host,))
             elif type_host == HOST_IP_LITERAL:
                 if not __valid_IPLiteral(host):
-                    raise InvalidIPLiteralError, "Invalid IP-literal %r" % (host,)
+                    raise InvalidIPLiteralError("Invalid IP-literal %r" % (host,))
         if port and not __all_in(port, DIGIT):
-            raise InvalidPortError, "Invalid port %r" % (port,)
+            raise InvalidPortError("Invalid port %r" % (port,))
     if path:
         if not __all_in(path, PCHAR):
-            raise InvalidPathError, "Invalid path %r - invalid character detected" % (path,)
+            raise InvalidPathError("Invalid path %r - invalid character detected" % (path,))
         if authority and path[0] != '/':
-            raise InvalidPathError, "Invalid path %r - non-absolute path can't be used with an authority" % (path,)
+            raise InvalidPathError("Invalid path %r - non-absolute path can't be used with an authority" % (path,))
         if (not authority) and (not scheme) and (':' in path.split('/', 1)[0]):
-            raise InvalidPathError, "Invalid path %r - path-noscheme can't have a ':' if no '/' before" % (path,)
+            raise InvalidPathError("Invalid path %r - path-noscheme can't have a ':' if no '/' before" % (path,))
     if query and (not __valid_query(query)):
-        raise InvalidQueryError, "Invalid splitted query tuple %r" % (query,)
+        raise InvalidQueryError("Invalid splitted query tuple %r" % (query,))
     if fragment and (not __all_in(fragment, QUEFRAG_CHAR)):
-        raise InvalidFragmentError, "Invalid fragment %r" % (fragment,)
+        raise InvalidFragmentError("Invalid fragment %r" % (fragment,))
     return uri_tree
 
 def uri_tree_decode(uri_tree):
@@ -570,20 +571,20 @@ def uri_tree_precode_check(uri_tree, type_host = HOST_REG_NAME):
     scheme, authority, path, query, fragment = uri_tree # pylint: disable-msg=W0612
     if scheme:
         if not valid_scheme(scheme):
-            raise InvalidSchemeError, "Invalid scheme %r" % (scheme,)
+            raise InvalidSchemeError("Invalid scheme %r" % (scheme,))
     if authority:
         user, passwd, host, port = authority # pylint: disable-msg=W0612
         if port and not __all_in(port, DIGIT):
-            raise InvalidPortError, "Invalid port %r" % (port,)
+            raise InvalidPortError("Invalid port %r" % (port,))
         if type_host == HOST_IP_LITERAL:
             if host and (not __valid_IPLiteral(host)):
-                raise InvalidIPLiteralError, "Invalid IP-literal %r" % (host,)
+                raise InvalidIPLiteralError("Invalid IP-literal %r" % (host,))
         elif type_host == HOST_IPV4_ADDRESS:
             if host and (not __valid_IPv4address(host)):
-                raise InvalidIPv4addressError, "Invalid IPv4address %r" % (host,)
+                raise InvalidIPv4addressError("Invalid IPv4address %r" % (host,))
     if path:
         if authority and path[0] != '/':
-            raise InvalidPathError, "Invalid path %r - non-absolute path can't be used with an authority" % (path,)
+            raise InvalidPathError("Invalid path %r - non-absolute path can't be used with an authority" % (path,))
     return uri_tree
 
 def uri_tree_encode(uri_tree, type_host = HOST_REG_NAME):
