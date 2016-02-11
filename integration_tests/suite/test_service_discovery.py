@@ -17,9 +17,7 @@
 import os
 import kombu
 import threading
-import json
 import requests
-import time
 
 from consul import Consul
 from contextlib import contextmanager
@@ -187,8 +185,6 @@ class TestServiceDiscovery(_BaseTest):
 
     def _get_message(self):
         try:
-            raw = self.messages.get(timeout=30)
+            return self.messages.get(timeout=30)
         except Empty:
             self.fail('Should have received a message')
-
-        return json.loads(raw)
