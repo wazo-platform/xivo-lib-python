@@ -66,9 +66,6 @@ class TestNotifyingRegisterer(unittest.TestCase):
                                                             4242,
                                                             [UUID, self.service_name])
 
-            msg = send_msg.call_args_list[0][0][0]
-            print msg.__dict__
-            print expected_message.__dict__
             send_msg.assert_called_once_with(expected_message)
 
     @patch('xivo.consul_helpers.Consul')
