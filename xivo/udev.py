@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2008-2014 Avencall
+# Copyright (C) 2008-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -194,7 +194,7 @@ def base_attr_key(key):
         return key, None
     match_key_attr = KEY_WITH_ATTR_REO.match(key)
     if match_key_attr is None:
-        raise ValueError, "invalid key: %r" % key
+        raise ValueError("invalid key: %r" % key)
     return match_key_attr.groups()
 
 
@@ -386,9 +386,9 @@ def replace_simple_op_values(recons, repl):
             repl_op, repl_val = repl[base]
             rule_allowed_ops = KEY[base][1]
             if repl_op not in rule_allowed_ops:
-                raise ValueError, "invalid replacement operation %r for key %r in rule %r" % (repl_op, key, reconstruct_rule(recons))
+                raise ValueError("invalid replacement operation %r for key %r in rule %r" % (repl_op, key, reconstruct_rule(recons)))
             if '"' in repl_val:
-                raise ValueError, "illegal character %r in replacement value %r for key %r in rule %r" % ('"', repl_val, key, reconstruct_rule(recons))
+                raise ValueError("illegal character %r in replacement value %r for key %r in rule %r" % ('"', repl_val, key, reconstruct_rule(recons)))
             subpart[RULE_KEY_POS_OP] = repl_op
             subpart[RULE_KEY_POS_VAL] = repl_val
     
@@ -489,7 +489,7 @@ def assert_frozenset(lst):
     """
     fset = frozenset(lst)
     if len(fset) != len(lst):
-        raise ValueError, "Duplicates found: " + repr(tuple(list_duplicates(lst)))
+        raise ValueError("Duplicates found: " + repr(tuple(list_duplicates(lst))))
     return fset
 
 
@@ -566,7 +566,7 @@ def rename_persistent_net_rules(src_dst_lst, out_renamer):
     
     for src, dst in src_dst_lst:
         if src == dst:
-            raise ValueError, "Same source and target name %s" % src
+            raise ValueError("Same source and target name %s" % src)
     
     start_needed = False
     runtime_renamed_possible = False
@@ -583,13 +583,13 @@ def rename_persistent_net_rules(src_dst_lst, out_renamer):
         
         for pure_dst in pure_dst_set:
             if pure_dst in known_iface_set:
-                raise ValueError, "Target interface name is already taken: %r" % pure_dst
+                raise ValueError("Target interface name is already taken: %r" % pure_dst)
         
         for src in src_set:
             if src not in rule_iface_set:
-                raise ValueError, "Source interface name is not in z25_persistent-net.rules: %r" % src
+                raise ValueError("Source interface name is not in z25_persistent-net.rules: %r" % src)
             if src not in system_iface_set:
-                raise ValueError, "Source interface name is not known by the system: %r" % src
+                raise ValueError("Source interface name is not known by the system: %r" % src)
         
         replacement = [({'NAME': ['=', src]}, {'NAME': ['=', dst]}) for src, dst in src_dst_lst]
         rollback = [rule_to_restore_name(rule) for rule in net_rules if consider_rule_for_rollback(rule)]

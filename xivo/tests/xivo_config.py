@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2008-2014 Avencall
+# Copyright (C) 2008-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -677,12 +677,10 @@ logging.basicConfig(level=logging.CRITICAL)
 class TestXysXivoConfigValidation(unittest.TestCase):
 
     for p, (test_title, src_conf) in enumerate(VALID_CONFIGS):
-        exec \
-         """def test_valid_%s(self):
+        exec("""def test_valid_%s(self):
                 conf = xivo_config.load_configuration(VALID_CONFIGS[%d][1])
-                self.assertEqual(isinstance(conf, dict), True)""" % (test_title, p)
+                self.assertEqual(isinstance(conf, dict), True)""" % (test_title, p))
 
     for p, (test_title, src_conf) in enumerate(INVALID_CONFIGS):
-        exec \
-         """def test_invalid_%s(self):
-                self.assertRaises(xivo_config.InvalidConfigurationError, xivo_config.load_configuration, INVALID_CONFIGS[%d][1])""" % (test_title, p)
+        exec("""def test_invalid_%s(self):
+                self.assertRaises(xivo_config.InvalidConfigurationError, xivo_config.load_configuration, INVALID_CONFIGS[%d][1])""" % (test_title, p))

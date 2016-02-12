@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2008-2014 Avencall
+# Copyright (C) 2008-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ def _get_match(op, tree):
         else:
             return []
     
-    raise TypeError, "invalid curop %r" % curop
+    raise TypeError("invalid curop %r" % curop)
 
 
 def _suppl_ok(op, k, tree, incl_metaop):
@@ -142,7 +142,7 @@ def _parse_one(op):
     for part in op.split('.'):
         
         if done or part == "":
-            raise ValueError, "invalid operator %r" % op
+            raise ValueError("invalid operator %r" % op)
         
         if part[-1] == "!" and part not in ('!!', '!'):
             part = part[:-1]

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2014 Avencall
+# Copyright (C) 2007-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -152,7 +152,7 @@ class cursor(object):
                 self.__dbapi2_cursor.execute(tmp_query)
             else:
                 self.__dbapi2_cursor.execute(tmp_query, parameters)
-        except Exception, e:
+        except Exception as e:
             # try to reconnect
             self.__connection.reconnect()
             self.__dbapi2_cursor = self.__connection._get_raw_cursor()
@@ -170,11 +170,11 @@ class cursor(object):
         tmp_query = self.__preparequery(sql_query, columns)
 
         if self.__methods[METHOD_MODULE].paramstyle == "qmark":
-            raise NotImplementedError, "qmark isn't fully supported"
+            raise NotImplementedError("qmark isn't fully supported")
 
         try:
             self.__dbapi2_cursor.executemany(tmp_query, seq_of_parameters)
-        except Exception, e:
+        except Exception as e:
             self.__connection.reconnect()
             self.__dbapi2_cursor = self.__connection._get_raw_cursor()
 
@@ -190,7 +190,7 @@ class cursor(object):
         """
         try:
             result = self.__dbapi2_cursor.fetchone()
-        except Exception, e:
+        except Exception as e:
             self.__connection.reconnect()
             self.__dbapi2_cursor = self.__connection._get_raw_cursor()
 
@@ -215,7 +215,7 @@ class cursor(object):
                 manyrows = self.__dbapi2_cursor.fetchmany()
             else:
                 manyrows = self.__dbapi2_cursor.fetchmany(size)
-        except Exception, e:
+        except Exception as e:
             self.__connection.reconnect()
             self.__dbapi2_cursor = self.__connection._get_raw_cursor()
 
@@ -240,7 +240,7 @@ class cursor(object):
         """
         try:
             allrows = self.__dbapi2_cursor.fetchall()
-        except Exception, e:
+        except Exception as e:
             self.__connection.reconnect()
             self.__dbapi2_cursor = self.__connection._get_raw_cursor()
 
@@ -434,21 +434,21 @@ def register_uri_backend(uri_scheme, create_method, module, c14n_uri_method, esc
         mod_paramstyle = module.paramstyle
         mod_threadsafety = module.threadsafety
     except NameError:
-        raise NotImplementedError, "This module does not support registration of non DBAPI services of at least apilevel 2.0"
+        raise NotImplementedError("This module does not support registration of non DBAPI services of at least apilevel 2.0")
     if delta_api < 0 or delta_api > 1:
-        raise NotImplementedError, "This module does not support registration of DBAPI services with a specified apilevel of %s" % module.apilevel
+        raise NotImplementedError("This module does not support registration of DBAPI services with a specified apilevel of %s" % module.apilevel)
     if mod_paramstyle not in ['pyformat', 'format', 'qmark']:
-        raise NotImplementedError, "This module only supports registration of DBAPI services with a 'format' or 'pyformat' 'qmark' paramstyle, not %r" % mod_paramstyle
+        raise NotImplementedError("This module only supports registration of DBAPI services with a 'format' or 'pyformat' 'qmark' paramstyle, not %r" % mod_paramstyle)
     if mod_threadsafety < any_threadsafety:
-        raise NotImplementedError, "This module does not support registration of DBAPI services of threadsafety %d (more generally under %d)" % (mod_threadsafety, any_threadsafety)
+        raise NotImplementedError("This module does not support registration of DBAPI services of threadsafety %d (more generally under %d)" % (mod_threadsafety, any_threadsafety))
     if not urisup.valid_scheme(uri_scheme):
-        raise urisup.InvalidSchemeError, "Can't register an invalid URI scheme %r" % uri_scheme
+        raise urisup.InvalidSchemeError("Can't register an invalid URI scheme %r" % uri_scheme)
     __uri_create_methods[uri_scheme] = (create_method, module, c14n_uri_method, escape, cast)
 
 def _get_methods_by_uri(sqluri):
     uri_scheme = urisup.uri_help_split(sqluri)[0]
     if uri_scheme not in __uri_create_methods:
-        raise NotImplementedError, 'Unknown URI scheme "%s"' % str(uri_scheme)
+        raise NotImplementedError('Unknown URI scheme "%s"' % str(uri_scheme))
     return __uri_create_methods[uri_scheme]
 
 def connect_by_uri(sqluri):

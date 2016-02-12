@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2008-2014 Avencall
+# Copyright (C) 2008-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -94,7 +94,7 @@ class EniBlockFamily(EniBlockIface):
         if method in self.METHODS:
             self.method = method
         else:
-            raise ValueError, "Method: %r should be in %r" % (method, self.METHODS)
+            raise ValueError("Method: %r should be in %r" % (method, self.METHODS))
 
 class EniBlockFamilyInet(EniBlockFamily):
     """
@@ -156,7 +156,7 @@ class EniBlockAllow(EniBlock):
         elif allow_kw == "auto":
             self.allowup = "auto"
         else:
-            raise ValueError, "allow_kw should start with \"allow-\" or be egal to \"auto\""
+            raise ValueError("allow_kw should start with \"allow-\" or be egal to \"auto\"")
         self.allow_kw = allow_kw
         self.allow_list = allow_list
 
@@ -216,7 +216,7 @@ class EniCookLineRecipe(object):
             if not contd:
                 break
         else:
-            warnfunc("last line is continued in block of raw lines: " + `part_cooked_lines`)
+            warnfunc("last line is continued in block of raw lines: " + repr(part_cooked_lines))
         while part_cooked_lines and not part_cooked_lines[-1].strip():
             part_cooked_lines.pop()
         list_splitter = [len(cooked_part) for cooked_part in part_cooked_lines]

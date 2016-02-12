@@ -2,7 +2,7 @@
 """Ordered Configuration Parser useful when the order of options counts.
 
 Copyright (c) 2001, 2002, 2003, 2004 Python Software Foundation;
-Copyright (C) 2007-2010  Avencall
+Copyright (C) 2007-2016  Avencall
 
 This module derives from the ConfigParser module distributed in Python 2.4.4
 
@@ -318,7 +318,7 @@ class SectionDesc:
             func = getattr(self.conf_instance, '_' + name + '_by_section_token')
             return lambda *x: func(self.sect_id_token, *x)
         except AttributeError:
-            raise AttributeError, name
+            raise AttributeError(name)
     def __iter__(self):
         """
         NEW API
@@ -398,14 +398,14 @@ class OptionDesc:
             func = getattr(self.conf_instance, '_' + name + '_by_option_token')
             return lambda *x: func(self.opt_id_token, *x)
         except AttributeError:
-            raise AttributeError, name
+            raise AttributeError(name)
 
 
 def _str_to_boolean(v):
     _boolean_states = {'1': True, 'yes': True, 'true': True, 'on': True,
                        '0': False, 'no': False, 'false': False, 'off': False}
     if v.lower() not in _boolean_states:
-        raise ValueError, 'Not a boolean: %s' % v
+        raise ValueError('Not a boolean: %s' % v)
     return _boolean_states[v.lower()]
 
 
@@ -912,11 +912,13 @@ class OrderedRawConf:
         return self._iter_options_by_sectup(self._sectup_by_name(section))
 
     @staticmethod
-    def _get_name_by_option_token((sectup, ot)):
+    def _get_name_by_option_token(value):
+        (sectup, ot) = value
         return sectup[0][ot][0]
 
     @staticmethod
-    def _get_value_by_option_token((sectup, ot)):
+    def _get_value_by_option_token(value):
+        (sectup, ot) = value
         return sectup[0][ot][1]
 
     def _getint_by_option_token(self, tok):
@@ -1142,7 +1144,7 @@ k=v
         def setUp(self):
             self.ord_cnf = OrderedRawConf(StringIO(VALID_CONF), parser_origin())
         def commonGetLike(self, method, xset):
-            map(lambda (x, y, z): self.assertEqual(method(x, y), z), xset)
+            map(lambda x, y, z: self.assertEqual(method(x, y), z), xset)
         def testGet(self):
             self.commonGetLike(self.ord_cnf.get, self.set_skv)
         def testGetInt(self):
@@ -1183,10 +1185,10 @@ k=v
             for wrong_s in OTHER_SECTIONS:
                 self.assertRaises(NoSectionError, self.ord_cnf.options, wrong_s)
         def testHasOption(self):
-            map(lambda (s, k, v): self.assertEqual(self.ord_cnf.has_option(s, k), True), self.set_skv)
+            map(lambda s, k, v: self.assertEqual(self.ord_cnf.has_option(s, k), True), self.set_skv)
             for sec in self.other_set:
-                map(lambda (s, k, v): self.assertEqual(self.ord_cnf.has_option(sec, k), False), self.set_skv)
-                map(lambda (s, k, v): self.assertEqual(self.ord_cnf.has_option(s, sec), False), self.set_skv)
+                map(lambda s, k, v: self.assertEqual(self.ord_cnf.has_option(sec, k), False), self.set_skv)
+                map(lambda s, k, v: self.assertEqual(self.ord_cnf.has_option(s, sec), False), self.set_skv)
 
     class NonIterConfictApi(unittest.TestCase):
         @staticmethod
@@ -1280,7 +1282,7 @@ k=v
             return OrderedRawConf(StringIO(conftxt), parser_origin(), _id1, string.lower)
 
     def map_skv_sec_upper(skv):
-        return map(lambda (s, k, v): (s.upper(), k, v), skv)
+        return map(lambda s, k, v: (s.upper(), k, v), skv)
 
     class C14nSectionsSimpleOldApiRequestUpper(SimpleOldApi):
         set_skv, set_int, set_float, set_boolean = \
@@ -1292,7 +1294,7 @@ k=v
             self.ord_cnf = OrderedRawConf(StringIO(VALID_CONF), parser_origin(), string.lower)
 
     def map_skv_opt_upper(skv):
-        return map(lambda (s, k, v): (s, k.upper(), v), skv)
+        return map(lambda s, k, v: (s, k.upper(), v), skv)
 
     class C14nOptionssSimpleOldApiRequestUpper(SimpleOldApi):
         set_skv, set_int, set_float, set_boolean = \
@@ -1449,7 +1451,7 @@ key=second_one
             return OrderedRawConf(StringIO(conftxt), parser_origin())
         def secFilter(self, lst_tuple_sec_data):
             for p, (secname, data) in enumerate(lst_tuple_sec_data):
-                if self.secMapper(secname) not in map(lambda (x, y):x, lst_tuple_sec_data[:p]):
+                if self.secMapper(secname) not in map(lambda x, y:x, lst_tuple_sec_data[:p]):
                     yield (secname, data)
         def injectAndFilter(self, datas):
             return self.secFilter(zip(ITER_CONF_SECTIONS, datas))
@@ -1469,7 +1471,7 @@ key=second_one
         def testOrderedOptions(self):
             ord_cnf = self.factory(ITER_CONF)
             for s, loi in self.injectAndFilter(self.ordItems):
-                self.assertEqual(ord_cnf.ordered_options(s), map(lambda (k, v):k, loi))
+                self.assertEqual(ord_cnf.ordered_options(s), map(lambda k, v:k, loi))
         def testOrderedOptionsRaises(self):
             ord_cnf = self.factory(ITER_CONF)
             self.assertRaises(NoSectionError, ord_cnf.ordered_options, "nothing")
@@ -1522,12 +1524,12 @@ key=second_one
                            ('boolean', True), ('nothere', False)]
             items = [('k', 'v1'), ('int', '42'), ('float', '131.31337'),
                      ('boolean', 'on')]
-            map(lambda (k, v): self.assertEqual(si1.has_option(k), v), options_pst)
+            map(lambda k, v: self.assertEqual(si1.has_option(k), v), options_pst)
             self.assertEqual(si1.ordered_items(), items)
-            self.assertEqual(frozenset(si1.items()), frozenset(map(lambda (k, v): (self.optMapper(k), v), items)))
-            self.assertEqual(si1.ordered_options(), map(lambda (k, v): k, items))
+            self.assertEqual(frozenset(si1.items()), frozenset(map(lambda k, v: (self.optMapper(k), v), items)))
+            self.assertEqual(si1.ordered_options(), map(lambda k, v: k, items))
             self.assertEqual(frozenset(si1.options()),
-                             frozenset(map(lambda (k, v): self.optMapper(k), items)))
+                             frozenset(map(lambda k, v: self.optMapper(k), items)))
         def testIterSectionOne(self):
             ord_cnf = self.factory(ITERSECTION_ONE)
             more = False

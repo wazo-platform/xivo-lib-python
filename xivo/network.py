@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2015 Avencall
+# Copyright (C) 2007-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -276,7 +276,7 @@ def phy_name_from_alias_if(ifname):
     Return the physical interface name from an alias interface
     """
     if not is_alias_if(ifname):
-        raise ValueError, "Invalid interface, it's not an alias interface (ifname: %r)" % ifname
+        raise ValueError("Invalid interface, it's not an alias interface (ifname: %r)" % ifname)
 
     return ifname[:ifname.find(':')]
 
@@ -412,7 +412,7 @@ def normalize_mac_address(macaddr):
     """
     macaddr_split = macaddr.upper().split(':', 6)
     if len(macaddr_split) != 6:
-        raise ValueError, "Bad format for mac address " + macaddr
+        raise ValueError("Bad format for mac address " + macaddr)
     return ':'.join([('%02X' % int(s, 16)) for s in macaddr_split])
 
 

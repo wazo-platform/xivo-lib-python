@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2014 Avencall
+# Copyright (C) 2007-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+from __future__ import print_function
 
 """Backend support for PostgreSQL for anysql
 
@@ -59,7 +61,7 @@ def __apply_types(params, typemap):
                 del params[k]
 
 def __dict_from_query(query):
-    print "dfQ=",query
+    print("dfQ=",query)
     if not query:
         return {}
     return dict(query)

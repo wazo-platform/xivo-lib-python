@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2015 Avencall
+# Copyright (C) 2007-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -278,7 +278,7 @@ class HttpReqHandler(BaseHTTPRequestHandler):
                 path = "/"
             
             if path[0] != "/":
-                raise urisup.InvalidURIError, 'path %r does not start with "/"' % path
+                raise urisup.InvalidURIError('path %r does not start with "/"' % path)
             
             path = re.sub("^/+", "/", path, 1)
 
@@ -287,7 +287,7 @@ class HttpReqHandler(BaseHTTPRequestHandler):
 
             return path, query, fragment
 
-        except urisup.InvalidURIError, e:
+        except urisup.InvalidURIError as e:
             log.error("invalid URI: %s", e)
             raise HttpReqError(400, str(e))
     
@@ -330,7 +330,7 @@ class HttpReqHandler(BaseHTTPRequestHandler):
         json_params = self.rfile.read(clen)
         try:
             params = _encode_if(json.loads(json_params))
-        except ValueError, e:
+        except ValueError as e:
             raise HttpReqError(415, text=str(e))
 
         if not isinstance(urlparams, dict):
@@ -348,7 +348,7 @@ class HttpReqHandler(BaseHTTPRequestHandler):
                 cmd = path[1:]
                 res_json = execute(cmd, query)
 
-            except HttpReqError, e:
+            except HttpReqError as e:
                 log.warning('HttpReqError while executing %s: %s', cmd, e.text)
                 e.report(self)
             
@@ -414,7 +414,7 @@ def register(handler, op, safe_init=None, at_start=None, name=None):
     if not name:
         name = handler.__name__
     if name in _commands:
-        raise ValueError, "%s is already registred" % name
+        raise ValueError("%s is already registred" % name)
     
     _commands[name] = Command(name, handler, op, safe_init, at_start)
     
@@ -456,7 +456,7 @@ def run(options):
     while not _killed:
         try:
             http_server.serve_until_killed()
-        except (socket.error, select.error), why:
+        except (socket.error, select.error) as why:
             if errno.EINTR == why[0]:
                 log.debug("interrupted system call")
             else:
