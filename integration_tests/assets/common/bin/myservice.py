@@ -21,11 +21,9 @@ import signal
 import logging
 import os
 
-from kombu import Connection, Exchange, Producer
 from flask import Flask, jsonify
 
 from xivo.consul_helpers import ServiceCatalogRegistration
-from xivo_bus import Marshaler, Publisher
 
 UUID = 'foobar'
 
@@ -57,10 +55,7 @@ def main():
     enabled = os.getenv('DISABLED', '0') == '0'
     logger.debug('advertise addr: %s', advertise_address)
     logger.debug('enabled: %s', enabled)
-    bus_url = 'amqp://{username}:{password}@{host}:{port}//'.format(username='guest',
-                                                                    password='guest',
-                                                                    host='rabbitmq',
-                                                                    port=5672)
+
     config = {'consul': {'host': 'consul',
                          'port': 8500,
                          'token': 'the_one_ring'},
@@ -70,19 +65,25 @@ def main():
                                     'ttl_interval': 30,
                                     'refresh_interval': 27,
                                     'retry_interval': 2},
+              'bus': {'username': 'guest',
+                      'password': 'guest',
+                      'host': 'rabbitmq',
+                      'port': 5672,
+                      'exchange_name': 'xivo',
+                      'exchange_type': 'topic'},
               'uuid': UUID}
+
     if not enabled:
         config['service_discovery']['enabled'] = False
 
     signal.signal(signal.SIGTERM, handler)
-    with Connection(bus_url) as bus_connection:
-        bus_connection.ensure_connection()
-        bus_exchange = Exchange('xivo', type='topic')
-        bus_producer = Producer(bus_connection, exchange=bus_exchange, auto_declare=True)
-        bus_marshaler = Marshaler(UUID)
-        bus_publisher = Publisher(bus_producer, bus_marshaler)
-        with ServiceCatalogRegistration('myservice', config, bus_publisher, self_check):
-            app.run(host="0.0.0.0", port=6262)
+    with ServiceCatalogRegistration('myservice',
+                                    config['uuid'],
+                                    config['consul'],
+                                    config['service_discovery'],
+                                    config['bus'],
+                                    self_check):
+        app.run(host="0.0.0.0", port=6262)
 
 
 if __name__ == '__main__':

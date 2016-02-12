@@ -17,10 +17,16 @@
 
 import logging
 import threading
-import uuid
+import socket
 
+from uuid import uuid4
 from consul import Check, Consul, ConsulException
 from requests.exceptions import ConnectionError
+
+try:
+    from kombu import Connection, Exchange, Producer
+except ImportError:
+    pass
 
 try:
     import netifaces
@@ -29,6 +35,7 @@ except ImportError:
 
 try:
     from xivo_bus.resources.services import event
+    from xivo_bus import Publisher, Marshaler
 except ImportError:
     pass
 
@@ -46,17 +53,19 @@ class MissingConfigurationError(RegistererError):
 
 class ServiceCatalogRegistration(object):
 
-    def __init__(self, service_name, config, publisher, check=None):
-        self._enabled = config['service_discovery'].get('enabled', True)
+    def __init__(self, service_name, uuid, consul_config,
+                 service_discovery_config, bus_config, check=None):
+        self._enabled = service_discovery_config.get('enabled', True)
         if not self._enabled:
             logger.debug('service discovery has been disabled')
             return
 
         self._check = check or self._default_check
-        self._registerer = NotifyingRegisterer.from_config(service_name, publisher, config)
+        self._registerer = NotifyingRegisterer(service_name, uuid, consul_config,
+                                               service_discovery_config, bus_config)
 
-        self._retry_interval = config['service_discovery']['retry_interval']
-        self._refresh_interval = config['service_discovery']['refresh_interval']
+        self._retry_interval = service_discovery_config['retry_interval']
+        self._refresh_interval = service_discovery_config['refresh_interval']
 
         self._thread = threading.Thread(target=self._loop)
         self._sleep_event = threading.Event()
@@ -121,14 +130,17 @@ class ServiceCatalogRegistration(object):
 
 class Registerer(object):
 
-    def __init__(self, name, consul_config, advertise_address, advertise_port, ttl_interval, service_tags):
-        self._service_id = str(uuid.uuid4())
+    def __init__(self, name, uuid, consul_config, service_discovery_config):
+        self._service_id = str(uuid4())
         self._service_name = name
-        self._advertise_address = advertise_address
-        self._advertise_port = advertise_port
-        self._tags = service_tags
+        try:
+            self._advertise_address = self._find_address(service_discovery_config)
+            self._advertise_port = service_discovery_config['advertise_port']
+            self._tags = [uuid, name] + service_discovery_config.get('extra_tags', [])
+            self._ttl_interval = '{}s'.format(service_discovery_config['ttl_interval'])
+        except KeyError as e:
+            raise MissingConfigurationError(str(e))
         self._consul_config = consul_config
-        self._ttl_interval = '{}s'.format(ttl_interval)
         self._check_id = 'service:{}'.format(self._service_id)
 
     @property
@@ -174,64 +186,61 @@ class Registerer(object):
         except (ConnectionError, ConsulException) as e:
             raise RegistererError(str(e))
 
-    @classmethod
-    def _find_address(cls, config):
-        advertise_address = config['service_discovery']['advertise_address']
+    def _find_address(self, service_discovery_config):
+        advertise_address = service_discovery_config['advertise_address']
         if advertise_address != 'auto':
             return advertise_address
 
-        iface = config['service_discovery']['advertise_address_interface']
+        iface = service_discovery_config['advertise_address_interface']
         try:
             return netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
         except ValueError as e:
             raise RegistererError('{}: {}'.format(str(e), iface))
 
-    @classmethod
-    def _canonicalize_config(cls, service_name, config):
-        try:
-            uuid = config['uuid']
-            consul_config = config['consul']
-            service_discovery_config = config['service_discovery']
-            original_tags = service_discovery_config.get('extra_tags', [])
-            service_discovery_config['extra_tags'] = original_tags + [service_name, uuid]
-            advertise_address = cls._find_address(config)
-            return dict(
-                consul_config=consul_config,
-                advertise_address=advertise_address,
-                advertise_port=service_discovery_config['advertise_port'],
-                ttl_interval=service_discovery_config['ttl_interval'],
-                service_tags=service_discovery_config['extra_tags'],
-            )
-        except KeyError as e:
-            raise MissingConfigurationError(str(e))
-
-    @classmethod
-    def from_config(cls, service_name, config):
-        canonicalized_config = cls._canonicalize_config(service_name, config)
-        return cls(service_name, **canonicalized_config)
-
 
 class NotifyingRegisterer(Registerer):
 
-    def __init__(self, name, publisher, consul_config,
-                 advertise_address, advertise_port,
-                 ttl_interval, service_tags):
-        self._publisher = publisher
-        super(NotifyingRegisterer, self).__init__(name, consul_config,
-                                                  advertise_address, advertise_port,
-                                                  ttl_interval, service_tags)
+    def __init__(self, name, uuid, consul_config, service_discovery_config, bus_config):
+        super(NotifyingRegisterer, self).__init__(name, uuid, consul_config, service_discovery_config)
+        self._bus_config = bus_config
+        self._marshaler = Marshaler(uuid)
+        try:
+            self._bus_url = 'amqp://{username}:{password}@{host}:{port}//'.format(**bus_config)
+        except KeyError as e:
+            raise MissingConfigurationError(str(e))
 
     def register(self):
         super(NotifyingRegisterer, self).register()
         msg = self._new_registered_event()
-        self._publisher.publish(msg)
+        self._send_msg(msg)
 
     def deregister(self):
-        was_registered = super(NotifyingRegisterer, self).deregister()
-        if was_registered:
+        exception = None
+        try:
+            should_send_msg = super(NotifyingRegisterer, self).deregister()
+        except RegistererError as e:
+            should_send_msg = True
+            exception = e
+
+        if should_send_msg:
             msg = self._new_deregistered_event()
-            self._publisher.publish(msg)
-        return was_registered
+            self._send_msg(msg)
+
+        if exception:
+            raise exception
+
+        return should_send_msg
+
+    def _send_msg(self, msg):
+        try:
+            with Connection(self._bus_url) as conn:
+                exchange = Exchange(self._bus_config['exchange_name'],
+                                    self._bus_config['exchange_type'])
+                producer = Producer(conn, exchange=exchange, auto_declare=True)
+                publisher = Publisher(producer, self._marshaler)
+                publisher.publish(msg)
+        except socket.error:
+            raise RegistererError('failed to publish on rabbitmq')
 
     def _new_deregistered_event(self):
         return event.ServiceDeregisteredEvent(self._service_name,
@@ -244,8 +253,3 @@ class NotifyingRegisterer(Registerer):
                                             self._advertise_address,
                                             self._advertise_port,
                                             self._tags)
-
-    @classmethod
-    def from_config(cls, service_name, publisher, config):
-        canonicalized_config = cls._canonicalize_config(service_name, config)
-        return cls(service_name, publisher, **canonicalized_config)
