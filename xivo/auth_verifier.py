@@ -100,7 +100,8 @@ class AuthVerifier(object):
         return request.headers.get('X-Auth-Token', '')
 
     def acl(self, decorated_function, *args, **kwargs):
-        return getattr(decorated_function, 'acl', '').format(**kwargs)
+        escaped_kwargs = {key: value.replace('.', '_') for key, value in kwargs.iteritems()}
+        return getattr(decorated_function, 'acl', '').format(**escaped_kwargs)
 
     def handle_unreachable(self, error):
         raise AuthServerUnreachable(self._auth_config['host'], self._auth_config['port'], error)
