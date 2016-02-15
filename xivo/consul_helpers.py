@@ -200,12 +200,14 @@ class Registerer(object):
 
 class NotifyingRegisterer(Registerer):
 
+    bus_uri_pattern = 'amqp://{username}:{password}@{host}:{port}//'
+
     def __init__(self, name, uuid, consul_config, service_discovery_config, bus_config):
         super(NotifyingRegisterer, self).__init__(name, uuid, consul_config, service_discovery_config)
         self._bus_config = bus_config
         self._marshaler = Marshaler(uuid)
         try:
-            self._bus_url = 'amqp://{username}:{password}@{host}:{port}//'.format(**bus_config)
+            self._bus_url = bus_config.get('uri') or self.bus_uri_pattern.format(**bus_config)
         except KeyError as e:
             raise MissingConfigurationError(str(e))
 
