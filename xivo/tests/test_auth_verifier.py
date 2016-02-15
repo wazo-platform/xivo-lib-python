@@ -176,6 +176,14 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(acl, equal_to('test_1.test_2'))
 
+    def test_acl_with_non_str(self):
+        auth_verifier = AuthVerifier()
+        mock = Mock(acl='{format1}.{format2}')
+
+        acl = auth_verifier.acl(mock, format1=12, format2=17)
+
+        assert_that(acl, equal_to('12.17'))
+
     def test_handle_unreachable(self):
         auth_verifier = AuthVerifier()
         auth_verifier.set_config({'host': s.host, 'port': s.port})

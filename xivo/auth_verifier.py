@@ -101,7 +101,7 @@ class AuthVerifier(object):
         return request.headers.get('X-Auth-Token', '')
 
     def acl(self, decorated_function, *args, **kwargs):
-        escaped_kwargs = {key: value.replace('.', '_') for key, value in iteritems(kwargs)}
+        escaped_kwargs = {key: str(value).replace('.', '_') for key, value in iteritems(kwargs)}
         return getattr(decorated_function, 'acl', '').format(**escaped_kwargs)
 
     def handle_unreachable(self, error):
