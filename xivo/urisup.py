@@ -458,7 +458,7 @@ def uri_tree_normalize(uri_tree):
     if authority and (filter(bool, authority) == ()):
         authority = None
     if query:
-        query = filter(lambda x, y: bool(x) or bool(y), query)
+        query = filter(lambda x_y: bool(x_y[0]) or bool(x_y[1]), query)
     return (scheme or None, authority or None, path or None,
             query or None, fragment or None)
 
