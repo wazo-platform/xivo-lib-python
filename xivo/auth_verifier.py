@@ -81,8 +81,6 @@ class AuthVerifier(object):
     def verify_token(self, func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            assert self._auth_config or self._auth_client, 'AuthVerifier is not configured'
-
             token = self.token()
             required_acl = self.acl(func, *args, **kwargs)
 
@@ -111,6 +109,9 @@ class AuthVerifier(object):
         raise Unauthorized(token)
 
     def client(self):
+        if not (self._auth_config or self._auth_client):
+            raise RuntimeError('AuthVerifier is not configured')
+
         if not self._auth_client:
             self._auth_client = Client(**self._auth_config)
         return self._auth_client

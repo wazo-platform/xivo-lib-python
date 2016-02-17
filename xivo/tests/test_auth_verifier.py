@@ -76,7 +76,7 @@ class TestAuthVerifier(unittest.TestCase):
         def decorated():
             pass
 
-        assert_that(decorated, raises(AssertionError))
+        assert_that(decorated, raises(RuntimeError))
 
     def test_calls_auth_client(self):
         mock_client = Mock()
