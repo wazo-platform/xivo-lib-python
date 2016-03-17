@@ -75,7 +75,6 @@ class TestPubsub(unittest.TestCase):
             self.pubsub.unsubscribe(SOME_TOPIC, callback)
         except Exception:
             self.fail('unsubscribe should not raise exceptions')
-            raise
 
     def test_unsubscribed_when_subscribed(self):
         callback = Mock()
@@ -91,7 +90,6 @@ class TestPubsub(unittest.TestCase):
             self.pubsub.publish(SOME_TOPIC, SOME_MESSAGE)
         except Exception:
             self.fail('publish should not raise exceptions')
-            raise
 
     def test_unsubscribe_when_multiple_subscribers_on_same_topic(self):
         callback_1 = Mock()

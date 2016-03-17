@@ -17,33 +17,36 @@
 
 import logging
 
+from collections import defaultdict
+
 logger = logging.getLogger(__name__)
 
 
 class Pubsub(object):
     def __init__(self):
-        self._subscribers = {}
+        self._subscribers = defaultdict(list)
 
     def subscribe(self, topic, callback):
-        self._subscribers.setdefault(topic, []).append(callback)
+        self._subscribers[topic].append(callback)
 
     def publish(self, topic, message):
-        if topic in self._subscribers:
-            for callback in self._subscribers[topic]:
-                callback(message)
+        for callback in self._subscribers[topic]:
+            callback(message)
 
     def unsubscribe(self, topic, callback):
-        if topic in self._subscribers:
+        try:
             self._subscribers[topic].remove(callback)
-            if len(self._subscribers[topic]) == 0:
-                self._subscribers.pop(topic)
+        except ValueError:
+            pass
+
+        if not self._subscribers[topic]:
+            self._subscribers.pop(topic, None)
 
 
 class ExceptionLoggingPubsub(Pubsub):
     def publish(self, topic, message):
-        if topic in self._subscribers:
-            for callback in self._subscribers[topic]:
-                try:
-                    callback(message)
-                except Exception as e:
-                    logger.exception(e)
+        for callback in self._subscribers[topic]:
+            try:
+                callback(message)
+            except Exception as e:
+                logger.exception(e)
