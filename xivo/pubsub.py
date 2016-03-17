@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2014 Avencall
+# Copyright (C) 2007-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Pubsub(object):
@@ -33,3 +37,13 @@ class Pubsub(object):
             self._subscribers[topic].remove(callback)
             if len(self._subscribers[topic]) == 0:
                 self._subscribers.pop(topic)
+
+
+class ExceptionLoggingPubsub(Pubsub):
+    def publish(self, topic, message):
+        if topic in self._subscribers:
+            for callback in self._subscribers[topic]:
+                try:
+                    callback(message)
+                except Exception as e:
+                    logger.exception(e)

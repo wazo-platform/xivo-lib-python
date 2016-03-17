@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2014 Avencall
+# Copyright (C) 2013-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,11 +17,17 @@
 
 import unittest
 
+from hamcrest import assert_that
 from mock import Mock
+from mock import patch
 from xivo.pubsub import Pubsub
+from xivo.pubsub import ExceptionLoggingPubsub
+
+SOME_TOPIC = 'abcd'
+SOME_MESSAGE = 'defg'
 
 
-class TestCallNotifier(unittest.TestCase):
+class TestPubsub(unittest.TestCase):
 
     def setUp(self):
         self.pubsub = Pubsub()
@@ -107,3 +113,32 @@ class TestCallNotifier(unittest.TestCase):
         self.pubsub.publish(topic, message)
         self.assertEquals(callback_1.call_count, 0)
         callback_2.assert_called_once_with(message)
+
+
+class TestExceptionLoggingPubsub(unittest.TestCase):
+
+    def setUp(self):
+        self.pubsub = ExceptionLoggingPubsub()
+
+    @patch('xivo.pubsub.logger')
+    def test_when_exception_then_exception_is_logged(self, logger):
+        callback = Mock()
+        exception = callback.side_effect = Exception()
+        self.pubsub.subscribe(SOME_TOPIC, callback)
+
+        self.pubsub.publish(SOME_TOPIC, SOME_MESSAGE)
+
+        logger.exception.assert_called_once_with(exception)
+
+    @patch('xivo.pubsub.logger', Mock())
+    def test_when_exception_then_other_callbacks_are_run(self):
+        callback_1, callback_2, callback_3 = Mock(), Mock(), Mock()
+        callback_2.side_effect = Exception()
+        self.pubsub.subscribe(SOME_TOPIC, callback_1)
+        self.pubsub.subscribe(SOME_TOPIC, callback_2)
+        self.pubsub.subscribe(SOME_TOPIC, callback_3)
+
+        self.pubsub.publish(SOME_TOPIC, SOME_MESSAGE)
+
+        assert_that(callback_1.called)
+        assert_that(callback_3.called)
