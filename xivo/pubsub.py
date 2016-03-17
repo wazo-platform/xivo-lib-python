@@ -31,7 +31,10 @@ class Pubsub(object):
 
     def publish(self, topic, message):
         for callback in self._subscribers[topic]:
-            callback(message)
+            self.publish_one(callback, message)
+
+    def publish_one(self, callback, message):
+        callback(message)
 
     def unsubscribe(self, topic, callback):
         try:
@@ -44,9 +47,8 @@ class Pubsub(object):
 
 
 class ExceptionLoggingPubsub(Pubsub):
-    def publish(self, topic, message):
-        for callback in self._subscribers[topic]:
-            try:
-                callback(message)
-            except Exception as e:
-                logger.exception(e)
+    def publish_one(self, callback, message):
+        try:
+            callback(message)
+        except Exception as e:
+            logger.exception(e)
