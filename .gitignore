@@ -6,3 +6,4 @@ coverage.xml
 nosetests-*.xml
 pep8.txt
 pylint.txt
+*.pyo
