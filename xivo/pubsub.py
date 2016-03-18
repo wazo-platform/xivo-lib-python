@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2014 Avencall
+# Copyright (C) 2007-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,21 +15,40 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
+import logging
+
+from collections import defaultdict
+
+logger = logging.getLogger(__name__)
+
 
 class Pubsub(object):
     def __init__(self):
-        self._subscribers = {}
+        self._subscribers = defaultdict(list)
 
     def subscribe(self, topic, callback):
-        self._subscribers.setdefault(topic, []).append(callback)
+        self._subscribers[topic].append(callback)
 
     def publish(self, topic, message):
-        if topic in self._subscribers:
-            for callback in self._subscribers[topic]:
-                callback(message)
+        for callback in self._subscribers[topic]:
+            self.publish_one(callback, message)
+
+    def publish_one(self, callback, message):
+        callback(message)
 
     def unsubscribe(self, topic, callback):
-        if topic in self._subscribers:
+        try:
             self._subscribers[topic].remove(callback)
-            if len(self._subscribers[topic]) == 0:
-                self._subscribers.pop(topic)
+        except ValueError:
+            pass
+
+        if not self._subscribers[topic]:
+            self._subscribers.pop(topic, None)
+
+
+class ExceptionLoggingPubsub(Pubsub):
+    def publish_one(self, callback, message):
+        try:
+            callback(message)
+        except Exception as e:
+            logger.exception(e)
