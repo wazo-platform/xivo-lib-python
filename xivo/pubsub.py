@@ -25,6 +25,14 @@ logger = logging.getLogger(__name__)
 class Pubsub(object):
     def __init__(self):
         self._subscribers = defaultdict(list)
+        self._exception_handler = self.default_exception_handler
+
+    def default_exception_handler(self, _, __, exception):
+        logger.exception(exception)
+
+    def set_exception_handler(self, exception_handler):
+        '''Expected handler interface: handler(listener, message, exception)'''
+        self._exception_handler = exception_handler
 
     def subscribe(self, topic, callback):
         self._subscribers[topic].append(callback)
@@ -34,7 +42,10 @@ class Pubsub(object):
             self.publish_one(callback, message)
 
     def publish_one(self, callback, message):
-        callback(message)
+        try:
+            callback(message)
+        except Exception as e:
+            self._exception_handler(callback, message, e)
 
     def unsubscribe(self, topic, callback):
         try:
@@ -46,9 +57,4 @@ class Pubsub(object):
             self._subscribers.pop(topic, None)
 
 
-class ExceptionLoggingPubsub(Pubsub):
-    def publish_one(self, callback, message):
-        try:
-            callback(message)
-        except Exception as e:
-            logger.exception(e)
+ExceptionLoggingPubsub = Pubsub

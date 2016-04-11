@@ -103,14 +103,19 @@ class TestPubsub(unittest.TestCase):
         assert_that(not_(callback_1.called))
         callback_2.assert_called_once_with(SOME_MESSAGE)
 
+    def test_when_exception_then_exception_is_handled(self):
+        callback = Mock()
+        exception = callback.side_effect = Exception()
+        handler = Mock()
+        self.pubsub.set_exception_handler(handler)
+        self.pubsub.subscribe(SOME_TOPIC, callback)
 
-class TestExceptionLoggingPubsub(unittest.TestCase):
+        self.pubsub.publish(SOME_TOPIC, SOME_MESSAGE)
 
-    def setUp(self):
-        self.pubsub = ExceptionLoggingPubsub()
+        handler.assert_called_once_with(callback, SOME_MESSAGE, exception)
 
     @patch('xivo.pubsub.logger')
-    def test_when_exception_then_exception_is_logged(self, logger):
+    def test_when_exception_then_exception_is_logged_by_default(self, logger):
         callback = Mock()
         exception = callback.side_effect = Exception()
         self.pubsub.subscribe(SOME_TOPIC, callback)
@@ -119,7 +124,6 @@ class TestExceptionLoggingPubsub(unittest.TestCase):
 
         logger.exception.assert_called_once_with(exception)
 
-    @patch('xivo.pubsub.logger', Mock())
     def test_when_exception_then_other_callbacks_are_run(self):
         callback_1, callback_2, callback_3 = Mock(), Mock(), Mock()
         callback_2.side_effect = Exception()
