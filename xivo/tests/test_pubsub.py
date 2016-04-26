@@ -22,7 +22,6 @@ from hamcrest import not_
 from mock import Mock
 from mock import patch
 from xivo.pubsub import Pubsub
-from xivo.pubsub import ExceptionLoggingPubsub
 
 SOME_TOPIC = 'abcd'
 SOME_MESSAGE = 'defg'

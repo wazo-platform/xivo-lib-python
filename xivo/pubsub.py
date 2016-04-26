@@ -55,6 +55,3 @@ class Pubsub(object):
 
         if not self._subscribers[topic]:
             self._subscribers.pop(topic, None)
-
-
-ExceptionLoggingPubsub = Pubsub
