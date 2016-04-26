@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014-2015 Avencall
+# Copyright (C) 2014-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +20,24 @@ import sys
 
 DEFAULT_LOG_FORMAT = '%(asctime)s [%(process)d] (%(levelname)s) (%(name)s): %(message)s'
 DEFAULT_LOG_LEVEL = logging.INFO
+
+
+class _StreamToLogger(object):
+    """
+    Fake file-like stream object that redirects writes to a logger instance.
+
+    Source: http://www.electricmonk.nl/log/2011/08/14/redirect-stdout-and-stderr-to-a-logger-in-python/
+    Copyright 2011 by Ferry Boender
+    SPDX-License-Identifier: GPL-2.0+
+    """
+    def __init__(self, logger, log_level=logging.INFO):
+        self.logger = logger
+        self.log_level = log_level
+        self.linebuf = ''
+
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            self.logger.log(self.log_level, line.rstrip())
 
 
 class _LogLevelFilter(logging.Filter):
@@ -49,6 +67,9 @@ def setup_logging(log_file, foreground=False, debug=False, log_level=DEFAULT_LOG
         stderr_handler.addFilter(_LogLevelFilter(lambda level: level > log_level))
         stderr_handler.setFormatter(formatter)
         root_logger.addHandler(stderr_handler)
+    else:
+        sys.stdout = _StreamToLogger(logging.getLogger('STDOUT'), logging.INFO)
+        sys.stderr = _StreamToLogger(logging.getLogger('STDERR'), logging.ERROR)
 
     if debug:
         log_level = logging.DEBUG
