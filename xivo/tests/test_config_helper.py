@@ -23,9 +23,12 @@ import tempfile
 import unittest
 
 from hamcrest import assert_that
+from hamcrest import calling
 from hamcrest import contains
 from hamcrest import equal_to
+from hamcrest import has_entry
 from hamcrest import is_not
+from hamcrest import raises
 from mock import patch
 from mock import Mock
 from mock import ANY
@@ -34,6 +37,11 @@ from yaml.parser import ParserError
 from ..config_helper import ConfigParser
 from ..config_helper import ErrorHandler
 from ..config_helper import PrintErrorHandler
+from ..config_helper import get_xivo_uuid
+from ..config_helper import set_xivo_uuid
+from ..config_helper import UUIDNotFound
+
+XIVO_UUID = '08c56466-8f29-45c7-9856-92bf1ba89b82'
 
 
 def _none_existent_filename():
@@ -283,3 +291,31 @@ class TestReadConfigFileHierarchy(unittest.TestCase):
 
         assert_that(config['sentinel'], equal_to('from_extra_config'))
         assert_that(config['main_file_only'], equal_to(True))
+
+
+class TestGetXiVOUUID(unittest.TestCase):
+
+    @patch('xivo.config_helper.os.getenv', return_value=False)
+    def test_given_no_uuid_then_raise_error(self, getenv):
+        assert_that(calling(get_xivo_uuid).with_args(Mock()),
+                    raises(UUIDNotFound))
+
+    @patch('xivo.config_helper.os.getenv', return_value=XIVO_UUID)
+    def test_given_uuid_then_return_uuid(self, getenv):
+        result = get_xivo_uuid(Mock())
+
+        assert_that(result, equal_to(XIVO_UUID))
+
+
+class TestSetXiVOUUID(unittest.TestCase):
+    @patch('xivo.config_helper.os.getenv', return_value=False)
+    def test_given_no_uuid_then_raise_error(self, getenv):
+        assert_that(calling(set_xivo_uuid).with_args({}, Mock()),
+                    raises(UUIDNotFound))
+
+    @patch('xivo.config_helper.os.getenv', return_value=XIVO_UUID)
+    def test_given_uuid_then_set_uuid(self, getenv):
+        config = {}
+        set_xivo_uuid(config, Mock())
+
+        assert_that(config, has_entry('uuid', XIVO_UUID))

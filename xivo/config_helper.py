@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014-2015 Avencall
+# Copyright (C) 2014-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -124,6 +124,23 @@ class ConfigParser(object):
         configs.append(main_config)
 
         return ChainMap(*configs)
+
+
+class UUIDNotFound(RuntimeError):
+    def __init__(self):
+        super(UUIDNotFound, self).__init__('XIVO_UUID environment variable is not set')
+
+
+def get_xivo_uuid(logger):
+    xivo_uuid = os.getenv('XIVO_UUID')
+    if not xivo_uuid:
+        logger.error('undefined environment variable XIVO_UUID')
+        raise UUIDNotFound()
+    return xivo_uuid
+
+
+def set_xivo_uuid(config, logger):
+    config['uuid'] = get_xivo_uuid(logger)
 
 
 _config_parser = ConfigParser()
