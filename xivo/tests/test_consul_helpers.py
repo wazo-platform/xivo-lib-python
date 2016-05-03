@@ -18,14 +18,15 @@
 import unittest
 import uuid
 
-from hamcrest import assert_that, equal_to
-from mock import ANY, patch, Mock, sentinel as s
+from hamcrest import assert_that, contains, equal_to
+from mock import ANY, call, patch, Mock, sentinel as s
 from xivo_bus.resources.services import event
 
 
 from ..consul_helpers import (NotifyingRegisterer,
                               Registerer,
-                              RegistererError)
+                              RegistererError,
+                              _find_address)
 
 
 UUID = str(uuid.uuid4())
@@ -35,6 +36,89 @@ BUS_CONFIG = {'username': 'bus_username',
               'port': 5532,
               'exchange_name': 'xchange',
               'exchange_type': 'topic'}
+
+
+class TestFindIpAddress(unittest.TestCase):
+
+    def test_that_the_main_iface_is_used_if_it_has_an_ip_address(self):
+        with patch('xivo.consul_helpers.netifaces') as netifaces:
+            netifaces.interfaces.return_value = ['lo', 'eth0', 'eth1', 'eth3']
+            netifaces.ifaddresses.return_value = {netifaces.AF_INET: [{'addr': s.eth3_ip}]}
+
+            result = _find_address('eth3')
+
+            netifaces.ifaddresses.assert_called_once_with('eth3')
+
+        assert_that(result, equal_to(s.eth3_ip))
+
+    def test_that_eth_ifaces_are_used_in_order_if_the_first_has_no_address(self):
+        def return_values(iface):
+            if iface == 'eth1':
+                return {netifaces.AF_INET: [{'addr': s.eth1_ip}]}
+            elif iface == 'eth3':
+                return {}
+            elif iface == 'eth0':
+                return {netifaces.AF_INET: [{'broadcast': '255.255.255.0'}]}
+
+        with patch('xivo.consul_helpers.netifaces') as netifaces:
+            netifaces.interfaces.return_value = ['lo', 'eth0', 'eth1', 'eth3']
+            netifaces.ifaddresses.side_effect = return_values
+
+            result = _find_address('eth3')
+
+            assert_that(netifaces.ifaddresses.mock_calls, contains(call('eth3'), call('eth0'), call('eth1')))
+
+        assert_that(result, equal_to(s.eth1_ip))
+
+    def test_that_lo_is_used_when_no_address_is_found_on_other_ifaces(self):
+        def return_values(iface):
+            if iface == 'lo':
+                return {netifaces.AF_INET: [{'addr': s.lo_ip}]}
+            else:
+                return {}
+
+        with patch('xivo.consul_helpers.netifaces') as netifaces:
+            netifaces.interfaces.return_value = ['lo', 'eth0', 'eth1', 'eth2', 'eth3']
+            netifaces.ifaddresses.side_effect = return_values
+
+            result = _find_address('eth3')
+
+            assert_that(netifaces.ifaddresses.mock_calls, contains(call('eth3'),
+                                                                   call('eth0'),
+                                                                   call('eth1'),
+                                                                   call('eth2'),
+                                                                   call('eth3'),
+                                                                   call('lo')))
+
+        assert_that(result, equal_to(s.lo_ip))
+
+    def test_that_127001_us_returned_if_all_else_fails(self):
+        with patch('xivo.consul_helpers.netifaces') as netifaces:
+            netifaces.interfaces.return_value = ['lo', 'eth0', 'eth1']
+            netifaces.ifaddresses.return_value = {}
+
+            result = _find_address('eth3')
+
+            assert_that(netifaces.ifaddresses.mock_calls, contains(call('eth3'),
+                                                                   call('eth0'),
+                                                                   call('eth1'),
+                                                                   call('lo')))
+
+        assert_that(result, equal_to('127.0.0.1'))
+
+    def test_that_an_invalid_iface_does_not_raise(self):
+        with patch('xivo.consul_helpers.netifaces') as netifaces:
+            netifaces.interfaces.return_value = ['lo', 'eth0', 'eth1']
+            netifaces.ifaddresses.side_effect = ValueError
+
+            result = _find_address('eth3')
+
+            assert_that(netifaces.ifaddresses.mock_calls, contains(call('eth3'),
+                                                                   call('eth0'),
+                                                                   call('eth1'),
+                                                                   call('lo')))
+
+        assert_that(result, equal_to('127.0.0.1'))
 
 
 class TestNotifyingRegisterer(unittest.TestCase):

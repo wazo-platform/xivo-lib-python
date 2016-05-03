@@ -137,6 +137,7 @@ class Registerer(object):
             self._advertise_address = self._find_address(service_discovery_config)
             self._advertise_port = service_discovery_config['advertise_port']
             self._tags = [uuid, name] + service_discovery_config.get('extra_tags', [])
+
             self._ttl_interval = '{}s'.format(service_discovery_config['ttl_interval'])
         except KeyError as e:
             raise MissingConfigurationError(str(e))
@@ -191,11 +192,21 @@ class Registerer(object):
         if advertise_address != 'auto':
             return advertise_address
 
-        iface = service_discovery_config['advertise_address_interface']
+        return _find_address(service_discovery_config['advertise_address_interface'])
+
+
+def _find_address(main_iface):
+    ifaces = [main_iface] + [iface for iface in netifaces.interfaces() if iface.startswith('eth')] + ['lo']
+    for iface in ifaces:
         try:
-            return netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
-        except ValueError as e:
-            raise RegistererError('{}: {}'.format(str(e), iface))
+            for config in netifaces.ifaddresses(iface).get(netifaces.AF_INET, []):
+                address = config.get('addr')
+                if address:
+                    return address
+        except ValueError:
+            logger.info('The configured interface does not exists: %s', iface)
+
+    return '127.0.0.1'
 
 
 class NotifyingRegisterer(Registerer):
