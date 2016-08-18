@@ -100,7 +100,7 @@ class AuthVerifier(object):
 
     def acl(self, decorated_function, *args, **kwargs):
         escaped_kwargs = {key: unicode(value).replace('.', '_') for key, value in iteritems(kwargs)}
-        return getattr(decorated_function, 'acl', '').format(**escaped_kwargs)
+        return unicode(getattr(decorated_function, 'acl', '')).format(**escaped_kwargs)
 
     def handle_unreachable(self, error):
         raise AuthServerUnreachable(self._auth_config['host'], self._auth_config['port'], error)
