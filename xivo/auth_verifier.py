@@ -20,7 +20,7 @@ import requests
 
 from flask import request
 from functools import wraps
-from six import iteritems
+from six import iteritems, text_type
 from xivo_auth_client import Client
 
 from xivo import rest_api_helpers
@@ -99,8 +99,8 @@ class AuthVerifier(object):
         return request.headers.get('X-Auth-Token', '')
 
     def acl(self, decorated_function, *args, **kwargs):
-        escaped_kwargs = {key: unicode(value).replace('.', '_') for key, value in iteritems(kwargs)}
-        return unicode(getattr(decorated_function, 'acl', '')).format(**escaped_kwargs)
+        escaped_kwargs = {key: text_type(value).replace(u'.', u'_') for key, value in iteritems(kwargs)}
+        return text_type(getattr(decorated_function, 'acl', '')).format(**escaped_kwargs)
 
     def handle_unreachable(self, error):
         raise AuthServerUnreachable(self._auth_config['host'], self._auth_config['port'], error)
