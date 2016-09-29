@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2015 Avencall
+# Copyright (C) 2013-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,22 +17,41 @@
 
 import unittest
 
+from hamcrest import assert_that, contains
+
 from ..protocol_interface import ProtocolInterface
 from ..protocol_interface import InvalidChannelError
 from ..protocol_interface import protocol_interface_from_channel
-from ..protocol_interface import protocol_interface_from_hint
+from ..protocol_interface import protocol_interfaces_from_hint
 from ..protocol_interface import agent_id_from_channel
 
 
 class TestProtocolInterface(unittest.TestCase):
 
-    def test_protocol_interface_from_hint(self):
+    def test_protocol_interfaces_from_hint(self):
         hint = 'SIP/askdjhf'
         expected_result = ProtocolInterface('SIP', 'askdjhf')
 
-        result = protocol_interface_from_hint(hint)
+        result = protocol_interfaces_from_hint(hint)
 
-        self.assertEquals(expected_result, result)
+        assert_that(result, contains(expected_result))
+
+    def test_protocol_interfaces_from_multidevice_hint(self):
+        hint = 'SIP/line1&SIP/line2'
+        expected_result = [ProtocolInterface('SIP', 'line1'),
+                           ProtocolInterface('SIP', 'line2')]
+
+        result = protocol_interfaces_from_hint(hint)
+
+        assert_that(result, contains(*expected_result))
+
+    def test_protocol_interfaces_from_hint_invalid(self):
+        hint = 'meetme:4001&SIP/line1'
+        expected_result = ProtocolInterface('SIP', 'line1')
+
+        result = protocol_interfaces_from_hint(hint)
+
+        assert_that(result, contains(expected_result))
 
     def test_protocol_interface_from_channel_sip(self):
         channel = 'SIP/askdjhf-3216549'
