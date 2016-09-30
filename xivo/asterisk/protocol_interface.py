@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2014 Avencall
+# Copyright (C) 2013-2016 Avencall
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ import re
 
 channel_regexp = re.compile(r'(sip|sccp|local|dahdi|iax2)/([\w@/-]+)-', re.I)
 agent_channel_regex = re.compile(r'Local/id-(\d+)@agentcallback')
-hint_regexp = re.compile(r'(sip|sccp|local|dahdi|iax2)/([\w@/-]+)', re.I)
+device_regexp = re.compile(r'(sip|sccp|local|dahdi|iax2)/([\w@/-]+)', re.I)
 
 
 ProtocolInterface = collections.namedtuple('ProtocolInterface', ['protocol', 'interface'])
@@ -43,10 +43,19 @@ def protocol_interface_from_channel(channel):
     return ProtocolInterface(protocol, interface)
 
 
-def protocol_interface_from_hint(hint):
-    matches = hint_regexp.match(hint)
+def protocol_interfaces_from_hint(hint, ignore_invalid=True):
+    for device in hint.split('&'):
+        protocol_interface = _protocol_interface_from_device(device)
+        if protocol_interface:
+            yield protocol_interface
+        elif not ignore_invalid:
+            raise InvalidChannelError(device)
+
+
+def _protocol_interface_from_device(device):
+    matches = device_regexp.match(device)
     if matches is None:
-        raise InvalidChannelError(hint)
+        return None
 
     protocol = matches.group(1)
     interface = matches.group(2)
