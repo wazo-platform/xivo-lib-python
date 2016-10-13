@@ -39,6 +39,14 @@ class _StreamToLogger(object):
         for line in buf.rstrip().splitlines():
             self.logger.log(self.log_level, line.rstrip())
 
+    def flush(self):
+        for handler in self.logger.handlers:
+            handler.flush()
+
+    def close(self):
+        for handler in self.logger.handlers:
+            handler.close()
+
 
 class _LogLevelFilter(logging.Filter):
     def __init__(self, level_filter):
