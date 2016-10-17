@@ -33,9 +33,10 @@ class _YAMLExecTag(yaml.YAMLObject):
 
     @classmethod
     def from_yaml(cls, loader, node):
-        for key, value in node.value:
-            if key.value == 'command':
-                return yaml.load(subprocess.check_output(value.value.split(' ')))
+        with open(os.devnull) as devnull:
+            for key, value in node.value:
+                if key.value == 'command':
+                    return yaml.load(subprocess.check_output(value.value.split(' '), stderr=devnull))
 
 
 class ErrorHandler(object):
