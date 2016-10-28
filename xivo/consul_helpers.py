@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2015-2016 Avencall
+# Copyright (C) 2016 Proformatique, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -121,7 +122,7 @@ class ServiceCatalogRegistration(object):
             self._registerer.register()
             self._registered = True
         except RegistererError:
-            logger.exception('failed to register service')
+            logger.debug('failed to register service', exc_info=True)
             logger.info('registration failed, retrying in %s seconds', self._retry_interval)
 
     def _default_check(self):
