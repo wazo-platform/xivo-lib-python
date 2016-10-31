@@ -44,7 +44,7 @@ def ssl_adapter(certificate, private_key, ciphers):
     adapter.context.set_options(SSL.OP_NO_SSLv2)
     adapter.context.set_options(SSL.OP_NO_SSLv3)
     adapter.context.set_options(SSL.OP_NO_COMPRESSION)
-    adapter.context.use_certificate_file(certificate)
+    adapter.context.use_certificate_chain_file(certificate)
     adapter.context.use_privatekey_file(private_key)
     adapter.context.set_cipher_list(ciphers)
     return adapter
