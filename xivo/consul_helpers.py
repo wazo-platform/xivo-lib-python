@@ -21,6 +21,8 @@ import threading
 import socket
 
 from uuid import uuid4
+import requests
+
 from consul import Check, Consul, ConsulException
 from requests.exceptions import ConnectionError
 
@@ -45,6 +47,10 @@ logger = logging.getLogger('service_discovery')
 
 
 class RegistererError(BaseException):
+    pass
+
+
+class ServiceDiscoveryError(Exception):
     pass
 
 
@@ -267,3 +273,68 @@ class NotifyingRegisterer(Registerer):
                                             self._advertise_address,
                                             self._advertise_port,
                                             self._tags)
+
+
+class ServiceFinder(object):
+
+    def __init__(self, consul_config, remote_tokens):
+        self._dc_url = '{scheme}://{host}:{port}/v1/catalog/datacenters'.format(**consul_config)
+        self._health_url = '{scheme}://{host}:{port}/v1/health/service'.format(**consul_config)
+        self._service_url = '{scheme}://{host}:{port}/v1/catalog/service'.format(**consul_config)
+        self._verify = consul_config.get('verify', True)
+        self._tokens = remote_tokens
+        self._local_token = consul_config.get('token')
+
+    def list_healthy_services(self, service_name):
+        services = []
+        for dc in self._get_datacenters():
+            healthy = self._get_healthy(service_name, dc)
+            for service in self._list_services(service_name, dc):
+                if service.get('ServiceID') not in healthy:
+                    continue
+                services.append(service)
+        return services
+
+    def _filter_health_services(self, service_name, query_result):
+        ids = set()
+        for node in query_result:
+            for check in node.get('Checks', []):
+                service_id = check.get('ServiceID')
+                if not service_id:
+                    continue
+                if service_name != check.get('ServiceName'):
+                    continue
+                ids.add(service_id)
+        return list(ids)
+
+    def _get_datacenters(self):
+        response = requests.get(self._dc_url,
+                                verify=self._verify)
+        self._assert_ok(response)
+        return response.json()
+
+    def _get_healthy(self, service_name, datacenter):
+        headers = {'X-Consul-Token': self._get_token(datacenter)}
+        url = '{}/{}'.format(self._health_url, service_name)
+        response = requests.get(url,
+                                verify=self._verify,
+                                params={'dc': datacenter, 'passing': True},
+                                headers=headers)
+        self._assert_ok(response)
+        return self._filter_health_services(service_name, response.json())
+
+    def _get_token(self, datacenter):
+        return self._tokens.get(datacenter, self._local_token)
+
+    def _list_services(self, service_name, datacenter):
+        headers = {'X-Consul-Token': self._get_token(datacenter)}
+        url = '{}/{}'.format(self._service_url, service_name)
+        response = requests.get(url, verify=self._verify, params={'dc': datacenter}, headers=headers)
+        self._assert_ok(response)
+        return response.json()
+
+    @staticmethod
+    def _assert_ok(response, code=200):
+        if response.status_code != code:
+            msg = getattr(response, 'text', 'unknown error')
+            raise ServiceDiscoveryError(msg)
