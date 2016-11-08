@@ -18,8 +18,10 @@
 
 import re
 import urllib
+import six
 
-from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter
+if six.PY2:
+    from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter
 from flask import current_app, request
 from OpenSSL import SSL
 
