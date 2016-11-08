@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2016 Avencall
+# Copyright (C) 2016 Proformatique Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
+import re
 import urllib
 
 from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter
@@ -29,9 +31,22 @@ def add_logger(app, logger):
         app.logger.addHandler(handler)
 
 
+def _log_request(url, response):
+    current_app.logger.info('(%s) %s %s %s', request.remote_addr, request.method, url, response.status_code)
+
+
 def log_request(response):
     url = urllib.unquote(request.url)
-    current_app.logger.info('(%s) %s %s %s', request.remote_addr, request.method, url, response.status_code)
+    _log_request(url, response)
+    return response
+
+
+_REPLACE_TOKEN_REGEX = re.compile(r'\btoken=[-0-9a-zA-Z]+')
+
+def log_request_hide_token(response):
+    url = urllib.unquote(request.url)
+    url = _REPLACE_TOKEN_REGEX.sub('token=<hidden>', url)
+    _log_request(url, response)
     return response
 
 
