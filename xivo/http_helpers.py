@@ -17,13 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import re
-import urllib
 import six
 
 if six.PY2:
     from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter
 from flask import current_app, request
 from OpenSSL import SSL
+from six.moves.urllib.parse import unquote
 
 DEFAULT_CIPHERS = 'ALL:!aNULL:!eNULL:!LOW:!EXP:!RC4:!3DES:!SEED:+HIGH:+MEDIUM'
 
@@ -38,7 +38,7 @@ def _log_request(url, response):
 
 
 def log_request(response):
-    url = urllib.unquote(request.url)
+    url = unquote(request.url)
     _log_request(url, response)
     return response
 
@@ -46,7 +46,7 @@ def log_request(response):
 _REPLACE_TOKEN_REGEX = re.compile(r'\btoken=[-0-9a-zA-Z]+')
 
 def log_request_hide_token(response):
-    url = urllib.unquote(request.url)
+    url = unquote(request.url)
     url = _REPLACE_TOKEN_REGEX.sub('token=<hidden>', url)
     _log_request(url, response)
     return response
