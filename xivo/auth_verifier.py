@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2015-2016 Avencall
+# Copyright (C) 2016 Proformatique Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +19,7 @@
 import logging
 import requests
 
+from collections import namedtuple
 from flask import request
 from functools import wraps
 from six import iteritems, text_type
@@ -28,9 +30,11 @@ from xivo import rest_api_helpers
 logger = logging.getLogger(__name__)
 
 
-def required_acl(acl):
+_ACLCheck = namedtuple('_ACLCheck', ['pattern', 'extract_token_id'])
+
+def required_acl(acl_pattern, extract_token_id=None):
     def wrapper(func):
-        func.acl = acl
+        func.acl = _ACLCheck(acl_pattern, extract_token_id)
         return func
     return wrapper
 
@@ -65,9 +69,13 @@ class AuthServerUnreachable(rest_api_helpers.APIException):
 
 class AuthVerifier(object):
 
-    def __init__(self, auth_config=None):
+    def __init__(self, auth_config=None, extract_token_id=None):
+        if extract_token_id is None:
+            extract_token_id = extract_token_id_from_header
         self._auth_client = None
         self._auth_config = auth_config
+        self._extract_token_id = extract_token_id
+        self._fallback_acl_check = _ACLCheck('', None)
 
     def set_config(self, auth_config):
         self._auth_config = dict(auth_config)
@@ -81,26 +89,32 @@ class AuthVerifier(object):
     def verify_token(self, func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            token = self.token()
-            required_acl = self.acl(func, *args, **kwargs)
-
+            # backward compatibility: when func.acl is not defined, it should
+            # probably just raise an AttributeError
+            acl_check = getattr(func, 'acl', self._fallback_acl_check)
+            token_id = (acl_check.extract_token_id or self.token)()
+            required_acl = self._required_acl(acl_check, args, kwargs)
             try:
-                token_is_valid = self.client().token.is_valid(token, required_acl)
+                token_is_valid = self.client().token.is_valid(token_id, required_acl)
             except requests.RequestException as e:
                 return self.handle_unreachable(e)
 
             if token_is_valid:
                 return func(*args, **kwargs)
 
-            return self.handle_unauthorized(token)
+            return self.handle_unauthorized(token_id)
         return wrapper
 
     def token(self):
-        return request.headers.get('X-Auth-Token', '')
+        return self._extract_token_id()
+
+    def _required_acl(self, acl_check, args, kwargs):
+        escaped_kwargs = {key: text_type(value).replace(u'.', u'_') for key, value in iteritems(kwargs)}
+        return text_type(acl_check.pattern).format(**escaped_kwargs)
 
     def acl(self, decorated_function, *args, **kwargs):
-        escaped_kwargs = {key: text_type(value).replace(u'.', u'_') for key, value in iteritems(kwargs)}
-        return text_type(getattr(decorated_function, 'acl', '')).format(**escaped_kwargs)
+        acl_check = getattr(decorated_function, 'acl', self._fallback_acl_check)
+        return self._required_acl(acl_check, args, kwargs)
 
     def handle_unreachable(self, error):
         raise AuthServerUnreachable(self._auth_config['host'], self._auth_config['port'], error)
@@ -115,3 +129,16 @@ class AuthVerifier(object):
         if not self._auth_client:
             self._auth_client = Client(**self._auth_config)
         return self._auth_client
+
+
+def extract_token_id_from_header():
+    return request.headers.get('X-Auth-Token', '')
+
+
+def extract_token_id_from_query_string():
+    return request.args.get('token', '')
+
+
+def extract_token_id_from_query_or_header():
+    return (extract_token_id_from_query_string() or
+            extract_token_id_from_header())

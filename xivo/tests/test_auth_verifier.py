@@ -29,15 +29,18 @@ from mock import sentinel as s
 from ..auth_verifier import AuthServerUnreachable
 from ..auth_verifier import AuthVerifier
 from ..auth_verifier import Unauthorized
+from ..auth_verifier import required_acl
+from ..auth_verifier import _ACLCheck
+
+
+def function_with_acl(pattern):
+    return Mock(acl=_ACLCheck(pattern, None))
 
 
 class StubVerifier(AuthVerifier):
 
     def token(self):
         return s.token
-
-    def acl(self, decorated_function, *args, **kwargs):
-        return s.acl
 
     def handle_unreachable(self, error):
         return s.unreachable
@@ -73,6 +76,7 @@ class TestAuthVerifier(unittest.TestCase):
         auth_verifier = AuthVerifier()
 
         @auth_verifier.verify_token
+        @required_acl('foo')
         def decorated():
             pass
 
@@ -84,12 +88,13 @@ class TestAuthVerifier(unittest.TestCase):
         auth_verifier.set_client(mock_client)
 
         @auth_verifier.verify_token
+        @required_acl('foo')
         def decorated():
             pass
 
         decorated()
 
-        mock_client.token.is_valid.assert_called_once_with(s.token, s.acl)
+        mock_client.token.is_valid.assert_called_once_with(s.token, 'foo')
 
     def test_calls_function_when_valid(self):
         mock_client = Mock()
@@ -98,6 +103,7 @@ class TestAuthVerifier(unittest.TestCase):
         auth_verifier.set_client(mock_client)
 
         @auth_verifier.verify_token
+        @required_acl('foo')
         def decorated():
             return s.result
 
@@ -112,6 +118,7 @@ class TestAuthVerifier(unittest.TestCase):
         auth_verifier.set_client(mock_client)
 
         @auth_verifier.verify_token
+        @required_acl('foo')
         def decorated():
             return s.result
 
@@ -126,6 +133,7 @@ class TestAuthVerifier(unittest.TestCase):
         auth_verifier.set_client(mock_client)
 
         @auth_verifier.verify_token
+        @required_acl('foo')
         def decorated():
             return s.result
 
@@ -162,25 +170,25 @@ class TestAuthVerifier(unittest.TestCase):
 
     def test_acl_not_empty(self):
         auth_verifier = AuthVerifier()
-        mock = Mock(acl='{format1},{format2}')
+        function = function_with_acl('{format1},{format2}')
 
-        acl = auth_verifier.acl(mock, format1='test1', format2='test2')
+        acl = auth_verifier.acl(function, format1='test1', format2='test2')
 
         assert_that(acl, equal_to('test1,test2'))
 
     def test_acl_with_dot(self):
         auth_verifier = AuthVerifier()
-        mock = Mock(acl='{format1}.{format2}')
+        function = function_with_acl('{format1}.{format2}')
 
-        acl = auth_verifier.acl(mock, format1='test.1', format2='test.2')
+        acl = auth_verifier.acl(function, format1='test.1', format2='test.2')
 
         assert_that(acl, equal_to('test_1.test_2'))
 
     def test_acl_with_non_str(self):
         auth_verifier = AuthVerifier()
-        mock = Mock(acl='{format1}.{format2}')
+        function = function_with_acl('{format1}.{format2}')
 
-        acl = auth_verifier.acl(mock, format1=12, format2=17)
+        acl = auth_verifier.acl(function, format1=12, format2=17)
 
         assert_that(acl, equal_to('12.17'))
 
