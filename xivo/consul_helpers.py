@@ -277,13 +277,12 @@ class NotifyingRegisterer(Registerer):
 
 class ServiceFinder(object):
 
-    def __init__(self, consul_config, remote_tokens):
+    def __init__(self, consul_config):
         self._dc_url = '{scheme}://{host}:{port}/v1/catalog/datacenters'.format(**consul_config)
         self._health_url = '{scheme}://{host}:{port}/v1/health/service'.format(**consul_config)
         self._service_url = '{scheme}://{host}:{port}/v1/catalog/service'.format(**consul_config)
         self._verify = consul_config.get('verify', True)
-        self._tokens = remote_tokens
-        self._local_token = consul_config.get('token')
+        self._token = consul_config.get('token')
 
     def list_healthy_services(self, service_name):
         services = []
@@ -314,12 +313,10 @@ class ServiceFinder(object):
         return response.json()
 
     def _get_healthy(self, service_name, datacenter):
-        headers = {'X-Consul-Token': self._get_token(datacenter)}
         url = '{}/{}'.format(self._health_url, service_name)
         response = requests.get(url,
                                 verify=self._verify,
-                                params={'dc': datacenter, 'passing': True},
-                                headers=headers)
+                                params={'dc': datacenter, 'passing': True})
         self._assert_ok(response)
         return self._filter_health_services(service_name, response.json())
 
@@ -327,9 +324,8 @@ class ServiceFinder(object):
         return self._tokens.get(datacenter, self._local_token)
 
     def _list_services(self, service_name, datacenter):
-        headers = {'X-Consul-Token': self._get_token(datacenter)}
         url = '{}/{}'.format(self._service_url, service_name)
-        response = requests.get(url, verify=self._verify, params={'dc': datacenter}, headers=headers)
+        response = requests.get(url, verify=self._verify, params={'dc': datacenter})
         self._assert_ok(response)
         return response.json()
 
