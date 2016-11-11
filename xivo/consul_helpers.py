@@ -287,24 +287,9 @@ class ServiceFinder(object):
     def list_healthy_services(self, service_name):
         services = []
         for dc in self._get_datacenters():
-            healthy = self._get_healthy(service_name, dc)
-            for service in self._list_services(service_name, dc):
-                if service.get('ServiceID') not in healthy:
-                    continue
+            for service in self._list_running_services(service_name, dc):
                 services.append(service)
         return services
-
-    def _filter_health_services(self, service_name, query_result):
-        ids = set()
-        for node in query_result:
-            for check in node.get('Checks', []):
-                service_id = check.get('ServiceID')
-                if not service_id:
-                    continue
-                if service_name != check.get('ServiceName'):
-                    continue
-                ids.add(service_id)
-        return list(ids)
 
     def _get_datacenters(self):
         response = requests.get(self._dc_url,
@@ -312,22 +297,18 @@ class ServiceFinder(object):
         self._assert_ok(response)
         return response.json()
 
-    def _get_healthy(self, service_name, datacenter):
+    def _list_running_services(self, service_name, datacenter):
         url = '{}/{}'.format(self._health_url, service_name)
         response = requests.get(url,
                                 verify=self._verify,
                                 params={'dc': datacenter, 'passing': True})
         self._assert_ok(response)
-        return self._filter_health_services(service_name, response.json())
-
-    def _get_token(self, datacenter):
-        return self._tokens.get(datacenter, self._local_token)
-
-    def _list_services(self, service_name, datacenter):
-        url = '{}/{}'.format(self._service_url, service_name)
-        response = requests.get(url, verify=self._verify, params={'dc': datacenter})
-        self._assert_ok(response)
-        return response.json()
+        services = []
+        for node in response.json():
+            service = node.get('Service')
+            if service:
+                services.append(service)
+        return services
 
     @staticmethod
     def _assert_ok(response, code=200):

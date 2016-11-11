@@ -244,29 +244,6 @@ class BaseFinderTestCase(unittest.TestCase):
                               'verify': True}
 
 
-class TestRemoteServiceFinderFilterHealthServices(BaseFinderTestCase):
-
-    def test_that_no_service_id_is_not_included(self):
-        nodes = [{'Checks': [{'ServiceID': '', 'ServiceName': 'foobar'},
-                             {'ServiceID': 'theserviceid', 'ServiceName': 'foobar'}]}]
-
-        finder = ServiceFinder(self.consul_config)
-
-        result = finder._filter_health_services('foobar', nodes)
-
-        assert_that(result, contains('theserviceid'))
-
-    def test_that_other_service_name_is_not_included(self):
-        nodes = [{'Checks': [{'ServiceID': 1, 'ServiceName': 'other'},
-                             {'ServiceID': 2, 'ServiceName': 'foobar'}]}]
-
-        finder = ServiceFinder(self.consul_config)
-
-        result = finder._filter_health_services('foobar', nodes)
-
-        assert_that(result, contains(2))
-
-
 @patch('xivo.consul_helpers.requests')
 class TestRemoteServiceFinderGetDatacenters(BaseFinderTestCase):
 
@@ -307,10 +284,10 @@ class TestRemoteServiceFinderGetDatacenters(BaseFinderTestCase):
 
 
 @patch('xivo.consul_helpers.requests')
-class TestRemoteServiceFinderGetHealthy(BaseFinderTestCase):
+class TestRemoteServiceFinderListRunningServices(BaseFinderTestCase):
 
     def test_that_the_health_url_matches_the_config(self, requests):
-        requests.get.return_value = Mock(status_code=200)
+        requests.get.return_value = Mock(status_code=200, json=Mock(return_value=[]))
         url_and_configs = [
             ('http://localhost:8500/v1/health/service/foobar', self.consul_config),
             ('https://192.168.1.1:2155/v1/health/service/foobar', {'scheme': 'https',
@@ -320,13 +297,12 @@ class TestRemoteServiceFinderGetHealthy(BaseFinderTestCase):
 
         for url, config in url_and_configs:
             finder = ServiceFinder(config)
-            with patch.object(finder, '_filter_health_services'):
-                finder._get_healthy('foobar', s.dc)
+            finder._list_running_services('foobar', s.dc)
             requests.get.assert_called_once_with(url, verify=ANY, params=ANY)
             requests.reset_mock()
 
-    def test_that_health_uses_the_configured_verify(self, requests):
-        requests.get.return_value = Mock(status_code=200)
+    def test_that_the_verify_config_is_user(self, requests):
+        requests.get.return_value = Mock(status_code=200, json=Mock(return_value=[]))
         verify_and_configs = [
             (True, self.consul_config),
             (False, {'verify': False, 'scheme': 'https', 'host': '192.168.1.1', 'port': 2155}),
@@ -334,29 +310,17 @@ class TestRemoteServiceFinderGetHealthy(BaseFinderTestCase):
 
         for verify, config in verify_and_configs:
             finder = ServiceFinder(config)
-            with patch.object(finder, '_filter_health_services'):
-                finder._get_healthy('foobar', s.dc)
+            finder._list_running_services('foobar', s.dc)
             requests.get.assert_called_once_with(ANY, verify=verify, params=ANY)
             requests.reset_mock()
 
-    def test_that_return_results_filtered_by_filter_health_services(self, requests):
-        requests.get.return_value = Mock(status_code=200)
-        finder = ServiceFinder(self.consul_config)
-
-        with patch.object(finder, '_filter_health_services') as filter_:
-            result = finder._get_healthy('foobar', s.dc)
-
-        filter_.assert_called_once_with('foobar', requests.get().json.return_value)
-        assert_that(result, equal_to(filter_.return_value))
-
     def test_that_params_are_based_on_the_datacenter(self, requests):
-        requests.get.return_value = Mock(status_code=200)
+        requests.get.return_value = Mock(status_code=200, json=Mock(return_value=[]))
 
         finder = ServiceFinder(self.consul_config)
 
         for dc in ['dc1', 'dc2']:
-            with patch.object(finder, '_filter_health_services'):
-                finder._get_healthy('foobar', dc)
+            finder._list_running_services('foobar', dc)
             expected = {'dc': dc, 'passing': True}
             requests.get.assert_called_once_with(ANY,
                                                  verify=ANY,
@@ -368,98 +332,38 @@ class TestRemoteServiceFinderGetHealthy(BaseFinderTestCase):
 
         finder = ServiceFinder(self.consul_config)
 
-        assert_that(calling(finder._get_healthy).with_args('foobar', 'dc1'),
+        assert_that(calling(finder._list_running_services).with_args('foobar', 'dc1'),
                     raises(Exception))
 
+    def test_that_returns_services_from_each_nodes(self, requests):
+        node_0_service = {"ID": "1c8c13d8-adca-4715-8bf3-04e51509f141",
+                          "Service": "xivo-ctid",
+                          "Tags": [
+                            "f9f0f3bb-f577-4354-9109-9cf6cf7c7adf",
+                            "xivo-ctid"],
+                          "Port": 9495,
+                          "Address": "10.37.0.254",
+                          "EnableTagOverride": False}
+        node_1_service = {"ID": "1c8c13d8-adca-4715-b1b1-04e51509f141",
+                          "Service": "xivo-ctid",
+                          "Tags": [
+                            "f9f0f3bb-f577-4354-b1b1-9cf6cf7c7adf",
+                            "xivo-ctid"],
+                          "Port": 9495,
+                          "Address": "10.37.1.254",
+                          "EnableTagOverride": False}
 
-class TestRemoteServiceFinderListHealthyServices(BaseFinderTestCase):
-
-    def test_that_all_datacenters_are_searched(self):
-        dcs = ['dc1', 'dc2', 'dc3']
-
-        finder = ServiceFinder(self.consul_config)
-
-        with patch.object(finder, '_get_datacenters', Mock(return_value=dcs)):
-            with patch.object(finder, '_get_healthy') as get_healthy:
-                with patch.object(finder, '_list_services') as list_services:
-                    finder.list_healthy_services(s.service_name)
-
-        for dc in dcs:
-            get_healthy.assert_any_call(s.service_name, dc)
-            list_services.assert_any_call(s.service_name, dc)
-
-    def test_that_only_healthy_services_are_returned(self):
-        s1, s2 = services = [
-            {'ServiceID': 1},
-            {'ServiceID': 42},
-        ]
-
-        finder = ServiceFinder(self.consul_config)
-
-        with patch.object(finder, '_get_datacenters', Mock(return_value=['dc1'])):
-            with patch.object(finder, '_get_healthy', Mock(return_value=[42])):
-                with patch.object(finder, '_list_services', Mock(return_value=services)):
-                    result = finder.list_healthy_services(s.service_name)
-
-        assert_that(result, contains(s2))
-
-
-@patch('xivo.consul_helpers.requests')
-class TestRemoteServiceFinderListServices(BaseFinderTestCase):
-
-    def test_that_url_matches_the_config(self, requests):
-        requests.get.return_value = Mock(status_code=200)
-        url_and_configs = [
-            ('http://localhost:8500/v1/catalog/service/foobar', self.consul_config),
-            ('https://192.168.1.1:2155/v1/catalog/service/foobar', {'scheme': 'https',
-                                                                   'host': '192.168.1.1',
-                                                                   'port': 2155}),
-        ]
-
-        for url, config in url_and_configs:
-            finder = ServiceFinder(config)
-            finder._list_services('foobar', s.dc)
-            requests.get.assert_called_once_with(url, verify=ANY, params=ANY)
-            requests.reset_mock()
-
-    def test_that_uses_the_configured_verify(self, requests):
-        requests.get.return_value = Mock(status_code=200)
-        verify_and_configs = [
-            (True, self.consul_config),
-            (False, {'verify': False, 'scheme': 'https', 'host': '192.168.1.1', 'port': 2155}),
-        ]
-
-        for verify, config in verify_and_configs:
-            finder = ServiceFinder(config)
-            finder._list_services('foobar', s.dc)
-            requests.get.assert_called_once_with(ANY, verify=verify, params=ANY)
-            requests.reset_mock()
-
-    def test_that_results_is_the_returned_json(self, requests):
-        requests.get.return_value = Mock(status_code=200)
-        finder = ServiceFinder(self.consul_config)
-
-        result = finder._list_services('foobar', s.dc)
-
-        assert_that(result, equal_to(requests.get().json.return_value))
-
-    def test_that_params_are_based_on_the_datacenter(self, requests):
-        requests.get.return_value = Mock(status_code=200)
+        response = [{"Node": {"Node": "pcm-dev-0",
+                              "Address": "10.37.0.254"},
+                     "Service": node_0_service,
+                     "Checks": []},
+                    {"Node": {"Node": "pcm-dev-1",
+                              "Address": "10.37.1.254"},
+                     "Service": node_1_service,
+                     "Checks": []}]
+        requests.get.return_value = Mock(status_code=200, json=Mock(return_value=response))
 
         finder = ServiceFinder(self.consul_config)
+        result = finder._list_running_services('xivo-ctid', 'dc1')
 
-        for dc in ['dc1', 'dc2']:
-            finder._list_services('foobar', dc)
-            expected = {'dc': dc}
-            requests.get.assert_called_once_with(ANY,
-                                                 verify=ANY,
-                                                 params=expected)
-            requests.reset_mock()
-
-    def test_that_raises_if_not_200(self, requests):
-        requests.get.return_value = Mock(status_code=403, text='some error')
-
-        finder = ServiceFinder(self.consul_config)
-
-        assert_that(calling(finder._list_services).with_args('foobar', 'dc1'),
-                    raises(Exception))
+        assert_that(result, contains(node_0_service, node_1_service))
