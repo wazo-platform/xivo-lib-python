@@ -297,7 +297,7 @@ class TestRemoteServiceFinderListRunningServices(BaseFinderTestCase):
 
         for url, config in url_and_configs:
             finder = ServiceFinder(config)
-            finder._list_running_services('foobar', s.dc)
+            finder._list_running_services('foobar', s.dc, None)
             requests.get.assert_called_once_with(url, verify=ANY, params=ANY)
             requests.reset_mock()
 
@@ -310,7 +310,7 @@ class TestRemoteServiceFinderListRunningServices(BaseFinderTestCase):
 
         for verify, config in verify_and_configs:
             finder = ServiceFinder(config)
-            finder._list_running_services('foobar', s.dc)
+            finder._list_running_services('foobar', s.dc, None)
             requests.get.assert_called_once_with(ANY, verify=verify, params=ANY)
             requests.reset_mock()
 
@@ -320,19 +320,28 @@ class TestRemoteServiceFinderListRunningServices(BaseFinderTestCase):
         finder = ServiceFinder(self.consul_config)
 
         for dc in ['dc1', 'dc2']:
-            finder._list_running_services('foobar', dc)
+            finder._list_running_services('foobar', dc, None)
             expected = {'dc': dc, 'passing': True}
             requests.get.assert_called_once_with(ANY,
                                                  verify=ANY,
                                                  params=expected)
             requests.reset_mock()
 
+    def test_that_param_contains_the_optionnal_tag(self, requests):
+        requests.get.return_value = Mock(status_code=200, json=Mock(return_value=[]))
+
+        finder = ServiceFinder(self.consul_config)
+
+        finder._list_running_services('foobar', s.db, tag=s.tag)
+        expected = {'dc': s.db, 'passing': True, 'tag': s.tag}
+        requests.get.assert_called_once_with(ANY, verify=ANY, params=expected)
+
     def test_that_raises_if_not_200(self, requests):
         requests.get.return_value = Mock(status_code=403, text='some error')
 
         finder = ServiceFinder(self.consul_config)
 
-        assert_that(calling(finder._list_running_services).with_args('foobar', 'dc1'),
+        assert_that(calling(finder._list_running_services).with_args('foobar', 'dc1', None),
                     raises(Exception))
 
     def test_that_returns_services_from_each_nodes(self, requests):
@@ -364,6 +373,6 @@ class TestRemoteServiceFinderListRunningServices(BaseFinderTestCase):
         requests.get.return_value = Mock(status_code=200, json=Mock(return_value=response))
 
         finder = ServiceFinder(self.consul_config)
-        result = finder._list_running_services('xivo-ctid', 'dc1')
+        result = finder._list_running_services('xivo-ctid', 'dc1', None)
 
         assert_that(result, contains(node_0_service, node_1_service))

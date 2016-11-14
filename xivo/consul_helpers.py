@@ -284,10 +284,10 @@ class ServiceFinder(object):
         self._verify = consul_config.get('verify', True)
         self._token = consul_config.get('token')
 
-    def list_healthy_services(self, service_name):
+    def list_healthy_services(self, service_name, xivo_uuid=None):
         services = []
         for dc in self._get_datacenters():
-            for service in self._list_running_services(service_name, dc):
+            for service in self._list_running_services(service_name, dc, tag=xivo_uuid):
                 services.append(service)
         return services
 
@@ -297,11 +297,12 @@ class ServiceFinder(object):
         self._assert_ok(response)
         return response.json()
 
-    def _list_running_services(self, service_name, datacenter):
+    def _list_running_services(self, service_name, datacenter, tag):
         url = '{}/{}'.format(self._health_url, service_name)
-        response = requests.get(url,
-                                verify=self._verify,
-                                params={'dc': datacenter, 'passing': True})
+        params = {'dc': datacenter, 'passing': True}
+        if tag:
+            params['tag'] = tag
+        response = requests.get(url, verify=self._verify, params=params)
         self._assert_ok(response)
         services = []
         for node in response.json():
