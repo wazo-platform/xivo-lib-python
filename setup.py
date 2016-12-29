@@ -8,8 +8,8 @@ setup(
     name='xivo',
     version='1.0',
     description='These are useful python libraries to be used with XIVO code',
-    author='Avencall',
-    author_email='xivo-dev@lists.proformatique.com',
-    url='http://projects.xivo.io/',
+    author='Wazo Authors',
+    author_email='dev.wazo@gmail.com',
+    url='http://wazo.community',
     packages=find_packages(),
 )
