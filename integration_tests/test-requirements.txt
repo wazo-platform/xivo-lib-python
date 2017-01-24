@@ -1,5 +1,5 @@
 docker-compose
-xivo-test-helpers>=0.1.4
+https://github.com/wazo-pbx/xivo-test-helpers/archive/master.zip
 nose
 kombu
 pyhamcrest
