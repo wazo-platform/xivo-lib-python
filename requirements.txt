@@ -8,5 +8,5 @@ psycopg2==2.5.4
 pyyaml==3.11
 pyopenssl==0.14
 python-consul==0.4.7
-six==1.8.0
+six
 stevedore==0.14.1
