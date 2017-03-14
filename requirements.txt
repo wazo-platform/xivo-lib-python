@@ -9,4 +9,4 @@ pyyaml==3.11
 pyopenssl==0.14
 python-consul==0.4.7
 six
-stevedore==0.14.1
+stevedore==1.17.1
