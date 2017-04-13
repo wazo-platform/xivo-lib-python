@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2016 Avencall
+# Copyright 2016-2017 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import logging
+import marshmallow
 import time
 
 from functools import wraps
@@ -45,4 +46,25 @@ def handle_api_exception(func):
             }
             logger.error('%s: %s', error.message, error.details)
             return response, error.status_code
+    return wrapper
+
+
+class ValidationError(APIException):
+
+    def __init__(self, errors):
+        super(ValidationError, self).__init__(
+            status_code=400,
+            message='Sent data is invalid',
+            error_id='invalid-data',
+            details=errors
+        )
+
+
+def handle_validation_exception(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except marshmallow.ValidationError as e:
+            raise ValidationError(e.messages)
     return wrapper
