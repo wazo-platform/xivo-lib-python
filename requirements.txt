@@ -8,5 +8,6 @@ psycopg2==2.5.4
 pyyaml==3.11
 pyopenssl==0.14
 python-consul==0.4.7
+marshmallow==2.10.3
 six
 stevedore==1.17.1
