@@ -15,34 +15,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-import logging
-import time
+import marshmallow
 
-from functools import wraps
+from .rest_api_helpers import APIException
 
-logger = logging.getLogger(__name__)
+class ValidationError(APIException):
+
+    def __init__(self, errors):
+        super(ValidationError, self).__init__(
+            status_code=400,
+            message='Sent data is invalid',
+            error_id='invalid-data',
+            details=errors
+        )
 
 
-class APIException(Exception):
-    def __init__(self, status_code, message, error_id, details=None):
-        self.status_code = status_code
-        self.message = message
-        self.id_ = error_id
-        self.details = details or {}
-
-
-def handle_api_exception(func):
+def handle_validation_exception(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except APIException as error:
-            response = {
-                'message': error.message,
-                'error_id': error.id_,
-                'details': error.details,
-                'timestamp': time.time()
-            }
-            logger.error('%s: %s', error.message, error.details)
-            return response, error.status_code
+        except marshmallow.ValidationError as e:
+            raise ValidationError(e.messages)
     return wrapper
