@@ -17,7 +17,10 @@
 
 import marshmallow
 
+from functools import wraps
+
 from .rest_api_helpers import APIException
+
 
 class ValidationError(APIException):
 
