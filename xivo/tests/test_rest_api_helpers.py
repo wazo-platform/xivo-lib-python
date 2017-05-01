@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2016 Avencall
+# Copyright 2016-2017 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -76,6 +76,28 @@ class TestRestApiHelpers(TestCase):
                 'timestamp': instance_of(float)
             }),
             s.status_code))
+
+    def test_given_api_exception_with_a_resource(self):
+        @handle_api_exception
+        def decorated():
+            raise APIException(s.status_code,
+                               s.message,
+                               s.error_id,
+                               s.details,
+                               resource=s.resource)
+
+        result = decorated()
+
+        assert_that(result, contains(
+            has_entries({
+                'resource': s.resource,
+                'message': s.message,
+                'error_id': s.error_id,
+                'details': s.details,
+                'timestamp': instance_of(float)
+            }),
+            s.status_code))
+
 
     @patch('xivo.rest_api_helpers.logger')
     def test_given_api_exception_when_handle_api_exception_then_logs_error(self, logger):
