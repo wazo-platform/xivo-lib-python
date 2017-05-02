@@ -24,11 +24,13 @@ logger = logging.getLogger(__name__)
 
 
 class APIException(Exception):
-    def __init__(self, status_code, message, error_id, details=None):
+
+    def __init__(self, status_code, message, error_id, details=None, resource=None):
         self.status_code = status_code
         self.message = message
         self.id_ = error_id
         self.details = details or {}
+        self.resource = resource
 
 
 def handle_api_exception(func):
@@ -43,6 +45,8 @@ def handle_api_exception(func):
                 'details': error.details,
                 'timestamp': time.time()
             }
+            if error.resource:
+                response['resource'] = error.resource
             logger.error('%s: %s', error.message, error.details)
             return response, error.status_code
     return wrapper
