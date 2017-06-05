@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2014 Avencall
+# Copyright 2013-2017 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import six
+
 
 class InputRawCommandLineSource(object):
 
@@ -27,13 +29,15 @@ class InputRawCommandLineSource(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         while True:
             try:
-                raw_command_line = raw_input(self._prompt).decode('UTF-8')
+                raw_command_line = six.b(six.moves.input(self._prompt)).decode('UTF-8')
                 return raw_command_line
             except EOFError:
                 print()
                 raise StopIteration()
             except KeyboardInterrupt:
                 print('^C')
+
+    next = __next__
