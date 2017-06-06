@@ -17,8 +17,10 @@
 
 import logging
 import time
+import yaml
 
 from functools import wraps
+from pkg_resources import resource_string, iter_entry_points
 
 logger = logging.getLogger(__name__)
 
@@ -50,3 +52,12 @@ def handle_api_exception(func):
             logger.error('%s: %s', error.message, error.details)
             return response, error.status_code
     return wrapper
+
+
+def load_all_api_specs(entry_point_group, spec_filename):
+    for module in iter_entry_points(group=entry_point_group):
+        try:
+            spec = yaml.load(resource_string(module.module_name, spec_filename))
+            yield spec
+        except IOError:
+            logger.debug('API spec for module "%s" does not exist', module.module_name)
