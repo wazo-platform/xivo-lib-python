@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2014 Avencall
+# Copyright 2013-2017 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ from xivo.cli.source.input import InputRawCommandLineSource
 
 class FacadeInterpreter(object):
 
-    def __init__(self, prompt=None, history_file=None):
+    def __init__(self, prompt=None, history_file=None, error_handler=None):
         if prompt is None:
             prompt = '{0}> '.format(os.path.basename(sys.argv[0]))
         if history_file:
@@ -43,7 +43,7 @@ class FacadeInterpreter(object):
         self._command_registry = CommandRegistry()
         self._command_line_completer = CommandLineCompleter(self._command_registry)
         self._raw_command_line_parser = RawCommandLineParser(self._command_registry)
-        self._error_handler = PrintTracebackErrorHandler()
+        self._error_handler = error_handler or PrintTracebackErrorHandler()
 
         self._add_std_commands()
         self._setup_completion()
@@ -67,11 +67,12 @@ class FacadeInterpreter(object):
                             self._error_handler)
         executor.execute()
 
-    def loop(self):
+    def loop(self, error_handler=None):
+        error_handler = error_handler or self._error_handler
         raw_command_line_source = InputRawCommandLineSource(self._prompt)
         executor = Executor(raw_command_line_source,
                             self._raw_command_line_parser,
-                            self._error_handler)
+                            error_handler)
         self._load_history()
         try:
             executor.execute()
