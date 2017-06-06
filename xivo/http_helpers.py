@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2016 Avencall
-# Copyright (C) 2016 Proformatique Inc.
+# Copyright 2016-2017 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +18,7 @@
 import re
 import six
 
-if six.PY2:
-    from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter
+from cherrypy import wsgiserver
 from flask import current_app, request
 from OpenSSL import SSL
 from six.moves.urllib.parse import unquote
@@ -56,14 +54,19 @@ def ssl_adapter(certificate, private_key, ciphers):
     _check_file_readable(certificate)
     _check_file_readable(private_key)
 
-    adapter = pyOpenSSLAdapter(certificate, private_key)
-    adapter.context = SSL.Context(SSL.SSLv23_METHOD)
-    adapter.context.set_options(SSL.OP_NO_SSLv2)
-    adapter.context.set_options(SSL.OP_NO_SSLv3)
-    adapter.context.set_options(SSL.OP_NO_COMPRESSION)
-    adapter.context.use_certificate_chain_file(certificate)
-    adapter.context.use_privatekey_file(private_key)
-    adapter.context.set_cipher_list(ciphers)
+    if six.PY2:
+        Adapter = wsgiserver.get_ssl_adapter_class('pyopenssl')
+        adapter = Adapter(certificate, private_key)
+        adapter.context = SSL.Context(SSL.SSLv23_METHOD)
+        adapter.context.set_options(SSL.OP_NO_SSLv2)
+        adapter.context.set_options(SSL.OP_NO_SSLv3)
+        adapter.context.set_options(SSL.OP_NO_COMPRESSION)
+        adapter.context.use_certificate_chain_file(certificate)
+        adapter.context.use_privatekey_file(private_key)
+        adapter.context.set_cipher_list(ciphers)
+    else:
+        Adapter = wsgiserver.get_ssl_adapter_class('builtin')
+        adapter = Adapter(certificate, private_key)
     return adapter
 
 
