@@ -22,6 +22,7 @@ import sys
 from xivo.cli import history
 from xivo.cli.command.help import HelpCommand
 from xivo.cli.command.exit import ExitCommand
+from xivo.cli.command.unknown import PrintingUnknownCommand
 from xivo.cli.completion.completer import CommandLineCompleter
 from xivo.cli.completion.readline import ReadlineCompletionHelper
 from xivo.cli.errorhandler import PrintTracebackErrorHandler
@@ -44,6 +45,7 @@ class FacadeInterpreter(object):
         self._command_line_completer = CommandLineCompleter(self._command_registry)
         self._raw_command_line_parser = RawCommandLineParser(self._command_registry)
         self._error_handler = error_handler or PrintTracebackErrorHandler()
+        self._unknown_command_class = PrintingUnknownCommand
 
         self._add_std_commands()
         self._setup_completion()
@@ -60,11 +62,15 @@ class FacadeInterpreter(object):
     def add_command(self, name, command):
         self._command_registry.register_command(name, command)
 
+    def set_unknown_command_class(self, command_class):
+        self._unknown_command_class = command_class
+
     def execute_command_line(self, raw_command_line):
         raw_command_line_source = [raw_command_line]
         executor = Executor(raw_command_line_source,
                             self._raw_command_line_parser,
-                            self._error_handler)
+                            self._error_handler,
+                            self._unknown_command_class)
         executor.execute()
 
     def loop(self, error_handler=None):
@@ -72,7 +78,8 @@ class FacadeInterpreter(object):
         raw_command_line_source = InputRawCommandLineSource(self._prompt)
         executor = Executor(raw_command_line_source,
                             self._raw_command_line_parser,
-                            error_handler)
+                            error_handler,
+                            self._unknown_command_class)
         self._load_history()
         try:
             executor.execute()
