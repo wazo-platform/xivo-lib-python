@@ -18,7 +18,7 @@
 import re
 import six
 
-from cherrypy import wsgiserver
+from cheroot import server
 from flask import current_app, request
 from OpenSSL import SSL
 from six.moves.urllib.parse import unquote
@@ -55,7 +55,7 @@ def ssl_adapter(certificate, private_key, ciphers):
     _check_file_readable(private_key)
 
     if six.PY2:
-        Adapter = wsgiserver.get_ssl_adapter_class('pyopenssl')
+        Adapter = server.get_ssl_adapter_class('pyopenssl')
         adapter = Adapter(certificate, private_key)
         adapter.context = SSL.Context(SSL.SSLv23_METHOD)
         adapter.context.set_options(SSL.OP_NO_SSLv2)
@@ -65,7 +65,7 @@ def ssl_adapter(certificate, private_key, ciphers):
         adapter.context.use_privatekey_file(private_key)
         adapter.context.set_cipher_list(ciphers)
     else:
-        Adapter = wsgiserver.get_ssl_adapter_class('builtin')
+        Adapter = server.get_ssl_adapter_class('builtin')
         adapter = Adapter(certificate, private_key)
     return adapter
 
