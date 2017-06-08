@@ -1,4 +1,4 @@
-cherrypy==3.7.0
+cheroot==5.5.0
 flask==0.10.1
 git+https://github.com/wazo-pbx/xivo-auth-client.git
 git+https://github.com/wazo-pbx/xivo-bus.git
