@@ -48,7 +48,7 @@ def log_request_hide_token(response):
     return response
 
 
-def ssl_adapter(certificate, private_key, ciphers):
+def ssl_adapter(certificate, private_key, ciphers=None):
     _check_file_readable(certificate)
     _check_file_readable(private_key)
 
