@@ -16,11 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import re
-import six
 
-from cheroot import server
+from cheroot.ssl.builtin import BuiltinSSLAdapter
 from flask import current_app, request
-from OpenSSL import SSL
 from six.moves.urllib.parse import unquote
 
 DEFAULT_CIPHERS = 'ALL:!aNULL:!eNULL:!LOW:!EXP:!RC4:!3DES:!SEED:+HIGH:+MEDIUM'
@@ -54,20 +52,7 @@ def ssl_adapter(certificate, private_key, ciphers):
     _check_file_readable(certificate)
     _check_file_readable(private_key)
 
-    if six.PY2:
-        Adapter = server.get_ssl_adapter_class('pyopenssl')
-        adapter = Adapter(certificate, private_key)
-        adapter.context = SSL.Context(SSL.SSLv23_METHOD)
-        adapter.context.set_options(SSL.OP_NO_SSLv2)
-        adapter.context.set_options(SSL.OP_NO_SSLv3)
-        adapter.context.set_options(SSL.OP_NO_COMPRESSION)
-        adapter.context.use_certificate_chain_file(certificate)
-        adapter.context.use_privatekey_file(private_key)
-        adapter.context.set_cipher_list(ciphers)
-    else:
-        Adapter = server.get_ssl_adapter_class('builtin')
-        adapter = Adapter(certificate, private_key)
-    return adapter
+    return BuiltinSSLAdapter(certificate, private_key)
 
 
 def _check_file_readable(file_path):
