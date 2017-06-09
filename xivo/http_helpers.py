@@ -21,8 +21,6 @@ from cheroot.ssl.builtin import BuiltinSSLAdapter
 from flask import current_app, request
 from six.moves.urllib.parse import unquote
 
-DEFAULT_CIPHERS = 'ALL:!aNULL:!eNULL:!LOW:!EXP:!RC4:!3DES:!SEED:+HIGH:+MEDIUM'
-
 
 def add_logger(app, logger):
     for handler in logger.handlers:
@@ -48,7 +46,7 @@ def log_request_hide_token(response):
     return response
 
 
-def ssl_adapter(certificate, private_key, ciphers=None):
+def ssl_adapter(certificate, private_key):
     _check_file_readable(certificate)
     _check_file_readable(private_key)
 
