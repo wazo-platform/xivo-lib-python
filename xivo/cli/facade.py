@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013-2014 Avencall
+# Copyright 2013-2017 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ import sys
 from xivo.cli import history
 from xivo.cli.command.help import HelpCommand
 from xivo.cli.command.exit import ExitCommand
+from xivo.cli.command.unknown import PrintingUnknownCommand
 from xivo.cli.completion.completer import CommandLineCompleter
 from xivo.cli.completion.readline import ReadlineCompletionHelper
 from xivo.cli.errorhandler import PrintTracebackErrorHandler
@@ -33,7 +34,7 @@ from xivo.cli.source.input import InputRawCommandLineSource
 
 class FacadeInterpreter(object):
 
-    def __init__(self, prompt=None, history_file=None):
+    def __init__(self, prompt=None, history_file=None, error_handler=None):
         if prompt is None:
             prompt = '{0}> '.format(os.path.basename(sys.argv[0]))
         if history_file:
@@ -43,7 +44,8 @@ class FacadeInterpreter(object):
         self._command_registry = CommandRegistry()
         self._command_line_completer = CommandLineCompleter(self._command_registry)
         self._raw_command_line_parser = RawCommandLineParser(self._command_registry)
-        self._error_handler = PrintTracebackErrorHandler()
+        self._error_handler = error_handler or PrintTracebackErrorHandler()
+        self._unknown_command_class = PrintingUnknownCommand
 
         self._add_std_commands()
         self._setup_completion()
@@ -60,18 +62,24 @@ class FacadeInterpreter(object):
     def add_command(self, name, command):
         self._command_registry.register_command(name, command)
 
+    def set_unknown_command_class(self, command_class):
+        self._unknown_command_class = command_class
+
     def execute_command_line(self, raw_command_line):
         raw_command_line_source = [raw_command_line]
         executor = Executor(raw_command_line_source,
                             self._raw_command_line_parser,
-                            self._error_handler)
+                            self._error_handler,
+                            self._unknown_command_class)
         executor.execute()
 
-    def loop(self):
+    def loop(self, error_handler=None):
+        error_handler = error_handler or self._error_handler
         raw_command_line_source = InputRawCommandLineSource(self._prompt)
         executor = Executor(raw_command_line_source,
                             self._raw_command_line_parser,
-                            self._error_handler)
+                            error_handler,
+                            self._unknown_command_class)
         self._load_history()
         try:
             executor.execute()
