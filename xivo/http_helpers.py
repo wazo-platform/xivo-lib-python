@@ -22,6 +22,22 @@ from flask import current_app, request
 from six.moves.urllib.parse import unquote
 
 
+class ReverseProxied(object):
+    '''
+    From http://flask.pocoo.org/snippets/35/
+    '''
+
+    def __init__(self, application):
+        self.app = application
+
+    def __call__(self, environ, start_response):
+        script_name = environ.get('HTTP_X_SCRIPT_NAME', '')
+        if script_name:
+            environ['SCRIPT_NAME'] = script_name
+
+        return self.app(environ, start_response)
+
+
 def add_logger(app, logger):
     for handler in logger.handlers:
         app.logger.addHandler(handler)
@@ -38,6 +54,7 @@ def log_request(response):
 
 
 _REPLACE_TOKEN_REGEX = re.compile(r'\btoken=[-0-9a-zA-Z]+')
+
 
 def log_request_hide_token(response):
     url = unquote(request.url)
