@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2015-2017 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2018 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,12 +51,13 @@ class TokenRenewer(object):
         self._renew_token()
 
         self._started = True
-        thread = threading.Thread(target=self._run)
-        thread.daemon = True
-        thread.start()
+        self._thread = threading.Thread(target=self._run, name='token-renewer')
+        self._thread.start()
 
     def stop(self):
         self._stopped.set()
+        logger.debug('joining token renewer thread...')
+        self._thread.join()
 
     def _run(self):
         while True:
