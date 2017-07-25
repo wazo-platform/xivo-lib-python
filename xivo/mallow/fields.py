@@ -8,6 +8,7 @@ from marshmallow.fields import List
 from marshmallow.fields import Integer
 from marshmallow.fields import Nested
 from marshmallow.fields import String
+from marshmallow.fields import UUID
 
 
 class Field(Field):
@@ -75,4 +76,13 @@ class String(String):
         'invalid': {'message': String.default_error_messages['invalid'],
                     'constraint_id': 'type',
                     'constraint': 'string'},
+    })
+
+
+class UUID(UUID):
+    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages.update({
+        'invalid_uuid': {'message': UUID.default_error_messages['invalid_uuid'],
+                         'constraint_id': 'type',
+                         'constraint': 'uuid'},
     })
