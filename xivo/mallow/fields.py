@@ -3,6 +3,7 @@
 
 from marshmallow.fields import Field
 from marshmallow.fields import Boolean
+from marshmallow.fields import DateTime
 from marshmallow.fields import Dict
 from marshmallow.fields import List
 from marshmallow.fields import Integer
@@ -31,6 +32,15 @@ class Boolean(Boolean):
         'invalid': {'message': Boolean.default_error_messages['invalid'],
                     'constraint_id': 'type',
                     'constraint': 'boolean'},
+    })
+
+
+class DateTime(DateTime):
+    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages.update({
+        'invalid': {'message': DateTime.default_error_messages['invalid'],
+                    'constraint_id': 'type',
+                    'constraint': 'datetime'},
     })
 
 
