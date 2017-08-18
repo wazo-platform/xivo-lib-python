@@ -179,8 +179,8 @@ class TestServiceDiscovery(_BaseTest):
     def test_that_the_bus_message_is_received_on_stop_when_rabbitmq_is_restarted(self):
         with self.myservice() as ip:
             self.assert_registered_msg_received(ip)  # to remove the message from the queue
-            self._run_cmd('docker-compose restart rabbitmq')
             self.stop_listening()
+            self._run_cmd('docker-compose restart rabbitmq')
             self.start_listening()
         self.assert_deregistered_msg_received()
 
