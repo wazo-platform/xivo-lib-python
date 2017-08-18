@@ -5,16 +5,12 @@ myservice:
     - consul
 rabbitmq:
   image: rabbitmq
-  expose:
-    - "5672"
   ports:
-    - "5672:5672"
+    - "5672"
 consul:
   image: progrium/consul
-  expose:
-    - "8500"
   ports:
-    - "8500:8500"
+    - "8500"
   command: "-client 0.0.0.0 -config-dir /tmp"
 sync:
   image: n3llyb0y/wait

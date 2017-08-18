@@ -28,6 +28,7 @@ from xivo_test_helpers import until
 from xivo_test_helpers.asset_launching_test_case import AssetLaunchingTestCase
 
 ASSET_ROOT = os.path.join(os.path.dirname(__file__), '..', 'assets')
+BUS_URL = 'amqp://{username}:{password}@{host}:{port}//'
 
 
 class ServiceConsumer(ConsumerMixin):
@@ -39,9 +40,18 @@ class ServiceConsumer(ConsumerMixin):
         self.connection = connection
         self._queue = kombu.Queue(exchange=self._exchange, routing_key=self._routing_key)
         self._received_messages = message_queue
+        self._is_running = False
 
     def get_consumers(self, Consumer, channel):
         return [Consumer(self._queue, callbacks=[self.on_message])]
+
+    def on_connection_error(self, exc, interval):
+        super(ServiceConsumer, self).on_connection_error(exc, interval)
+        self._is_running = False
+
+    def on_connection_revived(self):
+        super(ServiceConsumer, self).on_connection_revived()
+        self._is_running = True
 
     def on_message(self, body, message):
         self._received_messages.put_nowait(body)
@@ -49,6 +59,9 @@ class ServiceConsumer(ConsumerMixin):
 
     def get_message(self):
         return self._received_messages.get()
+
+    def is_running(self):
+        return self._is_running
 
 
 class _BaseTest(AssetLaunchingTestCase):
@@ -99,12 +112,9 @@ class TestServiceDiscovery(_BaseTest):
 
     assets_root = ASSET_ROOT
     asset = 'service_discovery'
-    bus_url = 'amqp://{username}:{password}@{host}:{port}//'.format(username='guest',
-                                                                    password='guest',
-                                                                    host='localhost',
-                                                                    port=5672)
 
     def setUp(self):
+        self._consumer = None
         self.messages = Queue()
         self.start_listening()
 
@@ -112,8 +122,19 @@ class TestServiceDiscovery(_BaseTest):
         self._bus_thread = threading.Thread(target=self._start_consuming)
         self._bus_thread.start()
 
+        def is_listening():
+            return self._consumer and self._consumer.is_running()
+
+        until.true(is_listening, tries=20, interval=0.5)
+
     def _start_consuming(self):
-        with kombu.Connection(self.bus_url) as conn:
+        bus_url = BUS_URL.format(
+            username='guest',
+            password='guest',
+            host='localhost',
+            port=self.service_port(5672, 'rabbitmq')
+        )
+        with kombu.Connection(bus_url) as conn:
             conn.ensure_connection()
             self._consumer = ServiceConsumer(conn, self.messages)
             self._consumer.run()
@@ -124,6 +145,7 @@ class TestServiceDiscovery(_BaseTest):
     def stop_listening(self):
         self._consumer.should_stop = True
         self._bus_thread.join()
+        self._consumer = None
 
     def empty_message_queue(self):
         while not self.messages.empty():
@@ -174,7 +196,8 @@ class TestServiceDiscovery(_BaseTest):
         assert_that(registered, equal_to(False))
 
     def _is_myservice_registered_to_consul(self, ip):
-        consul = Consul('localhost', '8500', 'the_one_ring')
+        port = self.service_port(8500, 'consul')
+        consul = Consul('localhost', port, 'the_one_ring')
         services = consul.agent.services()
         for index, service in services.iteritems():
             if service['Service'] == 'myservice' and service['Address'] == ip:
