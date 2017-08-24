@@ -36,3 +36,7 @@ def load(namespace, names, dependencies):
     manager.map(load_plugin, dependencies)
 
     return manager
+
+
+def from_list(enabled_names):
+    return {name: True for name in enabled_names}
