@@ -5,6 +5,7 @@ import logging
 
 from six import iteritems
 from stevedore.named import NamedExtensionManager
+from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 
@@ -39,4 +40,4 @@ def load(namespace, names, dependencies):
 
 
 def from_list(enabled_names):
-    return {name: True for name in enabled_names}
+    return OrderedDict((name, True) for name in enabled_names)
