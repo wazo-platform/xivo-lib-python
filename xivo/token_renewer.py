@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2015-2016 Avencall
+# Copyright 2015-2017 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,6 +67,7 @@ class TokenRenewer(object):
             self._renew_token()
 
     def _renew_token(self):
+        logger.debug('Creating token for "%s" with backend "%s", expiration %s', self._auth_client.username, self._backend, self._expiration)
         try:
             token = self._auth_client.token.new(self._backend, expiration=self._expiration)
         except Exception:
