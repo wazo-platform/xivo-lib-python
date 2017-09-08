@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2016 Avencall
+# Copyright 2007-2017 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,19 +35,24 @@ class Pubsub(object):
         self._exception_handler = exception_handler
 
     def subscribe(self, topic, callback):
+        logger.debug('Subscribing callback "%s" to topic "%s"', callback, topic)
         self._subscribers[topic].append(callback)
 
     def publish(self, topic, message):
+        logger.debug('Publishing to topic "%s": "%s"', topic, message)
         for callback in self._subscribers[topic]:
             self.publish_one(callback, message)
 
     def publish_one(self, callback, message):
+        logger.debug('Publishing to callback "%s": "%s"', callback, message)
         try:
             callback(message)
         except Exception as e:
+            logger.debug('Publishing failed. Running exception handler "%s"', self._exception_handler)
             self._exception_handler(callback, message, e)
 
     def unsubscribe(self, topic, callback):
+        logger.debug('Unsubscribing callback "%s" to topic "%s"', callback, topic)
         try:
             self._subscribers[topic].remove(callback)
         except ValueError:
