@@ -3,6 +3,7 @@
 
 from marshmallow.validate import Length
 from marshmallow.validate import OneOf
+from marshmallow.validate import Predicate
 from marshmallow.validate import Range
 from marshmallow.validate import Regexp
 from marshmallow.validate import URL
@@ -32,6 +33,20 @@ class OneOf(OneOf):
         return {
             'constraint_id': self.constraint_id,
             'constraint': {'choices': self.choices},
+            'message': msg,
+        }
+
+
+class Predicate(Predicate):
+
+    constraint_id = 'predicate'
+
+    def _format_error(self, value):
+        msg = super()._format_error(value)
+
+        return {
+            'constraint_id': self.constraint_id,
+            'constraint': {'method': self.method},
             'message': msg,
         }
 
