@@ -1,11 +1,27 @@
 # Copyright 2017 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
+from marshmallow.validate import Equal
 from marshmallow.validate import Length
 from marshmallow.validate import OneOf
+from marshmallow.validate import Predicate
 from marshmallow.validate import Range
 from marshmallow.validate import Regexp
 from marshmallow.validate import URL
+
+
+class Equal(Equal):
+
+    constraint_id = 'equal'
+
+    def _format_error(self, value):
+        msg = super()._format_error(value)
+
+        return {
+            'constraint_id': self.constraint_id,
+            'constraint': {'must_be': self.comparable},
+            'message': msg,
+        }
 
 
 class Length(Length):
@@ -32,6 +48,20 @@ class OneOf(OneOf):
         return {
             'constraint_id': self.constraint_id,
             'constraint': {'choices': self.choices},
+            'message': msg,
+        }
+
+
+class Predicate(Predicate):
+
+    constraint_id = 'predicate'
+
+    def _format_error(self, value):
+        msg = super()._format_error(value)
+
+        return {
+            'constraint_id': self.constraint_id,
+            'constraint': {'method': self.method},
             'message': msg,
         }
 
