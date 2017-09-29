@@ -71,15 +71,16 @@ class _BaseTest(AssetLaunchingTestCase):
 
     @contextmanager
     def myservice(self, ip=None, enabled=True):
-        self._run_cmd('docker-compose stop myservice')
-        self._run_cmd('docker-compose rm -f myservice')
+        self._run_docker_compose_cmd(['stop', self.service])
+        self._run_docker_compose_cmd(['rm', '-f', self.service])
 
         if not enabled:
-            self._run_cmd('docker-compose run -d -e DISABLED=1 myservice')
+            self._run_docker_compose_cmd(['run', '-d', '-e', 'DISABLED=1', self.service])
         elif not ip:
-            self._run_cmd('docker-compose run -d myservice')
+            self._run_docker_compose_cmd(['run', '-d', self.service])
         else:
-            self._run_cmd('docker-compose run -d -e ADVERTISE_ADDR={} myservice'.format(ip))
+            self._run_docker_compose_cmd(['run', '-d', '-e', 'ADVERTISE_ADDR={}'.format(ip), self.service])
+
         status = self.service_status('myservice')
 
         try:
@@ -87,6 +88,10 @@ class _BaseTest(AssetLaunchingTestCase):
         finally:
             id_ = status['Id']
             self._run_cmd('docker stop --time 20 {}'.format(id_))
+
+    def _run_docker_compose_cmd(self, cmd):
+        self._run_cmd('docker-compose {} {}'.format(' '.join(self._docker_compose_options()),
+                                                    ' '.join(cmd)))
 
 
 class TestServiceDiscoveryDisabled(_BaseTest):
