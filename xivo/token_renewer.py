@@ -71,7 +71,7 @@ class TokenRenewer(object):
         try:
             token = self._auth_client.token.new(self._backend, expiration=self._expiration)
         except Exception:
-            logger.warning('create token with xivo-auth failed', exc_info=True)
+            logger.warning('create token with wazo-auth failed', exc_info=True)
             self._renew_time = self._RENEW_TIME_FAILED
         else:
             self._renew_time = self._RENEW_TIME_COEFFICIENT * self._expiration
