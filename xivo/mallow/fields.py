@@ -5,11 +5,13 @@ from marshmallow.fields import Field
 from marshmallow.fields import Boolean
 from marshmallow.fields import DateTime
 from marshmallow.fields import Dict
+from marshmallow.fields import Email
 from marshmallow.fields import List
 from marshmallow.fields import Integer
 from marshmallow.fields import Nested
 from marshmallow.fields import String
 from marshmallow.fields import UUID
+from marshmallow import validate
 
 
 class Field(Field):
@@ -51,6 +53,20 @@ class Dict(Dict):
                     'constraint_id': 'type',
                     'constraint': 'dict'},
     })
+
+
+class Email(Email):
+    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages.update({
+        'invalid': {'message': Email.default_error_messages['invalid'],
+                    'constraint_id': 'type',
+                    'constraint': 'email'},
+    })
+
+    def __init__(self, *args, **kwargs):
+        super(self.__class__, self).__init__(*args, **kwargs)
+        # the default implementation does not work well with "invalid" being a dict
+        self.validators[0] = validate.Email(error='Invalid email address')
 
 
 class Integer(Integer):
