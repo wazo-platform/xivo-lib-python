@@ -11,7 +11,7 @@ from marshmallow.fields import Integer
 from marshmallow.fields import Nested
 from marshmallow.fields import String
 from marshmallow.fields import UUID
-from marshmallow import validate
+from . import validate
 
 
 class Field(Field):
@@ -66,7 +66,7 @@ class Email(Email):
     def __init__(self, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
         # the default implementation does not work well with "invalid" being a dict
-        self.validators[0] = validate.Email(error='Invalid email address')
+        self.validators[0] = validate.Email()
 
 
 class Integer(Integer):
