@@ -1,6 +1,7 @@
 # Copyright 2017 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
+from marshmallow.validate import Email
 from marshmallow.validate import Equal
 from marshmallow.validate import Length
 from marshmallow.validate import OneOf
@@ -10,12 +11,26 @@ from marshmallow.validate import Regexp
 from marshmallow.validate import URL
 
 
+class Email(Email):
+
+    constraint_id = 'email'
+
+    def _format_error(self, value):
+        msg = super(Email, self)._format_error(value)
+
+        return {
+            'constraint_id': self.constraint_id,
+            'constraint': 'must be a valid email address',
+            'message': msg,
+        }
+
+
 class Equal(Equal):
 
     constraint_id = 'equal'
 
     def _format_error(self, value):
-        msg = super()._format_error(value)
+        msg = super(Equal, self)._format_error(value)
 
         return {
             'constraint_id': self.constraint_id,
@@ -29,7 +44,7 @@ class Length(Length):
     constraint_id = 'length'
 
     def _format_error(self, value, message):
-        msg = super()._format_error(value, message)
+        msg = super(Length, self)._format_error(value, message)
 
         return {
             'constraint_id': self.constraint_id,
@@ -43,7 +58,7 @@ class OneOf(OneOf):
     constraint_id = 'enum'
 
     def _format_error(self, value):
-        msg = super()._format_error(value)
+        msg = super(OneOf, self)._format_error(value)
 
         return {
             'constraint_id': self.constraint_id,
@@ -57,7 +72,7 @@ class Predicate(Predicate):
     constraint_id = 'predicate'
 
     def _format_error(self, value):
-        msg = super()._format_error(value)
+        msg = super(Predicate, self)._format_error(value)
 
         return {
             'constraint_id': self.constraint_id,
@@ -71,7 +86,7 @@ class Range(Range):
     constraint_id = 'range'
 
     def _format_error(self, value, *args):
-        msg = super()._format_error(value, *args)
+        msg = super(Range, self)._format_error(value, *args)
         constraint = {}
         if self.min is not None:
             constraint['min'] = self.min
@@ -90,7 +105,7 @@ class Regexp(Regexp):
     constraint_id = 'regex'
 
     def _format_error(self, value):
-        msg = super()._format_error(value)
+        msg = super(Regexp, self)._format_error(value)
 
         return {
             'constraint_id': self.constraint_id,
@@ -104,7 +119,7 @@ class URL(URL):
     constraint_id = 'url'
 
     def _format_error(self, value):
-        msg = super()._format_error(value)
+        msg = super(URL, self)._format_error(value)
 
         return {
             'constraint_id': self.constraint_id,
