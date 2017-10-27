@@ -26,6 +26,10 @@ def load_plugin(ext, *load_args, **load_kwargs):
 def load(namespace, names, dependencies):
     names = enabled_names(names)
     logger.debug('Enabled plugins: %s', names)
+    if not names:
+        logger.info('no enabled plugins')
+        return
+
     manager = NamedExtensionManager(
         namespace,
         names,
