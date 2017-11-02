@@ -24,7 +24,7 @@ def on_missing_entrypoints(missing_names):
 
 def load_plugin(ext, *load_args, **load_kwargs):
     logger.debug('Loading dynamic plugin: %s', ext.name)
-    ext.obj.load(*load_args, **load_kwargs)
+    return ext.obj.load(*load_args, **load_kwargs)
 
 
 def load(namespace, names, dependencies):
