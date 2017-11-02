@@ -61,3 +61,5 @@ def load_all_api_specs(entry_point_group, spec_filename):
             yield spec
         except IOError:
             logger.debug('API spec for module "%s" does not exist', module.module_name)
+        except ImportError:
+            logger.warning('Could not load module %s', module.module_name)
