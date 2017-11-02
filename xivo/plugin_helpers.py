@@ -18,6 +18,10 @@ def on_load_failure(_, entrypoint, exception):
     logger.exception('There is an error with this module: %s', entrypoint)
 
 
+def on_missing_entrypoints(missing_names):
+    logger.error('Unable to load plugins because the entrypoint is missing: %s', missing_names)
+
+
 def load_plugin(ext, *load_args, **load_kwargs):
     logger.debug('Loading dynamic plugin: %s', ext.name)
     ext.obj.load(*load_args, **load_kwargs)
@@ -35,6 +39,7 @@ def load(namespace, names, dependencies):
         names,
         name_order=True,
         on_load_failure_callback=on_load_failure,
+        on_missing_entrypoints_callback=on_missing_entrypoints,
         invoke_on_load=True
     )
 
