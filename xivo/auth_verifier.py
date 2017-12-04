@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2015-2016 Avencall
-# Copyright (C) 2016 Proformatique Inc.
+# Copyright 2015-2017 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,14 +22,24 @@ from collections import namedtuple
 from flask import request
 from functools import wraps
 from six import iteritems, text_type
-from xivo_auth_client import Client
+
+# Postpone the raise to the first use of the Client constructor.
+# wazo-auth uses its own version of the client to avoid using its own
+# rest-api to call itself.
+try:
+    from xivo_auth_client import Client
+except ImportError as e:
+    class Client(object):
+        _exc = e
+        def __init__(self, *args, **kwargs):
+            raise self._exc
+
 
 from xivo import rest_api_helpers
 
+_ACLCheck = namedtuple('_ACLCheck', ['pattern', 'extract_token_id'])
 logger = logging.getLogger(__name__)
 
-
-_ACLCheck = namedtuple('_ACLCheck', ['pattern', 'extract_token_id'])
 
 def required_acl(acl_pattern, extract_token_id=None):
     def wrapper(func):
