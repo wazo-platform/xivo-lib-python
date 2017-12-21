@@ -39,6 +39,8 @@ class ReverseProxied(object):
 
 
 def add_logger(app, logger):
+    app.config['LOGGER_HANDLER_POLICY'] = 'never'
+    app.logger.propagate = True
     for handler in logger.handlers:
         app.logger.addHandler(handler)
 
