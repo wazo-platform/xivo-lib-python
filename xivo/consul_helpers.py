@@ -194,11 +194,15 @@ class Registerer(object):
             raise RegistererError(str(e))
 
     def _find_address(self, service_discovery_config):
-        advertise_address = service_discovery_config['advertise_address']
-        if advertise_address != 'auto':
-            return advertise_address
+        return address_from_config(service_discovery_config)
 
-        return _find_address(service_discovery_config['advertise_address_interface'])
+
+def address_from_config(service_discovery_config):
+    advertise_address = service_discovery_config['advertise_address']
+    if advertise_address != 'auto':
+        return advertise_address
+
+    return _find_address(service_discovery_config['advertise_address_interface'])
 
 
 def _find_address(main_iface):
