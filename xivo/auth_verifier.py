@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2015-2017 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2018 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@ try:
 except ImportError as e:
     class Client(object):
         _exc = e
+
         def __init__(self, *args, **kwargs):
             raise self._exc
 
@@ -46,6 +47,11 @@ def required_acl(acl_pattern, extract_token_id=None):
         func.acl = _ACLCheck(acl_pattern, extract_token_id)
         return func
     return wrapper
+
+
+def no_auth(func):
+    func.no_auth = True
+    return func
 
 
 class Unauthorized(rest_api_helpers.APIException):
@@ -100,6 +106,10 @@ class AuthVerifier(object):
         def wrapper(*args, **kwargs):
             # backward compatibility: when func.acl is not defined, it should
             # probably just raise an AttributeError
+            no_auth = getattr(func, 'no_auth', False)
+            if no_auth:
+                return func(*args, **kwargs)
+
             acl_check = getattr(func, 'acl', self._fallback_acl_check)
             token_id = (acl_check.extract_token_id or self.token)()
             required_acl = self._required_acl(acl_check, args, kwargs)
