@@ -18,20 +18,25 @@
 import requests
 import unittest
 
-from hamcrest import assert_that
-from hamcrest import calling
-from hamcrest import equal_to
-from hamcrest import raises
-from mock import Mock
-from mock import patch
-from mock import sentinel as s
-
-from ..auth_verifier import AuthServerUnreachable
-from ..auth_verifier import AuthVerifier
-from ..auth_verifier import Unauthorized
-from ..auth_verifier import required_acl
-from ..auth_verifier import _ACLCheck
-from ..auth_verifier import no_auth
+from hamcrest import (
+    assert_that,
+    calling,
+    equal_to,
+    raises,
+)
+from mock import (
+    Mock,
+    patch,
+    sentinel as s,
+)
+from ..auth_verifier import (
+    AuthServerUnreachable,
+    AuthVerifier,
+    Unauthorized,
+    _ACLCheck,
+    no_auth,
+    required_acl,
+)
 
 
 def function_with_acl(pattern):
