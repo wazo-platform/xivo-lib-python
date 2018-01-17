@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2015-2016 Avencall
+# Copyright 2015-2018 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,19 +18,25 @@
 import requests
 import unittest
 
-from hamcrest import assert_that
-from hamcrest import calling
-from hamcrest import equal_to
-from hamcrest import raises
-from mock import Mock
-from mock import patch
-from mock import sentinel as s
-
-from ..auth_verifier import AuthServerUnreachable
-from ..auth_verifier import AuthVerifier
-from ..auth_verifier import Unauthorized
-from ..auth_verifier import required_acl
-from ..auth_verifier import _ACLCheck
+from hamcrest import (
+    assert_that,
+    calling,
+    equal_to,
+    raises,
+)
+from mock import (
+    Mock,
+    patch,
+    sentinel as s,
+)
+from ..auth_verifier import (
+    AuthServerUnreachable,
+    AuthVerifier,
+    Unauthorized,
+    _ACLCheck,
+    no_auth,
+    required_acl,
+)
 
 
 def function_with_acl(pattern):
@@ -95,6 +101,22 @@ class TestAuthVerifier(unittest.TestCase):
         decorated()
 
         mock_client.token.is_valid.assert_called_once_with(s.token, 'foo')
+
+    def test_calls_function_when_no_auth(self):
+        mock_client = Mock()
+        mock_client.token.is_valid.return_value = False
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+
+        @auth_verifier.verify_token
+        @no_auth
+        def decorated():
+            return s.result
+
+        result = decorated()
+
+        assert_that(result, equal_to(s.result))
+        assert_that(mock_client.token.is_valid.called, equal_to(False))
 
     def test_calls_function_when_valid(self):
         mock_client = Mock()
