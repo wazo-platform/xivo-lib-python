@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007-2016 Avencall
+# Copyright 2007-2018 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,12 +17,8 @@
 
 """Common routines services in XIVO
 
-Copyright (C) 2007-2010  Avencall
-
 """
 # Dependencies/highly recommended? : arping curl
-
-__version__ = "$Revision$ $Date$"
 
 import os
 import re
@@ -68,7 +64,7 @@ INTERFACES_FILE = "interfaces"  # /etc/network/
 DHCPD_CONF_FILE = "dhcpd.conf"  # /etc/dhcp/
 IFPLUGD_FILE = "ifplugd"  # /etc/default/
 
-AUTHORIZED_PREFIXES = ("eth", "vlan", "dummy")
+AUTHORIZED_PREFIXES = ("en", "eth", "vlan", "dummy")
 
 
 def netif_managed(ifname):

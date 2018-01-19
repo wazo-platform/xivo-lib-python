@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2007-2017 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2007-2018 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,12 +17,8 @@
 
 """Network related routines for XIVO
 
-Copyright (C) 2007-2010  Avencall
-
 WARNING: Linux specific module, needs /sys/ - also Debian Etch specific module
 """
-
-__version__ = "$Revision$ $Date$"
 
 import re
 import os
@@ -40,7 +36,7 @@ log = logging.getLogger("xivo.network")  # pylint: disable-msg=C0103
 
 PROC_NET_VLAN = "/proc/net/vlan"
 VLAN_CONFIG_PARSER = re.compile('^\s*([^\s]+)\s*\|\s*(\d+)\s*\|\s*([^\s]+)\s*$').match
-VLAN_NAME_SPLITTER = re.compile('^(?:vlan(\d+)|(eth\d+)\.(\d+)|(?!vlan)[^\.]*\.(\d+))$').match
+VLAN_NAME_SPLITTER = re.compile('^(?:vlan(\d+)|(\W+)\.(\d+)|(?!vlan)[^\.]*\.(\d+))$').match
 
 SYS_CLASS_NET = "/sys/class/net"
 # /sys/class/net/<ifname>/carrier tells us if the interface if plugged
@@ -305,7 +301,7 @@ def is_eth_phy_if(ifname):
     """
     Return True if ifname is a valid physical ethernet interface name
     """
-    return ifname.startswith('eth') and not is_alias_if(ifname) and is_phy_if(ifname)
+    return (ifname.startswith('eth') or ifname.startswith('en')) and not is_alias_if(ifname) and is_phy_if(ifname)
 
 
 def get_filtered_phys(ifname_match_func=lambda x:True):
