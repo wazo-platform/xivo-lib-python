@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2015-2016 Avencall
-# Copyright (C) 2016 Proformatique, Inc.
+# Copyright 2015-2018 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,7 +49,7 @@ class TestFindIpAddress(unittest.TestCase):
 
             result = _find_address('eth3')
 
-            netifaces.ifaddresses.assert_called_once_with('eth3')
+            self._assert_called(netifaces.ifaddresses, 'eth3')
 
         assert_that(result, equal_to(s.eth3_ip))
 
@@ -69,7 +68,7 @@ class TestFindIpAddress(unittest.TestCase):
 
             result = _find_address('eth3')
 
-            assert_that(netifaces.ifaddresses.mock_calls, contains(call('eth3'), call('eth0'), call('eth1')))
+            self._assert_called(netifaces.ifaddresses, 'eth3', 'eth0', 'eth1')
 
         assert_that(result, equal_to(s.eth1_ip))
 
@@ -86,26 +85,18 @@ class TestFindIpAddress(unittest.TestCase):
 
             result = _find_address('eth3')
 
-            assert_that(netifaces.ifaddresses.mock_calls, contains(call('eth3'),
-                                                                   call('eth0'),
-                                                                   call('eth1'),
-                                                                   call('eth2'),
-                                                                   call('eth3'),
-                                                                   call('lo')))
+            self._assert_called(netifaces.ifaddresses, 'eth3', 'eth0', 'eth1', 'eth2', 'eth3', 'lo')
 
         assert_that(result, equal_to(s.lo_ip))
 
-    def test_that_127001_us_returned_if_all_else_fails(self):
+    def test_that_127001_is_returned_if_all_else_fails(self):
         with patch('xivo.consul_helpers.netifaces') as netifaces:
             netifaces.interfaces.return_value = ['lo', 'eth0', 'eth1']
             netifaces.ifaddresses.return_value = {}
 
             result = _find_address('eth3')
 
-            assert_that(netifaces.ifaddresses.mock_calls, contains(call('eth3'),
-                                                                   call('eth0'),
-                                                                   call('eth1'),
-                                                                   call('lo')))
+            self._assert_called(netifaces.ifaddresses, 'eth3', 'eth0', 'eth1', 'lo')
 
         assert_that(result, equal_to('127.0.0.1'))
 
@@ -116,12 +107,13 @@ class TestFindIpAddress(unittest.TestCase):
 
             result = _find_address('eth3')
 
-            assert_that(netifaces.ifaddresses.mock_calls, contains(call('eth3'),
-                                                                   call('eth0'),
-                                                                   call('eth1'),
-                                                                   call('lo')))
+            self._assert_called(netifaces.ifaddresses, 'eth3', 'eth0', 'eth1', 'lo')
 
         assert_that(result, equal_to('127.0.0.1'))
+
+    def _assert_called(self, mock, *args):
+        expected_calls = [call(arg) for arg in args]
+        mock.assert_has_calls(expected_calls)
 
 
 class TestNotifyingRegisterer(unittest.TestCase):
