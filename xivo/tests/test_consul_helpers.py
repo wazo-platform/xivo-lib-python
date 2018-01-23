@@ -72,6 +72,25 @@ class TestFindIpAddress(unittest.TestCase):
 
         assert_that(result, equal_to(s.eth1_ip))
 
+    def test_that_en_ifaces_are_used_in_order_if_the_first_has_no_address(self):
+        def return_values(iface):
+            if iface == 'enp0s1':
+                return {netifaces.AF_INET: [{'addr': s.enp0s1}]}
+            elif iface == 'enp0s3':
+                return {netifaces.AF_INET: [{'broadcast': '255.255.255.0'}]}
+            else:
+                return {}
+
+        with patch('xivo.consul_helpers.netifaces') as netifaces:
+            netifaces.interfaces.return_value = ['lo', 'ens1', 'eno3', 'enp0s1']
+            netifaces.ifaddresses.side_effect = return_values
+
+            result = _find_address('enp0s3')
+
+            self._assert_called(netifaces.ifaddresses, 'enp0s3', 'ens1', 'eno3', 'enp0s1')
+
+        assert_that(result, equal_to(s.enp0s1))
+
     def test_that_lo_is_used_when_no_address_is_found_on_other_ifaces(self):
         def return_values(iface):
             if iface == 'lo':
