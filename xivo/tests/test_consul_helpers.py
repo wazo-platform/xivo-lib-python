@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2015-2016 Avencall
-# Copyright (C) 2016 Proformatique, Inc.
+# Copyright 2015-2018 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,7 +49,7 @@ class TestFindIpAddress(unittest.TestCase):
 
             result = _find_address('eth3')
 
-            netifaces.ifaddresses.assert_called_once_with('eth3')
+            self._assert_called(netifaces.ifaddresses, 'eth3')
 
         assert_that(result, equal_to(s.eth3_ip))
 
@@ -69,9 +68,28 @@ class TestFindIpAddress(unittest.TestCase):
 
             result = _find_address('eth3')
 
-            assert_that(netifaces.ifaddresses.mock_calls, contains(call('eth3'), call('eth0'), call('eth1')))
+            self._assert_called(netifaces.ifaddresses, 'eth3', 'eth0', 'eth1')
 
         assert_that(result, equal_to(s.eth1_ip))
+
+    def test_that_en_ifaces_are_used_in_order_if_the_first_has_no_address(self):
+        def return_values(iface):
+            if iface == 'enp0s1':
+                return {netifaces.AF_INET: [{'addr': s.enp0s1}]}
+            elif iface == 'enp0s3':
+                return {netifaces.AF_INET: [{'broadcast': '255.255.255.0'}]}
+            else:
+                return {}
+
+        with patch('xivo.consul_helpers.netifaces') as netifaces:
+            netifaces.interfaces.return_value = ['lo', 'ens1', 'eno3', 'enp0s1']
+            netifaces.ifaddresses.side_effect = return_values
+
+            result = _find_address('enp0s3')
+
+            self._assert_called(netifaces.ifaddresses, 'enp0s3', 'ens1', 'eno3', 'enp0s1')
+
+        assert_that(result, equal_to(s.enp0s1))
 
     def test_that_lo_is_used_when_no_address_is_found_on_other_ifaces(self):
         def return_values(iface):
@@ -86,26 +104,18 @@ class TestFindIpAddress(unittest.TestCase):
 
             result = _find_address('eth3')
 
-            assert_that(netifaces.ifaddresses.mock_calls, contains(call('eth3'),
-                                                                   call('eth0'),
-                                                                   call('eth1'),
-                                                                   call('eth2'),
-                                                                   call('eth3'),
-                                                                   call('lo')))
+            self._assert_called(netifaces.ifaddresses, 'eth3', 'eth0', 'eth1', 'eth2', 'eth3', 'lo')
 
         assert_that(result, equal_to(s.lo_ip))
 
-    def test_that_127001_us_returned_if_all_else_fails(self):
+    def test_that_127001_is_returned_if_all_else_fails(self):
         with patch('xivo.consul_helpers.netifaces') as netifaces:
             netifaces.interfaces.return_value = ['lo', 'eth0', 'eth1']
             netifaces.ifaddresses.return_value = {}
 
             result = _find_address('eth3')
 
-            assert_that(netifaces.ifaddresses.mock_calls, contains(call('eth3'),
-                                                                   call('eth0'),
-                                                                   call('eth1'),
-                                                                   call('lo')))
+            self._assert_called(netifaces.ifaddresses, 'eth3', 'eth0', 'eth1', 'lo')
 
         assert_that(result, equal_to('127.0.0.1'))
 
@@ -116,12 +126,13 @@ class TestFindIpAddress(unittest.TestCase):
 
             result = _find_address('eth3')
 
-            assert_that(netifaces.ifaddresses.mock_calls, contains(call('eth3'),
-                                                                   call('eth0'),
-                                                                   call('eth1'),
-                                                                   call('lo')))
+            self._assert_called(netifaces.ifaddresses, 'eth3', 'eth0', 'eth1', 'lo')
 
         assert_that(result, equal_to('127.0.0.1'))
+
+    def _assert_called(self, mock, *args):
+        expected_calls = [call(arg) for arg in args]
+        mock.assert_has_calls(expected_calls)
 
 
 class TestNotifyingRegisterer(unittest.TestCase):

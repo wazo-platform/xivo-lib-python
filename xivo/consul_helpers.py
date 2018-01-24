@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2015-2017 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2018 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@ except ImportError:
 
 
 logger = logging.getLogger('service_discovery')
+VALID_SERVICE_DISCO_IFACE_PREFIX = ['eth', 'en']
 
 
 class RegistererError(Exception):
@@ -206,7 +207,13 @@ def address_from_config(service_discovery_config):
 
 
 def _find_address(main_iface):
-    ifaces = [main_iface] + [iface for iface in netifaces.interfaces() if iface.startswith('eth')] + ['lo']
+    def _is_valid_iface_name(name):
+        for prefix in VALID_SERVICE_DISCO_IFACE_PREFIX:
+            if name.startswith(prefix):
+                return True
+        return False
+
+    ifaces = [main_iface] + [iface for iface in netifaces.interfaces() if _is_valid_iface_name(iface)] + ['lo']
     for iface in ifaces:
         try:
             for config in netifaces.ifaddresses(iface).get(netifaces.AF_INET, []):
