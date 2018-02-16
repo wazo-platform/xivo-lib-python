@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2016-2017 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2018 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,8 +41,6 @@ class ReverseProxied(object):
 def add_logger(app, logger):
     app.config['LOGGER_HANDLER_POLICY'] = 'never'
     app.logger.propagate = True
-    for handler in logger.handlers:
-        app.logger.addHandler(handler)
 
 
 def _log_request(url, response):
