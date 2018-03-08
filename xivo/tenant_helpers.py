@@ -54,10 +54,11 @@ class Tenant(object):
             raise InvalidTenant()
         if len(tenants) > 2:
             raise InvalidTenant()
-        return tenants[0]
+        return cls(**tenants[0])
 
-    def __init__(self, uuid):
+    def __init__(self, uuid, name=None):
         self.uuid = uuid
+        self.name = name
 
     def check_against(self, token):
         if self.uuid not in token['metadata'].get('tenants', []):
