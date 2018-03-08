@@ -6,6 +6,7 @@ import requests
 import flask
 
 from flask import request
+from xivo import rest_api_helpers
 from xivo.auth_verifier import extract_token_id_from_header
 from xivo.auth_verifier import AuthServerUnreachable
 
@@ -13,17 +14,30 @@ from xivo.auth_verifier import AuthServerUnreachable
 class InvalidTenant(Exception):
     def __init__(self, tenant_uuid=None):
         if tenant_uuid:
-            super().__init__('Invalid tenant "{uuid}"'.format(uuid=tenant_uuid))
+            super(InvalidTenant, self).__init__('Invalid tenant "{uuid}"'.format(uuid=tenant_uuid))
         else:
-            super().__init__('Invalid tenant')
+            super(InvalidTenant, self).__init__('Invalid tenant')
 
 
 class InvalidToken(Exception):
     def __init__(self, token_id=None):
         if token_id:
-            super().__init__('Invalid token "{id}"'.format(id=token_id))
+            super(InvalidToken, self).__init__('Invalid token "{id}"'.format(id=token_id))
         else:
-            super().__init__('Invalid token')
+            super(InvalidToken, self).__init__('Invalid token')
+
+
+class UnauthorizedTenant(rest_api_helpers.APIException):
+
+    def __init__(self, tenant):
+        super(UnauthorizedTenant, self).__init__(
+            status_code=401,
+            message='Unauthorized tenant',
+            error_id='unauthorized-tenant',
+            details={
+                'tenant': tenant,
+            }
+        )
 
 
 class Tenant(object):
@@ -32,9 +46,14 @@ class Tenant(object):
     def autodetect(cls, tokens):
         token = tokens.from_headers()
         try:
-            return cls.from_headers().check_against(token)
+            tenant = cls.from_headers()
         except InvalidTenant:
             return cls.from_token(token)
+
+        try:
+            return tenant.check_against(token)
+        except InvalidTenant:
+            raise UnauthorizedTenant(token)
 
     @classmethod
     def from_headers(cls):
@@ -52,7 +71,7 @@ class Tenant(object):
             raise InvalidTenant()
         if not tenants:
             raise InvalidTenant()
-        if len(tenants) > 2:
+        if len(tenants) > 1:
             raise InvalidTenant()
         return cls(**tenants[0])
 
@@ -61,7 +80,8 @@ class Tenant(object):
         self.name = name
 
     def check_against(self, token):
-        if self.uuid not in token['metadata'].get('tenants', []):
+        authorized_tenants = (tenant['uuid'] for tenant in token['metadata'].get('tenants', []))
+        if self.uuid not in authorized_tenants:
             raise InvalidTenant(self.uuid)
         return self
 
