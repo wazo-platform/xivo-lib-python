@@ -29,7 +29,7 @@ class InvalidToken(Exception):
 class Tenant(object):
 
     @classmethod
-    def autodetect(cls, headers, tokens):
+    def autodetect(cls, tokens):
         token = tokens.from_headers()
         try:
             return cls.from_headers().check_against(token)
