@@ -58,7 +58,7 @@ class Tenant(object):
     @classmethod
     def from_headers(cls):
         try:
-            tenant_uuid = request.headers['X-Wazo-Tenant']
+            tenant_uuid = request.headers['Wazo-Tenant']
         except KeyError:
             raise InvalidTenant()
         return cls(uuid=tenant_uuid)
