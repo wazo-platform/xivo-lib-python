@@ -53,7 +53,7 @@ class Tenant(object):
         try:
             return tenant.check_against(token)
         except InvalidTenant:
-            raise UnauthorizedTenant(token)
+            raise UnauthorizedTenant(tenant.uuid)
 
     @classmethod
     def from_headers(cls):
