@@ -1,4 +1,4 @@
-# Copyright 2017 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2018 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
 from marshmallow.fields import Field
@@ -112,3 +112,7 @@ class UUID(UUID):
                          'constraint_id': 'type',
                          'constraint': 'uuid'},
     })
+
+
+def WazoOrder(sort_columns, default_sort_column):
+    return String(validate=validate.OneOf(sort_columns), missing=default_sort_column)
