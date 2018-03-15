@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2016-2017 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2018 The Wazo Authors  (see the AUTHORS file)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@ import marshmallow
 
 from functools import wraps
 
+from .mallow import fields, validate
 from .rest_api_helpers import APIException
 
 
@@ -41,3 +42,17 @@ def handle_validation_exception(func):
         except marshmallow.ValidationError as e:
             raise ValidationError(e.messages)
     return wrapper
+
+
+class ListSchema(marshmallow.Schema):
+    default_sort_column = None
+    sort_columns = []
+
+    direction = fields.String(validate=validate.OneOf(['asc', 'desc']), missing='asc')
+    order = fields.WazoOrder(sort_columns=[], default_sort_column=None)
+    limit = fields.Integer(validate=validate.Range(min=0), missing=None)
+    offset = fields.Integer(validate=validate.Range(min=0), missing=0)
+    search = fields.String(missing=None)
+
+    class Meta:
+        strict = True
