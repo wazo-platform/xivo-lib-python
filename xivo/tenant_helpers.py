@@ -27,6 +27,11 @@ class InvalidToken(Exception):
             super(InvalidToken, self).__init__('Invalid token')
 
 
+class InvalidUser(Exception):
+    def __init__(self, user_uuid):
+        super(InvalidUser, self).__init__('Invalid user "{uuid}"'.format(uuid=user_uuid))
+
+
 class UnauthorizedTenant(rest_api_helpers.APIException):
 
     def __init__(self, tenant):
@@ -43,7 +48,7 @@ class UnauthorizedTenant(rest_api_helpers.APIException):
 class Tenant(object):
 
     @classmethod
-    def autodetect(cls, tokens):
+    def autodetect(cls, tokens, users):
         token = tokens.from_headers()
         try:
             tenant = cls.from_headers()
@@ -51,7 +56,13 @@ class Tenant(object):
             return cls.from_token(token)
 
         try:
-            return tenant.check_against(token)
+            return tenant.check_against_token(token)
+        except InvalidTenant:
+            pass  # check against user
+
+        user = users.get(token['metadata'].get('uuid'))
+        try:
+            return tenant.check_against_user(user)
         except InvalidTenant:
             raise UnauthorizedTenant(tenant.uuid)
 
@@ -79,8 +90,14 @@ class Tenant(object):
         self.uuid = uuid
         self.name = name
 
-    def check_against(self, token):
+    def check_against_token(self, token):
         authorized_tenants = (tenant['uuid'] for tenant in token['metadata'].get('tenants', []))
+        if self.uuid not in authorized_tenants:
+            raise InvalidTenant(self.uuid)
+        return self
+
+    def check_against_user(self, user):
+        authorized_tenants = (tenant.uuid for tenant in user.tenants())
         if self.uuid not in authorized_tenants:
             raise InvalidTenant(self.uuid)
         return self
@@ -115,3 +132,33 @@ class CachedTokens(Tokens):
 
         token = flask.g['tokens'][token_id] = super().get(token_id)
         return token
+
+
+class Users(object):
+
+    def __init__(self, auth):
+        self._auth = auth
+
+    def get(self, user_uuid):
+        try:
+            return User(self._auth, **self._auth.users.get(user_uuid))
+        except requests.HTTPError as e:
+            raise InvalidUser(user_uuid)
+        except requests.RequestException as e:
+            raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
+
+
+class User(object):
+
+    def __init__(self, auth, uuid, **kwargs):
+        self._auth = auth
+        self._uuid = uuid
+
+    def tenants(self):
+        try:
+            users = self._auth.users.get_tenants(self._uuid)['items']
+        except requests.HTTPError as e:
+            raise InvalidUser(self._uuid)
+        except requests.RequestException as e:
+            raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
+        return [Tenant(**tenant) for tenant in users]
