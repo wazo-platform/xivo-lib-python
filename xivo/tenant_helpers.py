@@ -10,6 +10,18 @@ from xivo import rest_api_helpers
 from xivo.auth_verifier import extract_token_id_from_header
 from xivo.auth_verifier import AuthServerUnreachable
 
+# Postpone the raise to the first use of the Client constructor.
+# wazo-auth uses its own version of the client to avoid using its own
+# rest-api to call itself.
+try:
+    from xivo_auth_client import Client as AuthClient
+except ImportError as e:
+    class Client(object):
+        _exc = e
+
+        def __init__(self, *args, **kwargs):
+            raise self._exc
+
 
 class InvalidTenant(Exception):
     def __init__(self, tenant_uuid=None):
@@ -43,6 +55,35 @@ class UnauthorizedTenant(rest_api_helpers.APIException):
                 'tenant': tenant,
             }
         )
+
+
+class TenantDetector(object):
+
+    def __init__(self, auth_config):
+        self._auth_config = auth_config
+
+    def autodetect(self):
+        auth_client = AuthClient(**self._auth_config)
+
+        tokens = Tokens(auth_client)
+        token = tokens.from_headers()
+        try:
+            tenant = Tenant.from_headers()
+        except InvalidTenant:
+            return Tenant.from_token(token)
+
+        try:
+            return tenant.check_against_token(token)
+        except InvalidTenant:
+            pass  # check against user
+
+        auth_client.set_token(token['token'])
+        users = Users(auth_client)
+        user = users.get(token['metadata'].get('uuid'))
+        try:
+            return tenant.check_against_user(user)
+        except InvalidTenant:
+            raise UnauthorizedTenant(tenant.uuid)
 
 
 class Tenant(object):
