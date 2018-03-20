@@ -67,23 +67,9 @@ class TenantDetector(object):
 
         tokens = Tokens(auth_client)
         token = tokens.from_headers()
-        try:
-            tenant = Tenant.from_headers()
-        except InvalidTenant:
-            return Tenant.from_token(token)
-
-        try:
-            return tenant.check_against_token(token)
-        except InvalidTenant:
-            pass  # check against user
-
         auth_client.set_token(token['token'])
         users = Users(auth_client)
-        user = users.get(token['metadata'].get('uuid'))
-        try:
-            return tenant.check_against_user(user)
-        except InvalidTenant:
-            raise UnauthorizedTenant(tenant.uuid)
+        return Tenant.autodetect(tokens, users)
 
 
 class Tenant(object):
