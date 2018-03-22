@@ -167,12 +167,7 @@ class Users(object):
         self._auth = auth
 
     def get(self, user_uuid):
-        try:
-            return User(self._auth, **self._auth.users.get(user_uuid))
-        except requests.HTTPError as e:
-            raise InvalidUser(user_uuid)
-        except requests.RequestException as e:
-            raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
+        return User(self._auth, user_uuid)
 
 
 class User(object):
@@ -183,9 +178,9 @@ class User(object):
 
     def tenants(self):
         try:
-            users = self._auth.users.get_tenants(self._uuid)['items']
+            tenants = self._auth.users.get_tenants(self._uuid)['items']
         except requests.HTTPError as e:
             raise InvalidUser(self._uuid)
         except requests.RequestException as e:
             raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
-        return [Tenant(**tenant) for tenant in users]
+        return [Tenant(**tenant) for tenant in tenants]
