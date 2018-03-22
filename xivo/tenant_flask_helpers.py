@@ -59,7 +59,13 @@ current_user = LocalProxy(get_current_user)
 
 class Tenant(tenant_helpers.Tenant):
     @classmethod
-    def autodetect(cls):
+    def autodetect(cls, many=False):
+        if many:
+            return cls.autodetect_many()
+        return cls.autodetect_one()
+
+    @classmethod
+    def autodetect_one(cls):
         try:
             tenant = cls.from_headers()
         except tenant_helpers.InvalidTenant:
@@ -74,3 +80,7 @@ class Tenant(tenant_helpers.Tenant):
             return tenant.check_against_user(current_user)
         except tenant_helpers.InvalidTenant:
             raise tenant_helpers.UnauthorizedTenant(tenant.uuid)
+
+    @classmethod
+    def autodetect_many(cls):
+        return current_user.tenants()
