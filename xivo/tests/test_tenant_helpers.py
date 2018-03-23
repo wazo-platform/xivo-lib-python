@@ -17,7 +17,6 @@ from xivo_test_helpers.hamcrest.raises import raises
 from unittest import TestCase
 
 from ..tenant_helpers import (
-    CachedTokens,
     InvalidTenant,
     InvalidToken,
     InvalidUser,
@@ -264,40 +263,18 @@ class TestTokensFromHeaders(TestCase):
 
 class TestUsersGet(TestCase):
 
-    def test_given_no_auth_server_when_get_then_raise(self):
+    def test_when_get_then_return_user(self):
         auth = Mock()
-        auth.users.get.side_effect = requests.RequestException
         users = Users(auth)
 
-        assert_that(
-            calling(users.get).with_args('user'),
-            raises(AuthServerUnreachable)
-        )
-
-    def test_given_unknown_user_when_get_then_raise(self):
-        auth = Mock()
-        auth.users.get.side_effect = requests.HTTPError
-        users = Users(auth)
-
-        assert_that(
-            calling(users.get).with_args('user'),
-            raises(InvalidUser)
-        )
-
-    def test_given_correct_user_id_when_get_then_return_user(self):
-        user = {'uuid': 'user-uuid'}
-        auth = Mock()
-        auth.users.get.return_value = user
-        users = Users(auth)
-
-        result = users.get('user')
+        result = users.get('user-uuid')
 
         assert_that(result, instance_of(User))
 
 
 class TestUserTenants(TestCase):
 
-    def test_given_no_auth_server_when_get_then_raise(self):
+    def test_given_no_auth_server_when_tenants_then_raise(self):
         auth = Mock()
         auth.users.get_tenants.side_effect = requests.RequestException
         user = User(auth, 'user-uuid')
@@ -307,7 +284,7 @@ class TestUserTenants(TestCase):
             raises(AuthServerUnreachable)
         )
 
-    def test_given_unknown_user_when_get_then_raise(self):
+    def test_given_unknown_user_when_tenants_then_raise(self):
         auth = Mock()
         auth.users.get_tenants.side_effect = requests.HTTPError
         user = User(auth, 'user-uuid')
@@ -317,7 +294,7 @@ class TestUserTenants(TestCase):
             raises(InvalidUser)
         )
 
-    def test_given_correct_user_id_when_get_then_return_user(self):
+    def test_given_correct_user_id_when_tenants_then_return_tenants(self):
         user = {'uuid': 'user-uuid'}
         auth = Mock()
         auth.users.get_tenants.return_value = {'items': [{'uuid': 'tenant-uuid'}]}
