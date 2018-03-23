@@ -3,24 +3,11 @@
 # SPDX-License-Identifier: GPL-3.0+
 
 import requests
-import flask
 
 from flask import request
 from xivo import rest_api_helpers
 from xivo.auth_verifier import extract_token_id_from_header
 from xivo.auth_verifier import AuthServerUnreachable
-
-# Postpone the raise to the first use of the Client constructor.
-# wazo-auth uses its own version of the client to avoid using its own
-# rest-api to call itself.
-try:
-    from xivo_auth_client import Client as AuthClient
-except ImportError as e:
-    class Client(object):
-        _exc = e
-
-        def __init__(self, *args, **kwargs):
-            raise self._exc
 
 
 class InvalidTenant(Exception):
@@ -55,21 +42,6 @@ class UnauthorizedTenant(rest_api_helpers.APIException):
                 'tenant': tenant,
             }
         )
-
-
-class TenantDetector(object):
-
-    def __init__(self, auth_config):
-        self._auth_config = auth_config
-
-    def autodetect(self):
-        auth_client = AuthClient(**self._auth_config)
-
-        tokens = Tokens(auth_client)
-        token = tokens.from_headers()
-        auth_client.set_token(token['token'])
-        users = Users(auth_client)
-        return Tenant.autodetect(tokens, users)
 
 
 class Tenant(object):
@@ -148,17 +120,6 @@ class Tokens(object):
         if not token_id:
             raise InvalidToken()
         return self.get(token_id)
-
-
-class CachedTokens(Tokens):
-
-    def get(self, token_id):
-        token = flask.g['tokens'].get(token_id)
-        if token:
-            return token
-
-        token = flask.g['tokens'][token_id] = super().get(token_id)
-        return token
 
 
 class Users(object):
