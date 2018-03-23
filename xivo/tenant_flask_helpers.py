@@ -83,4 +83,8 @@ class Tenant(tenant_helpers.Tenant):
 
     @classmethod
     def autodetect_many(cls):
-        return current_user.tenants()
+        try:
+            return current_user.tenants()
+        except tenant_helpers.InvalidUser:
+            # xivo_admin and xivo_service do not have a user uuid that can be fetched on /users
+            return [Tenant(**tenant) for tenant in token['metadata'].get('tenants')]
