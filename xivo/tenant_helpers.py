@@ -144,4 +144,4 @@ class User(object):
             raise InvalidUser(self._uuid)
         except requests.RequestException as e:
             raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
-        return [Tenant(**tenant) for tenant in tenants]
+        return [Tenant(uuid=tenant['uuid'], name=tenant.get('name')) for tenant in tenants]
