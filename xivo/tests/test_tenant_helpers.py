@@ -331,3 +331,15 @@ class TestUserTenants(TestCase):
         result = user.tenants()
 
         assert_that(result, contains(has_properties(uuid='tenant-uuid')))
+
+    def test_when_calling_tenants_multiple_time_then_dont_call_wazo_auth_again(self):
+        user = {'uuid': 'user-uuid'}
+        auth = Mock()
+        exception = Exception('Should not be called again')
+        auth.users.get_tenants.side_effect = [{'items': [{'uuid': 'tenant-uuid'}]}, exception]
+        user = User(auth, 'user-uuid')
+
+        result = user.tenants()
+        result = user.tenants()
+
+        assert_that(result, contains(has_properties(uuid='tenant-uuid')))

@@ -151,12 +151,18 @@ class User(object):
     def __init__(self, auth, uuid, **kwargs):
         self._auth = auth
         self._uuid = uuid
+        self._tenants = None
 
     def tenants(self):
+        if self._tenants is not None:
+            return self._tenants
+
         try:
             tenants = self._auth.users.get_tenants(self._uuid)['items']
         except requests.HTTPError as e:
             raise InvalidUser(self._uuid)
         except requests.RequestException as e:
             raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
-        return [Tenant(**tenant) for tenant in tenants]
+
+        self._tenants = [Tenant(**tenant) for tenant in tenants]
+        return self._tenants
