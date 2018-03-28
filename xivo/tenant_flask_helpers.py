@@ -83,17 +83,25 @@ class Tenant(tenant_helpers.Tenant):
 
     @classmethod
     def autodetect_many(cls):
-        try:
-            cls.from_headers()
-            header_has_tenant = True
-        except tenant_helpers.InvalidTenant:
-            header_has_tenant = False
+        tenants = cls.from_headers(many=True)
 
-        if header_has_tenant:
-            return [cls.autodetect_one()]
+        if not tenants:
+            try:
+                return current_user.tenants()
+            except tenant_helpers.InvalidUser:
+                # xivo_admin and xivo_service do not have a user uuid that can be fetched on /users
+                return [Tenant(**tenant) for tenant in token['metadata'].get('tenants')]
 
-        try:
-            return current_user.tenants()
-        except tenant_helpers.InvalidUser:
-            # xivo_admin and xivo_service do not have a user uuid that can be fetched on /users
-            return [Tenant(**tenant) for tenant in token['metadata'].get('tenants')]
+        for tenant in tenants:
+            try:
+                tenant.check_against_token(token)
+                continue
+            except tenant_helpers.InvalidTenant:
+                pass  # check against user
+
+            try:
+                tenant.check_against_user(current_user)
+            except tenant_helpers.InvalidTenant:
+                raise tenant_helpers.UnauthorizedTenant(tenant.uuid)
+
+        return tenants

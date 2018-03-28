@@ -8,6 +8,7 @@ from hamcrest import (
     calling,
     contains,
     equal_to,
+    empty,
     has_properties,
     instance_of,
 )
@@ -116,6 +117,33 @@ class TestTenantFromHeaders(TestCase):
         result = Tenant.from_headers()
 
         assert_that(result.uuid, equal_to(tenant))
+
+    @patch('xivo.tenant_helpers.request')
+    def test_given_multiple_tenant_when_from_headers_then_raise(self, request):
+        tenant = 'tenant1,tenant2'
+        request.headers = {'Wazo-Tenant': tenant}
+
+        assert_that(calling(Tenant.from_headers),
+                    raises(InvalidTenant))
+
+
+class TestTenantFromHeadersMany(TestCase):
+
+    @patch('xivo.tenant_helpers.request')
+    def test_given_no_tenant_when_from_headers_then_empty_list(self, request):
+        request.headers = {}
+
+        result = Tenant.from_headers(many=True)
+
+        assert_that(result, empty())
+
+    @patch('xivo.tenant_helpers.request')
+    def test_given_tenant_when_from_headers_then_return_tenants(self, request):
+        request.headers = {'Wazo-Tenant': 'tenant1, tenant2'}
+
+        result = Tenant.from_headers(many=True)
+
+        assert_that(result, contains(has_properties(uuid='tenant1'), has_properties(uuid='tenant2')))
 
 
 class TestTenantFromToken(TestCase):
@@ -300,6 +328,18 @@ class TestUserTenants(TestCase):
         auth.users.get_tenants.return_value = {'items': [{'uuid': 'tenant-uuid'}]}
         user = User(auth, 'user-uuid')
 
+        result = user.tenants()
+
+        assert_that(result, contains(has_properties(uuid='tenant-uuid')))
+
+    def test_when_calling_tenants_multiple_time_then_dont_call_wazo_auth_again(self):
+        user = {'uuid': 'user-uuid'}
+        auth = Mock()
+        exception = Exception('Should not be called again')
+        auth.users.get_tenants.side_effect = [{'items': [{'uuid': 'tenant-uuid'}]}, exception]
+        user = User(auth, 'user-uuid')
+
+        result = user.tenants()
         result = user.tenants()
 
         assert_that(result, contains(has_properties(uuid='tenant-uuid')))
