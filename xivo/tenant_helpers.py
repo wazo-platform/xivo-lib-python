@@ -66,12 +66,27 @@ class Tenant(object):
             raise UnauthorizedTenant(tenant.uuid)
 
     @classmethod
-    def from_headers(cls):
+    def from_headers(cls, many=False):
+        if many:
+            return cls.from_headers_many()
+        return cls.from_headers_one()
+
+    @classmethod
+    def from_headers_one(cls):
         try:
             tenant_uuid = request.headers['Wazo-Tenant']
         except KeyError:
             raise InvalidTenant()
+        if ',' in tenant_uuid:
+            raise InvalidTenant()
         return cls(uuid=tenant_uuid)
+
+    @classmethod
+    def from_headers_many(cls):
+        if 'Wazo-Tenant' not in request.headers:
+            return []
+        tenant_uuids = request.headers['Wazo-Tenant'].split(',')
+        return [cls(uuid=tenant_uuid.strip()) for tenant_uuid in tenant_uuids]
 
     @classmethod
     def from_token(cls, token):
