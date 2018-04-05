@@ -30,3 +30,7 @@ class TestStringifiedDict(unittest.TestCase):
     def test_when_not_dict_object_then_no_crash_occurs(self):
         _, error = AllFieldsSchema().load(1)
         assert_that(error, is_not(empty))
+
+    def test_when_invalid_email_then_no_crash_occurs(self):
+        _, error = AllFieldsSchema().load({'email': 'invalid_email'})
+        assert_that(error, is_not(empty))

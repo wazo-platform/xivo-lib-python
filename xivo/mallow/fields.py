@@ -86,11 +86,6 @@ class Email(Email):
         ),
     })
 
-    def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
-        # the default implementation does not work well with "invalid" being a dict
-        self.validators[0] = validate.Email()
-
 
 class Integer(Integer):
     default_error_messages = dict(Field.default_error_messages)
