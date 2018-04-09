@@ -1,21 +1,27 @@
 # -*- coding: utf-8 -*-
-# Copyright 2016-2017 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2018 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
-
-from hamcrest import assert_that
-from hamcrest import contains
-from hamcrest import equal_to
-from hamcrest import has_entries
-from hamcrest import instance_of
-from hamcrest import is_
-from hamcrest import raises
-from mock import patch
-from mock import sentinel as s
 from unittest import TestCase
 
-from ..rest_api_helpers import APIException
-from ..rest_api_helpers import handle_api_exception
+from hamcrest import (
+    assert_that,
+    contains,
+    equal_to,
+    has_entries,
+    instance_of,
+    is_,
+    raises,
+)
+from mock import (
+    patch,
+    sentinel as s,
+)
+
+from ..rest_api_helpers import (
+    APIException,
+    handle_api_exception,
+)
 
 
 class TestRestApiHelpers(TestCase):
@@ -84,7 +90,6 @@ class TestRestApiHelpers(TestCase):
                 'timestamp': instance_of(float)
             }),
             s.status_code))
-
 
     @patch('xivo.rest_api_helpers.logger')
     def test_given_api_exception_when_handle_api_exception_then_logs_error(self, logger):

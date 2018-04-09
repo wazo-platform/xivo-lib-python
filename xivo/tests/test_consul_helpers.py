@@ -346,16 +346,18 @@ class TestRemoteServiceFinderListRunningServices(BaseFinderTestCase):
         node_0_service = {"ID": "1c8c13d8-adca-4715-8bf3-04e51509f141",
                           "Service": "xivo-ctid",
                           "Tags": [
-                            "f9f0f3bb-f577-4354-9109-9cf6cf7c7adf",
-                            "xivo-ctid"],
+                              "f9f0f3bb-f577-4354-9109-9cf6cf7c7adf",
+                              "xivo-ctid",
+                          ],
                           "Port": 9495,
                           "Address": "10.37.0.254",
                           "EnableTagOverride": False}
         node_1_service = {"ID": "1c8c13d8-adca-4715-b1b1-04e51509f141",
                           "Service": "xivo-ctid",
                           "Tags": [
-                            "f9f0f3bb-f577-4354-b1b1-9cf6cf7c7adf",
-                            "xivo-ctid"],
+                              "f9f0f3bb-f577-4354-b1b1-9cf6cf7c7adf",
+                              "xivo-ctid",
+                          ],
                           "Port": 9495,
                           "Address": "10.37.1.254",
                           "EnableTagOverride": False}
