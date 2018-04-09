@@ -2,9 +2,9 @@
 # Copyright 2016-2018 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
-import marshmallow
-
 from functools import wraps
+
+import marshmallow
 
 from .mallow import fields, validate
 from .rest_api_helpers import APIException

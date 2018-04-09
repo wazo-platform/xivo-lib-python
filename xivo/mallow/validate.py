@@ -1,17 +1,19 @@
-# Copyright 2017 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2018 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
-from marshmallow.validate import Email
-from marshmallow.validate import Equal
-from marshmallow.validate import Length
-from marshmallow.validate import OneOf
-from marshmallow.validate import Predicate
-from marshmallow.validate import Range
-from marshmallow.validate import Regexp
-from marshmallow.validate import URL
+from marshmallow.validate import (
+    Email as _Email,
+    Equal as _Equal,
+    Length as _Length,
+    OneOf as _OneOf,
+    Predicate as _Predicate,
+    Range as _Range,
+    Regexp as _Regexp,
+    URL as _URL,
+)
 
 
-class Email(Email):
+class Email(_Email):
 
     constraint_id = 'email'
 
@@ -25,7 +27,7 @@ class Email(Email):
         }
 
 
-class Equal(Equal):
+class Equal(_Equal):
 
     constraint_id = 'equal'
 
@@ -39,7 +41,7 @@ class Equal(Equal):
         }
 
 
-class Length(Length):
+class Length(_Length):
 
     constraint_id = 'length'
 
@@ -53,7 +55,7 @@ class Length(Length):
         }
 
 
-class OneOf(OneOf):
+class OneOf(_OneOf):
 
     constraint_id = 'enum'
 
@@ -67,7 +69,7 @@ class OneOf(OneOf):
         }
 
 
-class Predicate(Predicate):
+class Predicate(_Predicate):
 
     constraint_id = 'predicate'
 
@@ -81,7 +83,7 @@ class Predicate(Predicate):
         }
 
 
-class Range(Range):
+class Range(_Range):
 
     constraint_id = 'range'
 
@@ -100,7 +102,7 @@ class Range(Range):
         }
 
 
-class Regexp(Regexp):
+class Regexp(_Regexp):
 
     constraint_id = 'regex'
 
@@ -114,7 +116,7 @@ class Regexp(Regexp):
         }
 
 
-class URL(URL):
+class URL(_URL):
 
     constraint_id = 'url'
 

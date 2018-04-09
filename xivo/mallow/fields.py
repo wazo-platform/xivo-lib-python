@@ -2,16 +2,16 @@
 # SPDX-License-Identifier: GPL-3.0+
 
 from marshmallow.fields import (
-    Boolean,
-    DateTime,
-    Dict,
-    Email,
-    Field,
-    Integer,
-    List,
-    Nested,
-    String,
-    UUID,
+    Boolean as _Boolean,
+    DateTime as _DateTime,
+    Dict as _Dict,
+    Email as _Email,
+    Field as _Field,
+    Integer as _Integer,
+    List as _List,
+    Nested as _Nested,
+    String as _String,
+    UUID as _UUID,
 )
 from . import validate
 
@@ -23,119 +23,119 @@ class _StringifiedDict(dict):
         return self
 
 
-class Field(Field):
+class Field(_Field):
     default_error_messages = {
         'null': _StringifiedDict(
-            message=Field.default_error_messages['null'],
+            message=_Field.default_error_messages['null'],
             constraint_id='not_null',
             constraint='not_null'
         ),
         'required': _StringifiedDict(
-            message=Field.default_error_messages['required'],
+            message=_Field.default_error_messages['required'],
             constraint_id='required',
             constraint='required',
         ),
         'type': _StringifiedDict(
-            message=Field.default_error_messages['type'],
+            message=_Field.default_error_messages['type'],
             constraint_id='type',
             constraint='type',
         ),
     }
 
 
-class Boolean(Boolean):
+class Boolean(_Boolean):
     default_error_messages = dict(Field.default_error_messages)
     default_error_messages.update({
         'invalid': _StringifiedDict(
-            message=Boolean.default_error_messages['invalid'],
+            message=_Boolean.default_error_messages['invalid'],
             constraint_id='type',
             constraint='boolean'
         ),
     })
 
 
-class DateTime(DateTime):
+class DateTime(_DateTime):
     default_error_messages = dict(Field.default_error_messages)
     default_error_messages.update({
         'invalid': _StringifiedDict(
-            message=DateTime.default_error_messages['invalid'],
+            message=_DateTime.default_error_messages['invalid'],
             constraint_id='type',
             constraint='datetime',
         ),
     })
 
 
-class Dict(Dict):
+class Dict(_Dict):
     default_error_messages = dict(Field.default_error_messages)
     default_error_messages.update({
         'invalid': _StringifiedDict(
-            message=Dict.default_error_messages['invalid'],
+            message=_Dict.default_error_messages['invalid'],
             constraint_id='type',
             constraint='dict',
         ),
     })
 
 
-class Email(Email):
+class Email(_Email):
     default_error_messages = dict(Field.default_error_messages)
     default_error_messages.update({
         'invalid': _StringifiedDict(
-            message=Email.default_error_messages['invalid'],
+            message=_Email.default_error_messages['invalid'],
             constraint_id='type',
             constraint='email',
         ),
     })
 
 
-class Integer(Integer):
+class Integer(_Integer):
     default_error_messages = dict(Field.default_error_messages)
     default_error_messages.update({
         'invalid': _StringifiedDict(
-            message=Integer.default_error_messages['invalid'],
+            message=_Integer.default_error_messages['invalid'],
             constraint_id='type',
             constraint='integer',
         ),
     })
 
 
-class List(List):
+class List(_List):
     default_error_messages = dict(Field.default_error_messages)
     default_error_messages.update({
         'invalid': _StringifiedDict(
-            message=List.default_error_messages['invalid'],
+            message=_List.default_error_messages['invalid'],
             constraint_id='type',
             constraint='list',
         ),
     })
 
 
-class Nested(Nested):
+class Nested(_Nested):
     default_error_messages = dict(Field.default_error_messages)
     default_error_messages.update({
         'type': _StringifiedDict(
-            message=Nested.default_error_messages['type'],
+            message=_Nested.default_error_messages['type'],
             constraint_id='type',
             constraint='dict',
         ),
     })
 
 
-class String(String):
+class String(_String):
     default_error_messages = dict(Field.default_error_messages)
     default_error_messages.update({
         'invalid': _StringifiedDict(
-            message=String.default_error_messages['invalid'],
+            message=_String.default_error_messages['invalid'],
             constraint_id='type',
             constraint='string',
         ),
     })
 
 
-class UUID(UUID):
+class UUID(_UUID):
     default_error_messages = dict(Field.default_error_messages)
     default_error_messages.update({
         'invalid_uuid': _StringifiedDict(
-            message=UUID.default_error_messages['invalid_uuid'],
+            message=_UUID.default_error_messages['invalid_uuid'],
             constraint_id='type',
             constraint='uuid',
         ),
