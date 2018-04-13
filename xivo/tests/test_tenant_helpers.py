@@ -47,7 +47,8 @@ class TestTenantAutodetect(TestCase):
     def test_given_token_no_tenant_when_autodetect_then_return_tenant(self, request):
         tenant = 'tenant'
         tokens = Mock()
-        tokens.from_headers.return_value = {'metadata': {'tenants': [{'uuid': tenant}]}}
+        tokens.from_headers.return_value = {'metadata': {'tenant_uuid': tenant,
+                                                         'tenants': [{'uuid': tenant}]}}
         users = Mock()
         request.headers = {'X-Auth-Token': 'token'}
 
@@ -59,7 +60,7 @@ class TestTenantAutodetect(TestCase):
     def test_given_token_and_tenant_when_autodetect_then_return_tenant(self, request):
         tenant = 'tenant'
         tokens = Mock()
-        tokens.from_headers.return_value = {'metadata': {'tenants': [{'uuid': tenant}]}}
+        tokens.from_headers.return_value = {'metadata': {'tenant_uuid': tenant, 'tenants': [{'uuid': tenant}]}}
         users = Mock()
         request.headers = {'X-Auth-Token': 'token',
                            'Wazo-Tenant': tenant}
@@ -71,10 +72,15 @@ class TestTenantAutodetect(TestCase):
     @patch('xivo.tenant_helpers.request')
     def test_given_token_unknown_tenant_and_user_in_tenant_when_autodetect_then_return_tenant(self, request):
         tenant = 'tenant'
+        other = 'other'
         tokens = Mock()
-        tokens.from_headers.return_value = {'metadata': {'uuid': 'user', 'tenants': []}}
+        tokens.from_headers.return_value = {'metadata': {'uuid': 'user',
+                                                         'tenant_uuid': other,
+                                                         'tenants': [
+                                                             {'uuid': other},
+                                                         ]}}
         users = Mock()
-        users.get.return_value.tenants.return_value = [Mock(uuid=tenant)]
+        users.get.return_value.tenants.return_value = [Mock(uuid=tenant), Mock(uuid=other)]
         request.headers = {'X-Auth-Token': 'token',
                            'Wazo-Tenant': tenant}
 
@@ -85,8 +91,13 @@ class TestTenantAutodetect(TestCase):
     @patch('xivo.tenant_helpers.request')
     def test_given_token_unknown_tenant_and_user_not_in_tenant_when_autodetect_then_raise(self, request):
         tenant = 'tenant'
+        other = 'other'
         tokens = Mock()
-        tokens.from_headers.return_value = {'metadata': {'uuid': 'user', 'tenants': []}}
+        tokens.from_headers.return_value = {'metadata': {'uuid': 'user',
+                                                         'tenant_uuid': other,
+                                                         'tenants': [
+                                                             {'uuid': other},
+                                                         ]}}
         users = Mock()
         users.get.return_value.tenants.return_value = []
         request.headers = {'X-Auth-Token': 'token',
@@ -175,7 +186,8 @@ class TestTenantFromToken(TestCase):
 
     def test_given_tenant_when_from_token_then_return_tenant(self):
         tenant = 'tenant'
-        token = {'metadata': {'tenants': [{'uuid': tenant}]}}
+        token = {'metadata': {'tenant_uuid': tenant,
+                              'tenants': [{'uuid': tenant}]}}
 
         result = Tenant.from_token(token)
 
