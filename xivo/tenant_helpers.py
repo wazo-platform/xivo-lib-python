@@ -91,9 +91,14 @@ class Tenant(object):
     @classmethod
     def from_token(cls, token):
         try:
-            return cls(token['metadata']['tenant_uuid'])
+            tenants = token['metadata']['tenants']
         except KeyError:
             raise InvalidTenant()
+        if not tenants:
+            raise InvalidTenant()
+        if len(tenants) > 1:
+            raise InvalidTenant()
+        return cls(**tenants[0])
 
     def __init__(self, uuid, name=None):
         self.uuid = uuid
