@@ -65,7 +65,7 @@ class Tenant(tenant_helpers.Tenant):
 
         try:
             return tenant.check_against_user(current_user)
-        except tenant_helpers.InvalidTenant:
+        except (tenant_helpers.InvalidTenant, tenant_helpers.InvalidUser):
             raise tenant_helpers.UnauthorizedTenant(tenant.uuid)
 
     @classmethod
