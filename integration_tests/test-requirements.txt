@@ -3,4 +3,4 @@ https://github.com/wazo-pbx/xivo-test-helpers/archive/master.zip
 nose
 kombu==3.0.34
 pyhamcrest
-python-consul
+python-consul==0.7.0

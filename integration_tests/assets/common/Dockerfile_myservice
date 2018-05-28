@@ -7,7 +7,7 @@ RUN pip install \
     kombu \
     flask \
     https://github.com/wazo-pbx/xivo-bus/archive/master.zip \
-    python-consul \
+    python-consul==0.7.0 \
     netifaces
 
 RUN cd /tmp/xivo && python setup.py install
