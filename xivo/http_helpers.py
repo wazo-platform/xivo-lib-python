@@ -44,10 +44,11 @@ class LazyHeaderFormatter(object):
 
     def _filter_sensible_fields(self, headers):
         if 'Authorization' in headers:
-            value = headers['Authorization']
-            new_value = 'X' * len(value)
-            if value.startswith('Basic '):
-                new_value = 'Basic ' + new_value[5:]
+            if headers['Authorization'].startswith('Basic '):
+                new_value = 'Basic <hidden>'
+            else:
+                new_value = '<hidden>'
+
             headers['Authorization'] = new_value
 
         if 'X-Auth-Token' in headers:
