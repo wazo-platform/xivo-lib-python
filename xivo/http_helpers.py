@@ -30,9 +30,66 @@ def add_logger(app, logger):
     app.logger.propagate = True
 
 
+class LazyHeaderFormatter(object):
+
+    VISIBLE_TOKEN_SIZE = 8
+
+    def __init__(self, raw_headers):
+        self._raw_headers = raw_headers
+
+    def __str__(self):
+        headers_dict = self._to_dict(self._raw_headers)
+        filtered_headers = self._filter_sensible_fields(headers_dict)
+        return '{}'.format(filtered_headers)
+
+    def _filter_sensible_fields(self, headers):
+        if 'Authorization' in headers:
+            value = headers['Authorization']
+            new_value = 'X' * len(value)
+            if value.startswith('Basic '):
+                new_value = 'Basic ' + new_value[5:]
+            headers['Authorization'] = new_value
+
+        if 'X-Auth-Token' in headers:
+            value = headers['X-Auth-Token']
+            visible_pos = len(value) - self.VISIBLE_TOKEN_SIZE
+            new_value = []
+            for i, c in enumerate(value):
+                if i >= visible_pos or c == '-':
+                    new_value.append(c)
+                else:
+                    new_value.append('X')
+            headers['X-Auth-Token'] = ''.join(new_value)
+
+        return headers
+
+
+    def _to_dict(self, headers):
+        return dict(headers)
+
+
 def _log_request(url, response):
     current_app.logger.info('(%s) %s %s %s', request.remote_addr, request.method, url, response.status_code)
 
+
+def log_before_request():
+    not_printable_content_types = [
+        'application/octet-stream',
+    ]
+
+    params = {
+        'method': request.method,
+        'url': unquote(request.url),
+        'headers': LazyHeaderFormatter(request.headers),
+    }
+
+    if request.data and request.headers.get('Content-Type') not in not_printable_content_types:
+        params['data'] = request.data
+        fmt = "%(method)s %(url)s %(headers)s with data %(data)s"
+    else:
+        fmt = "%(method)s %(url)s %(headers)s"
+
+    current_app.logger.info(fmt, params)
 
 def log_request(response):
     url = unquote(request.url)
