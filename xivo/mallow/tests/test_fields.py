@@ -17,6 +17,7 @@ class AllFieldsSchema(Schema):
     string = fields.String()
     integer = fields.Integer()
     boolean = fields.Integer()
+    date = fields.Date()
     datetime = fields.DateTime()
     dict_ = fields.Dict()
     email = fields.Email()

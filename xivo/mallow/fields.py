@@ -3,6 +3,7 @@
 
 from marshmallow.fields import (
     Boolean as _Boolean,
+    Date as _Date,
     DateTime as _DateTime,
     Dict as _Dict,
     Email as _Email,
@@ -50,6 +51,17 @@ class Boolean(_Boolean):
             message=_Boolean.default_error_messages['invalid'],
             constraint_id='type',
             constraint='boolean'
+        ),
+    })
+
+
+class Date(_Date):
+    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages.update({
+        'invalid': _StringifiedDict(
+            message=_Date.default_error_messages['invalid'],
+            constraint_id='type',
+            constraint='date',
         ),
     })
 
