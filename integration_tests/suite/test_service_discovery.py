@@ -57,6 +57,14 @@ class _BaseTest(AssetLaunchingTestCase):
     assets_root = ASSET_ROOT
     service = 'myservice'
 
+    @classmethod
+    def _docker_compose_options(cls):
+        return [
+            '--file', os.path.join(cls.assets_root, 'docker-compose.yml'),
+            '--file', os.path.join(cls.assets_root, 'docker-compose.{}.override.yml'.format(cls.asset)),
+            '--project-name', cls.service,
+        ]
+
     @contextmanager
     def myservice(self, ip=None, enabled=True):
         self._run_docker_compose_cmd(['stop', self.service])
@@ -72,7 +80,7 @@ class _BaseTest(AssetLaunchingTestCase):
         status = self.service_status('myservice')
 
         try:
-            network_name = '{}0{}_default'.format(self.service, self.asset)
+            network_name = '{}_default'.format(self.service)
             yield ip or status['NetworkSettings']['Networks'][network_name]['IPAddress']
         finally:
             id_ = status['Id']
