@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2016-2017 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2018 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
 import os
@@ -72,7 +72,8 @@ class _BaseTest(AssetLaunchingTestCase):
         status = self.service_status('myservice')
 
         try:
-            yield ip or status['NetworkSettings']['IPAddress']
+            network_name = '{}0{}_default'.format(self.service, self.asset)
+            yield ip or status['NetworkSettings']['Networks'][network_name]['IPAddress']
         finally:
             id_ = status['Id']
             self._run_cmd('docker stop --time 20 {}'.format(id_))
