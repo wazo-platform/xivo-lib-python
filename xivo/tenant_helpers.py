@@ -33,13 +33,13 @@ class InvalidUser(Exception):
 
 class UnauthorizedTenant(rest_api_helpers.APIException):
 
-    def __init__(self, tenant):
+    def __init__(self, tenant_uuid):
         super(UnauthorizedTenant, self).__init__(
             status_code=401,
             message='Unauthorized tenant',
             error_id='unauthorized-tenant',
             details={
-                'tenant': tenant,
+                'tenant_uuid': str(tenant_uuid),
             }
         )
 
