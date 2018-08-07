@@ -1,6 +1,6 @@
 from python:2.7.13
 
-COPY integration_tests/assets/common/bin /usr/local/bin
+COPY integration_tests/assets/bin /usr/local/bin
 COPY . /tmp/xivo
 
 RUN pip install \
