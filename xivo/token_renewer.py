@@ -29,7 +29,6 @@ class TokenRenewer(object):
             raise Exception('token renewer already started')
 
         self._callbacks.append(callback)
-        self._notify(callback, None)
 
     def start(self):
         if self._started:

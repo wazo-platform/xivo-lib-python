@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-2016 Avencall
+# Copyright 2015-2018 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
 import unittest
@@ -20,13 +20,6 @@ class TestTokenRenewer(unittest.TestCase):
         self.backend = 'foo-backend'
         self.expiration = 30
         self.token_renewer = TokenRenewer(self.auth_client, self.backend, self.expiration)
-
-    def test_subscribe_to_token_change(self):
-        callback = Mock()
-
-        self.token_renewer.subscribe_to_token_change(callback)
-
-        callback.assert_called_once_with(None)
 
     def test_renew_token_success(self):
         callback = Mock()
