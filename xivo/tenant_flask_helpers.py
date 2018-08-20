@@ -2,6 +2,8 @@
 # Copyright 2018 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
+import logging
+
 from flask import (
     current_app,
     g,
@@ -11,6 +13,8 @@ from werkzeug.local import LocalProxy
 from xivo.tenant_helpers import Tokens, Users
 
 from . import tenant_helpers
+
+logger = logging.getLogger(__name__)
 
 
 def get_auth_client():
@@ -56,16 +60,22 @@ class Tenant(tenant_helpers.Tenant):
         try:
             tenant = cls.from_headers()
         except tenant_helpers.InvalidTenant:
-            return cls.from_token(token)
+            logger.debug('Invalid tenant "%s" from header, using token...', tenant.uuid)
+            tenant = cls.from_token(token)
+            logger.debug('Found tenant "%s" from token', tenant.uuid)
+            return tenant
 
+        logger.debug('Found tenant "%s" from header', tenant.uuid)
         try:
             return tenant.check_against_token(token)
         except tenant_helpers.InvalidTenant:
+            logger.debug('Tenant invalid against token')
             pass  # check against user
 
         try:
             return tenant.check_against_user(current_user)
         except (tenant_helpers.InvalidTenant, tenant_helpers.InvalidUser):
+            logger.debug('Tenant invalid against user')
             raise tenant_helpers.UnauthorizedTenant(tenant.uuid)
 
     @classmethod

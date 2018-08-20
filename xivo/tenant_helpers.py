@@ -111,6 +111,12 @@ class Tenant(object):
             raise InvalidTenant(self.uuid)
         return self
 
+    def __repr__(self):
+        result = '<Tenant: {uuid}>'.format(uuid=self.uuid)
+        if self.name:
+            result = '<Tenant: {uuid} "{name}">'.format(uuid=self.uuid, name=self.name)
+        return result
+
 
 class Tokens(object):
 
