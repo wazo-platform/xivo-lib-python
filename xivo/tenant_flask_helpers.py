@@ -60,7 +60,7 @@ class Tenant(tenant_helpers.Tenant):
         try:
             tenant = cls.from_headers()
         except tenant_helpers.InvalidTenant:
-            logger.debug('Invalid tenant "%s" from header, using token...', tenant.uuid)
+            logger.debug('Invalid tenant from header, using token...')
             tenant = cls.from_token(token)
             logger.debug('Found tenant "%s" from token', tenant.uuid)
             return tenant
