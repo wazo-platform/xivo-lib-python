@@ -31,6 +31,9 @@ class TokenRenewer(object):
         self._callbacks.append(callback)
 
     def unsubscribe_from_token_change(self, callback):
+        if threading.current_thread() != self._thread:
+            raise UserWarning('unsubscribe_from_token_change is not threadsafe')
+
         self._callbacks.remove(callback)
 
     def start(self):
