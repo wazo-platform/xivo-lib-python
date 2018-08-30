@@ -30,6 +30,9 @@ class TokenRenewer(object):
 
         self._callbacks.append(callback)
 
+    def unsubscribe_from_token_change(self, callback):
+        self._callbacks.remove(callback)
+
     def start(self):
         if self._started:
             raise Exception('token renewer already started')
@@ -54,7 +57,12 @@ class TokenRenewer(object):
             self._renew_token()
 
     def _renew_token(self):
-        logger.debug('Creating token for "%s" with backend "%s", expiration %s', self._auth_client.username, self._backend, self._expiration)
+        logger.debug(
+            'Creating token for "%s" with backend "%s", expiration %s',
+            self._auth_client.username,
+            self._backend,
+            self._expiration
+        )
         try:
             token = self._auth_client.token.new(self._backend, expiration=self._expiration)
         except Exception:
@@ -65,7 +73,7 @@ class TokenRenewer(object):
             self._notify_all(token['token'])
 
     def _notify_all(self, token_id):
-        for callback in self._callbacks:
+        for callback in list(self._callbacks):
             self._notify(callback, token_id)
 
     def _notify(self, callback, token_id):
