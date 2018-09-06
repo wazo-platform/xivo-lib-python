@@ -23,18 +23,15 @@ class TokenRenewer(object):
         self._started = False
         self._stopped = threading.Event()
         self._renew_time = 0
+        self._callback_lock = threading.Lock()
 
     def subscribe_to_token_change(self, callback):
-        if self._started:
-            raise Exception('token renewer already started')
-
-        self._callbacks.append(callback)
+        with self._callback_lock:
+            self._callbacks.append(callback)
 
     def unsubscribe_from_token_change(self, callback):
-        if threading.current_thread() != self._thread:
-            raise UserWarning('unsubscribe_from_token_change is not threadsafe')
-
-        self._callbacks.remove(callback)
+        with self._callback_lock:
+            self._callbacks.remove(callback)
 
     def start(self):
         if self._started:
@@ -76,7 +73,9 @@ class TokenRenewer(object):
             self._notify_all(token['token'])
 
     def _notify_all(self, token_id):
-        for callback in list(self._callbacks):
+        with self._callback_lock:
+            current_callbacks = list(self._callbacks)
+        for callback in current_callbacks:
             self._notify(callback, token_id)
 
     def _notify(self, callback, token_id):
