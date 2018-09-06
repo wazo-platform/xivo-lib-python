@@ -1,6 +1,8 @@
 # Copyright 2017-2018 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
+import ipaddress
+
 from marshmallow.fields import (
     Boolean as _Boolean,
     Date as _Date,
@@ -13,6 +15,7 @@ from marshmallow.fields import (
     Nested as _Nested,
     String as _String,
     UUID as _UUID,
+    ValidatedField,
 )
 from . import validate
 
@@ -152,6 +155,32 @@ class UUID(_UUID):
             constraint='uuid',
         ),
     })
+
+
+class IP(ValidatedField, String):
+
+    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages.update({
+        'invalid': {'message': 'Not a valid IP address.',
+                    'constraint_id': 'type',
+                    'constraint': 'ip_address'},
+    })
+
+    def _validated(self, value):
+        if value is None:
+            return None
+        try:
+            return ipaddress.ip_address(value)
+        except ValueError:
+            self.fail('invalid')
+
+    def _serialize(self, value, attr, obj):
+        serialized = super()._serialize(value, attr, obj)
+        return str(self._validated(serialized))
+
+    def _deserialize(self, value, attr, data):
+        deserialized = super()._deserialize(value, attr, data)
+        return str(self._validated(deserialized))
 
 
 def WazoOrder(sort_columns, default_sort_column):
