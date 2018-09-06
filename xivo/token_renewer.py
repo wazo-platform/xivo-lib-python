@@ -20,18 +20,20 @@ class TokenRenewer(object):
         self._backend = backend
         self._expiration = expiration
         self._callbacks = []
+        self._callbacks_tmp = []
         self._started = False
         self._stopped = threading.Event()
         self._renew_time = 0
         self._callback_lock = threading.Lock()
+        self._callback_tmp_lock = threading.Lock()
 
     def subscribe_to_token_change(self, callback):
         with self._callback_lock:
             self._callbacks.append(callback)
 
-    def unsubscribe_from_token_change(self, callback):
-        with self._callback_lock:
-            self._callbacks.remove(callback)
+    def subscribe_to_next_token_change(self, callback):
+        with self._callback_tmp_lock:
+            self._callbacks_tmp.append(callback)
 
     def start(self):
         if self._started:
@@ -77,6 +79,13 @@ class TokenRenewer(object):
             current_callbacks = list(self._callbacks)
         for callback in current_callbacks:
             self._notify(callback, token_id)
+
+        with self._callback_tmp_lock:
+            current_callbacks_tmp = list(self._callbacks_tmp)
+        for callback in current_callbacks_tmp:
+            self._notify(callback, token_id)
+        with self._callback_tmp_lock:
+            self._callbacks_tmp = []
 
     def _notify(self, callback, token_id):
         try:
