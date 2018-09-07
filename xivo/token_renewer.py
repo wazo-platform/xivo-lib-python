@@ -75,15 +75,10 @@ class TokenRenewer(object):
 
     def _notify_all(self, token_id):
         with self._callback_lock:
-            current_callbacks = list(self._callbacks)
-        for callback in current_callbacks:
-            self._notify(callback, token_id)
-
-        with self._callback_lock:
-            current_callbacks_tmp = list(self._callbacks_tmp)
+            callbacks = list(self._callbacks + self._callbacks_tmp)
             self._callbacks_tmp = []
 
-        for callback in current_callbacks_tmp:
+        for callback in callbacks:
             self._notify(callback, token_id)
 
     def _notify(self, callback, token_id):
