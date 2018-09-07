@@ -42,16 +42,18 @@ class TestTokenRenewer(unittest.TestCase):
 
         assert_that(callback.called, equal_to(False))
 
-    def test_unsubscribe_from_token_change(self):
+    def test_subscribe_to_next_token_change(self):
         callback = Mock()
-
-        def remove_callback(token):
-            self.token_renewer.unsubscribe_from_token_change(callback)
-
         self.auth_client.token.new.return_value = self.token
-        self.token_renewer.subscribe_to_token_change(remove_callback)
-        self.token_renewer.subscribe_to_token_change(callback)
+        self.token_renewer.subscribe_to_next_token_change(callback)
         callback.reset_mock()
 
         self.token_renewer._renew_token()
+
         callback.assert_called_once_with(self.token_id)
+
+        callback.reset_mock()
+
+        self.token_renewer._renew_token()
+
+        callback.assert_not_called()
