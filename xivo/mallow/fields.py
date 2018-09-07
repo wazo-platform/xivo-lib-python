@@ -1,8 +1,6 @@
 # Copyright 2017-2018 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
-import ipaddress
-
 from marshmallow.fields import (
     Boolean as _Boolean,
     Date as _Date,
@@ -18,6 +16,12 @@ from marshmallow.fields import (
     ValidatedField,
 )
 from . import validate
+
+ipaddress_available = True
+try:
+    import ipaddress  # stdlib in python3, needs to be installed in python2
+except ImportError:
+    ipaddress_available = False
 
 
 class _StringifiedDict(dict):
@@ -165,6 +169,11 @@ class IP(ValidatedField, String):
                     'constraint_id': 'type',
                     'constraint': 'ip_address'},
     })
+
+    def __init__(self, *args, **kwargs):
+        if not ipaddress_available:
+            raise RuntimeError('IP field requires the python ipaddress library')
+        super().__init__(*args, **kwargs)
 
     def _validated(self, value):
         if value is None:
