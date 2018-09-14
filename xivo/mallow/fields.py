@@ -179,17 +179,9 @@ class IP(ValidatedField, String):
         if value is None:
             return None
         try:
-            return ipaddress.ip_address(value)
+            return str(ipaddress.ip_address(value))
         except ValueError:
             self.fail('invalid')
-
-    def _serialize(self, value, attr, obj):
-        serialized = super()._serialize(value, attr, obj)
-        return str(self._validated(serialized))
-
-    def _deserialize(self, value, attr, data):
-        deserialized = super()._deserialize(value, attr, data)
-        return str(self._validated(deserialized))
 
 
 def WazoOrder(sort_columns, default_sort_column):
