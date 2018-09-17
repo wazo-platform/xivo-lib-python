@@ -13,8 +13,15 @@ from marshmallow.fields import (
     Nested as _Nested,
     String as _String,
     UUID as _UUID,
+    ValidatedField,
 )
 from . import validate
+
+ipaddress_available = True
+try:
+    import ipaddress  # stdlib in python3, needs to be installed in python2
+except ImportError:
+    ipaddress_available = False
 
 
 class _StringifiedDict(dict):
@@ -152,6 +159,29 @@ class UUID(_UUID):
             constraint='uuid',
         ),
     })
+
+
+class IP(ValidatedField, String):
+
+    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages.update({
+        'invalid': {'message': 'Not a valid IP address.',
+                    'constraint_id': 'type',
+                    'constraint': 'ip_address'},
+    })
+
+    def __init__(self, *args, **kwargs):
+        if not ipaddress_available:
+            raise RuntimeError('IP field requires the python ipaddress library')
+        super().__init__(*args, **kwargs)
+
+    def _validated(self, value):
+        if value is None:
+            return None
+        try:
+            return str(ipaddress.ip_address(value))
+        except ValueError:
+            self.fail('invalid')
 
 
 def WazoOrder(sort_columns, default_sort_column):
