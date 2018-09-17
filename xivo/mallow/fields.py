@@ -173,7 +173,7 @@ class IP(ValidatedField, String):
     def __init__(self, *args, **kwargs):
         if not ipaddress_available:
             raise RuntimeError('IP field requires the python ipaddress library')
-        super().__init__(*args, **kwargs)
+        super(IP, self).__init__(*args, **kwargs)
 
     def _validated(self, value):
         if value is None:
