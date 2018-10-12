@@ -8,7 +8,6 @@ from hamcrest import (
     calling,
     contains,
     equal_to,
-    empty,
     has_properties,
     instance_of,
 )
@@ -136,25 +135,6 @@ class TestTenantFromHeaders(TestCase):
 
         assert_that(calling(Tenant.from_headers),
                     raises(InvalidTenant))
-
-
-class TestTenantFromHeadersMany(TestCase):
-
-    @patch('xivo.tenant_helpers.request')
-    def test_given_no_tenant_when_from_headers_then_empty_list(self, request):
-        request.headers = {}
-
-        result = Tenant.from_headers(many=True)
-
-        assert_that(result, empty())
-
-    @patch('xivo.tenant_helpers.request')
-    def test_given_tenant_when_from_headers_then_return_tenants(self, request):
-        request.headers = {'Wazo-Tenant': 'tenant1, tenant2'}
-
-        result = Tenant.from_headers(many=True)
-
-        assert_that(result, contains(has_properties(uuid='tenant1'), has_properties(uuid='tenant2')))
 
 
 class TestTenantFromToken(TestCase):
