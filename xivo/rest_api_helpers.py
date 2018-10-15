@@ -5,6 +5,7 @@
 import logging
 import time
 import yaml
+from copy import copy
 
 from functools import wraps
 from pkg_resources import resource_string, iter_entry_points
@@ -50,3 +51,23 @@ def load_all_api_specs(entry_point_group, spec_filename):
             logger.debug('API spec for module "%s" does not exist', module.module_name)
         except ImportError:
             logger.warning('Could not load module %s', module.module_name)
+
+
+def merge_js_spec_examples(api_spec, js_doc):
+    result = copy(api_spec)
+
+    i = 0
+    while i < len(js_doc):
+        api_tag = [x for x in js_doc[i]['tags'] if x['title'] == 'api'][0]
+
+        if api_tag:
+            method, path = api_tag['description'].lower().split(' ')
+
+            if path in result['paths'] and method in result['paths'][path]:
+                result['paths'][path][method]['x-code-samples'] = [{
+                    'lang': 'JavaScript',
+                    'source': js_doc[i]['examples'][0]['description']
+                }]
+        i += 1
+
+    return result

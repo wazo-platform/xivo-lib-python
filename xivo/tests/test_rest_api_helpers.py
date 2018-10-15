@@ -21,6 +21,7 @@ from mock import (
 from ..rest_api_helpers import (
     APIException,
     handle_api_exception,
+    merge_js_spec_examples,
 )
 
 
@@ -103,3 +104,24 @@ class TestRestApiHelpers(TestCase):
         decorated()
 
         assert_that(logger.error.called, is_(True))
+
+    def test_merging_js_specs(self):
+        api_spec = {
+            'paths': {
+                '/users/me/presences': {
+                    'put': {}
+                }
+            }
+        }
+        js_doc = [
+            {
+                'tags': [{ 'title': 'api', 'description': 'PUT /users/me/presences' }],
+                'examples': [
+                    { 'description': 'console.log("hello");'}
+                ]
+            }
+        ]
+        result = merge_js_spec_examples(api_spec, js_doc)
+        expected = [ { 'lang': 'JavaScript', 'source': js_doc[0]['examples'][0]['description'] }]
+
+        assert_that(result['paths']['/users/me/presences']['put']['x-code-samples'], equal_to(expected))
