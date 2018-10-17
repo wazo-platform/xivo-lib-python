@@ -38,4 +38,4 @@ class TokenStatus(object):
         self.has_token = True
 
     def provide_status(self, status):
-        status['service_token'] = Status.ok if self.has_token else Status.fail
+        status['service_token']['status'] = Status.ok if self.has_token else Status.fail
