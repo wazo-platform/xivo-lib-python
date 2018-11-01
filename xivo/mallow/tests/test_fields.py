@@ -25,6 +25,7 @@ class AllFieldsSchema(Schema):
     list_ = fields.List(fields.String())
     nested = fields.Nested('TestSchema')
     uuid = fields.UUID()
+    constant = fields.Constant('constant')
     ip = fields.IP()
 
 

@@ -3,6 +3,7 @@
 
 from marshmallow.fields import (
     Boolean as _Boolean,
+    Constant as _Constant,
     Date as _Date,
     DateTime as _DateTime,
     Dict as _Dict,
@@ -159,6 +160,10 @@ class UUID(_UUID):
             constraint='uuid',
         ),
     })
+
+
+class Constant(_Constant):
+    default_error_messages = dict(Field.default_error_messages)
 
 
 class IP(ValidatedField, String):
