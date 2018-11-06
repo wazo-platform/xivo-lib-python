@@ -64,13 +64,12 @@ class LazyHeaderFormatter(object):
 
         return headers
 
-
     def _to_dict(self, headers):
         return dict(headers)
 
 
 def _log_request(url, response):
-    current_app.logger.info('(%s) %s %s %s', request.remote_addr, request.method, url, response.status_code)
+    current_app.logger.info('response: (%s) %s %s %s', request.remote_addr, request.method, url, response.status_code)
 
 
 def log_before_request():
@@ -86,11 +85,12 @@ def log_before_request():
 
     if request.data and request.headers.get('Content-Type') not in not_printable_content_types:
         params['data'] = request.data
-        fmt = "%(method)s %(url)s %(headers)s with data %(data)s"
+        fmt = "request: %(method)s %(url)s %(headers)s with data %(data)s"
     else:
-        fmt = "%(method)s %(url)s %(headers)s"
+        fmt = "request: %(method)s %(url)s %(headers)s"
 
     current_app.logger.info(fmt, params)
+
 
 def log_request(response):
     url = unquote(request.url)

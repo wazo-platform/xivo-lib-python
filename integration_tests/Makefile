@@ -6,7 +6,7 @@ myservice:
 test-setup: myservice
 	docker pull progrium/consul
 	docker pull rabbitmq
-	docker pull waisbrot/wait
+	docker pull wazopbx/wait
 
 test:
 	nosetests suite
