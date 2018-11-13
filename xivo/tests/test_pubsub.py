@@ -8,7 +8,8 @@ from hamcrest import assert_that
 from hamcrest import not_
 from mock import Mock
 from mock import patch
-from xivo.pubsub import Pubsub
+
+from ..pubsub import Pubsub, CallbackCollector
 
 SOME_TOPIC = 'abcd'
 SOME_MESSAGE = 'defg'
@@ -120,3 +121,65 @@ class TestPubsub(unittest.TestCase):
 
         assert_that(callback_1.called)
         assert_that(callback_3.called)
+
+
+class TestCallbackCollector(unittest.TestCase):
+    def setUp(self):
+        self.callback_collector = CallbackCollector()
+
+    def test_subscribe_and_source_callback(self):
+        callback = Mock()
+        source_callback_1 = self.callback_collector.new_source()
+        self.callback_collector.subscribe(callback)
+
+        source_callback_1()
+
+        callback.assert_called_once_with()
+
+    def test_subscribe_and_multiple_source_callbacks(self):
+        callback = Mock()
+        source_callback_1 = self.callback_collector.new_source()
+        source_callback_2 = self.callback_collector.new_source()
+        source_callback_3 = self.callback_collector.new_source()
+        self.callback_collector.subscribe(callback)
+
+        source_callback_2()
+        callback.assert_not_called()
+
+        source_callback_3()
+        callback.assert_not_called()
+
+        source_callback_1()
+        callback.assert_called_once_with()
+
+    def test_multiple_subscribes_and_source_callback(self):
+        callback_1 = Mock()
+        callback_2 = Mock()
+        source_callback = self.callback_collector.new_source()
+        self.callback_collector.subscribe(callback_1)
+        self.callback_collector.subscribe(callback_2)
+
+        source_callback()
+        callback_1.assert_called_once_with()
+        callback_2.assert_called_once_with()
+
+    def test_multiple_subscribes_and_multiple_source_callbacks(self):
+        callback_1 = Mock()
+        callback_2 = Mock()
+        source_callback_1 = self.callback_collector.new_source()
+        source_callback_2 = self.callback_collector.new_source()
+        source_callback_3 = self.callback_collector.new_source()
+        self.callback_collector.subscribe(callback_1)
+        self.callback_collector.subscribe(callback_2)
+
+        source_callback_2()
+        callback_1.assert_not_called()
+        callback_2.assert_not_called()
+
+        source_callback_3()
+        callback_1.assert_not_called()
+        callback_2.assert_not_called()
+
+        source_callback_1()
+        callback_1.assert_called_once_with()
+        callback_2.assert_called_once_with()
