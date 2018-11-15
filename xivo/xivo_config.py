@@ -284,6 +284,11 @@ def plausible_static(static, schema):
     """
     address = network.parse_ipv4(static['address'])
     netmask = network.parse_ipv4(static['netmask'])
+
+    # If point to point configuration (netmask is 255.255.255.255), bypass the tests
+    if netmask[0] == 255 and netmask[1] == 255 and netmask[2] == 255 and netmask[3] == 255 and:
+        return True
+
     if not network.plausible_netmask(netmask):
         return False
     addr_list = [address]
