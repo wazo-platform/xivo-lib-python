@@ -57,14 +57,6 @@ class _BaseTest(AssetLaunchingTestCase):
     assets_root = ASSET_ROOT
     service = 'myservice'
 
-    @classmethod
-    def _docker_compose_options(cls):
-        return [
-            '--file', os.path.join(cls.assets_root, 'docker-compose.yml'),
-            '--file', os.path.join(cls.assets_root, 'docker-compose.{}.override.yml'.format(cls.asset)),
-            '--project-name', cls.service,
-        ]
-
     @contextmanager
     def myservice(self, ip=None, enabled=True):
         self._run_docker_compose_cmd(['stop', self.service])
