@@ -11,13 +11,11 @@ logger = logging.getLogger(__name__)
 class TokenRenewer(object):
 
     DEFAULT_EXPIRATION = 6 * 3600
-    DEFAULT_BACKEND = 'xivo_service'
     _RENEW_TIME_COEFFICIENT = 0.8
     _RENEW_TIME_FAILED = 20
 
-    def __init__(self, auth_client, backend=DEFAULT_BACKEND, expiration=DEFAULT_EXPIRATION):
+    def __init__(self, auth_client, expiration=DEFAULT_EXPIRATION):
         self._auth_client = auth_client
-        self._backend = backend
         self._expiration = expiration
         self._callbacks = []
         self._callbacks_tmp = []
@@ -59,13 +57,12 @@ class TokenRenewer(object):
 
     def _renew_token(self):
         logger.debug(
-            'Creating token for "%s" with backend "%s", expiration %s',
+            'Creating token for "%s" with expiration %s',
             self._auth_client.username,
-            self._backend,
             self._expiration
         )
         try:
-            token = self._auth_client.token.new(self._backend, expiration=self._expiration)
+            token = self._auth_client.token.new(expiration=self._expiration)
         except Exception:
             logger.warning('create token with wazo-auth failed', exc_info=True)
             self._renew_time = self._RENEW_TIME_FAILED
