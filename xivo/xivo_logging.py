@@ -2,6 +2,7 @@
 # Copyright (C) 2014-2016 Avencall
 # SPDX-License-Identifier: GPL-3.0+
 
+import io
 import logging
 import sys
 
@@ -44,6 +45,12 @@ class _LogLevelFilter(logging.Filter):
 
 
 def setup_logging(log_file, foreground=False, debug=False, log_level=DEFAULT_LOG_LEVEL, log_format=DEFAULT_LOG_FORMAT):
+    '''
+    logger.*  ------------------------ v
+    sys.stdout > streamtologger(INFO)  > logger > streamhandler(level<ERROR) > sys.stdout
+    sys.stderr > streamtologger(ERROR) ^        > streamhandler(level>=ERROR) > sys.stderr
+                                                > filehandler(all levels) > file
+    '''
     root_logger = logging.getLogger()
 
     formatter = logging.Formatter(log_format)
@@ -52,23 +59,22 @@ def setup_logging(log_file, foreground=False, debug=False, log_level=DEFAULT_LOG
     handler.setFormatter(formatter)
     root_logger.addHandler(handler)
 
-    if foreground:
-        stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.addFilter(_LogLevelFilter(lambda level: level <= log_level))
-        stdout_handler.setFormatter(formatter)
-        root_logger.addHandler(stdout_handler)
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.addFilter(_LogLevelFilter(lambda level: level < logging.ERROR))
+    stdout_handler.setFormatter(formatter)
+    root_logger.addHandler(stdout_handler)
 
-        stderr_handler = logging.StreamHandler(sys.stderr)
-        stderr_handler.addFilter(_LogLevelFilter(lambda level: level > log_level))
-        stderr_handler.setFormatter(formatter)
-        root_logger.addHandler(stderr_handler)
-    else:
-        sys.stdout = _StreamToLogger(logging.getLogger('STDOUT'), logging.INFO)
-        sys.stderr = _StreamToLogger(logging.getLogger('STDERR'), logging.ERROR)
+    stderr_handler = logging.StreamHandler(sys.stderr)
+    stderr_handler.addFilter(_LogLevelFilter(lambda level: level >= logging.ERROR))
+    stderr_handler.setFormatter(formatter)
+    root_logger.addHandler(stderr_handler)
 
     if debug:
         log_level = logging.DEBUG
     root_logger.setLevel(log_level)
+
+    sys.stdout = _StreamToLogger(logging.getLogger('STDOUT'), logging.INFO)
+    sys.stderr = _StreamToLogger(logging.getLogger('STDERR'), logging.ERROR)
 
     sys.excepthook = excepthook
 

@@ -18,3 +18,8 @@ services:
     ports:
       - "8500"
     command: "-client 0.0.0.0 -config-dir /tmp"
+
+  thread-exception:
+    image: thread-exception
+    volumes:
+      - ../..:/usr/local/src/xivo-lib-python:ro
