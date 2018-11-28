@@ -4,7 +4,7 @@ egg-info:
 	cd .. && python setup.py egg_info
 
 myservice:
-	docker build -t myservice -f assets/Dockerfile_myservice ..
+	docker build -t myservice -f Dockerfile-myservice ..
 
 test-setup: myservice thread-exception egg-info
 	docker pull progrium/consul
@@ -16,4 +16,4 @@ test:
 	nosetests suite
 
 thread-exception:
-	docker build -t thread-exception -f assets/Dockerfile_thread_exception ..
+	docker build -t thread-exception -f Dockerfile-thread-exception ..
