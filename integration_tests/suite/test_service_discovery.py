@@ -10,7 +10,7 @@ import requests
 from consul import Consul
 from contextlib import contextmanager
 from hamcrest import assert_that, contains_inanyorder, contains_string, equal_to
-from Queue import Empty, Queue
+from six.moves import queue
 from kombu.mixins import ConsumerMixin
 from xivo_test_helpers import until
 from xivo_test_helpers.asset_launching_test_case import AssetLaunchingTestCase
@@ -109,7 +109,7 @@ class TestServiceDiscovery(_BaseTest):
 
     def setUp(self):
         self._consumer = None
-        self.messages = Queue()
+        self.messages = queue.Queue()
         self.start_listening()
 
     def start_listening(self):
@@ -143,7 +143,7 @@ class TestServiceDiscovery(_BaseTest):
 
     def empty_message_queue(self):
         while not self.messages.empty():
-            print 'removing', self.messages.get_nowait()
+            print('removing', self.messages.get_nowait())
 
     def test_that_the_bus_message_is_received_on_start_and_stop_with_auth(self):
         with self.myservice() as ip:
@@ -193,7 +193,7 @@ class TestServiceDiscovery(_BaseTest):
         port = self.service_port(8500, 'consul')
         consul = Consul('localhost', port, 'the_one_ring')
         services = consul.agent.services()
-        for index, service in services.iteritems():
+        for index, service in services.items():
             if service['Service'] == 'myservice' and service['Address'] == ip:
                 return True
 
@@ -218,5 +218,5 @@ class TestServiceDiscovery(_BaseTest):
     def _get_message(self):
         try:
             return self.messages.get(timeout=30)
-        except Empty:
+        except queue.Empty:
             self.fail('Should have received a message')
