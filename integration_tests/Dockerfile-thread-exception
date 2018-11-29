@@ -1,0 +1,8 @@
+FROM python:3.5-slim-stretch
+
+COPY integration_tests/assets/bin/thread-exception.py /usr/local/bin
+COPY . /usr/local/src/xivo-lib-python
+
+RUN cd /usr/local/src/xivo-lib-python && python3 setup.py develop
+
+CMD python3 /usr/local/bin/thread-exception.py

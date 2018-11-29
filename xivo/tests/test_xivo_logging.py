@@ -38,22 +38,15 @@ class TestLogging(TestCase):
 
         logging.FileHandler.assert_called_once_with(log_file)
         file_handler.setFormatter.assert_called_once_with(formatter)
-        root_logger.addHandler.assert_called_once_with(file_handler)
+        root_logger.addHandler.assert_any_call(file_handler)
 
-    def test_setup_logging_with_no_foreground_then_no_stream_logging(self, logging):
-        log_file = Mock()
-
-        setup_logging(log_file)
-
-        assert_that(logging.StreamHandler.call_count, equal_to(0))
-
-    def test_setup_logging_with_foreground_then_stream_logging(self, logging):
+    def test_setup_logging_then_stream_logging(self, logging):
         log_file = Mock()
         root_logger = logging.getLogger.return_value
         stream_handler = logging.StreamHandler.return_value
         formatter = logging.Formatter.return_value
 
-        setup_logging(log_file, foreground=True)
+        setup_logging(log_file)
 
         stream_handler.setFormatter.assert_any_call(formatter)
         root_logger.addHandler.assert_any_call(stream_handler)
@@ -124,7 +117,7 @@ class TestLoggingOutput(TestCase):
     def test_setup_logging_when_log_in_info_level_then_log_in_stdout(self, stdout, stderr):
         message = 'test info'
 
-        setup_logging(self.file_name, foreground=True)
+        setup_logging(self.file_name)
         logging.getLogger('test').info(message)
 
         assert_that(stdout.getvalue(), contains_string(message))
@@ -133,17 +126,17 @@ class TestLoggingOutput(TestCase):
     def test_setup_logging_when_log_in_warning_level_then_log_in_stdout(self, stdout, stderr):
         message = ''
 
-        setup_logging(self.file_name, foreground=True)
+        setup_logging(self.file_name)
         logging.getLogger('test').warning(message)
 
         assert_that(stdout.getvalue(), contains_string(message))
-        assert_that(stderr.getvalue(), '')
+        assert_that(stderr.getvalue(), equal_to(''))
 
     def test_setup_logging_when_log_in_error_level_then_log_in_stderr(self, stdout, stderr):
         message = 'test error'
         _, file_name = tempfile.mkstemp()
 
-        setup_logging(file_name, foreground=True)
+        setup_logging(file_name)
         logging.getLogger('test').error(message)
 
         assert_that(stderr.getvalue(), contains_string(message))
