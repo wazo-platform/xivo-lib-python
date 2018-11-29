@@ -7,3 +7,4 @@ nosetests-*.xml
 pep8.txt
 pylint.txt
 *.pyo
+pycodestyle.txt
