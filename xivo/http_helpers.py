@@ -84,7 +84,10 @@ def log_before_request():
     }
 
     if request.data and request.headers.get('Content-Type') not in not_printable_content_types:
-        params['data'] = request.data
+        try:
+            params['data'] = request.data.decode('utf-8')
+        except UnicodeDecodeError:
+            params['data'] = repr(request.data)
         fmt = "request: %(method)s %(url)s %(headers)s with data %(data)s"
     else:
         fmt = "request: %(method)s %(url)s %(headers)s"
