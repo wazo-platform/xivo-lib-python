@@ -2,6 +2,7 @@
 # Copyright 2015-2018 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
+import itertools
 import logging
 import threading
 
@@ -12,7 +13,6 @@ class TokenRenewer(object):
 
     DEFAULT_EXPIRATION = 6 * 3600
     _RENEW_TIME_COEFFICIENT = 0.8
-    _RENEW_TIME_FAILED = 20
 
     def __init__(self, auth_client, expiration=DEFAULT_EXPIRATION):
         self._auth_client = auth_client
@@ -23,6 +23,7 @@ class TokenRenewer(object):
         self._stopped = threading.Event()
         self._renew_time = 0
         self._callback_lock = threading.Lock()
+        self._renew_time_failed = itertools.chain((1, 2, 4, 8, 16), itertools.repeat(32))
 
     def subscribe_to_token_change(self, callback):
         with self._callback_lock:
@@ -64,8 +65,8 @@ class TokenRenewer(object):
         try:
             token = self._auth_client.token.new(expiration=self._expiration)
         except Exception:
-            logger.warning('create token with wazo-auth failed', exc_info=True)
-            self._renew_time = self._RENEW_TIME_FAILED
+            self._renew_time = next(self._renew_time_failed)
+            logger.warning('Creating token with wazo-auth failed. Retrying in %s seconds...', self._renew_time, exc_info=True)
         else:
             self._renew_time = self._RENEW_TIME_COEFFICIENT * self._expiration
             self._notify_all(token['token'])
