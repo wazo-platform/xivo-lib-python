@@ -1,4 +1,4 @@
-# Copyright 2017-2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
 from marshmallow.fields import (
@@ -9,6 +9,7 @@ from marshmallow.fields import (
     Dict as _Dict,
     Email as _Email,
     Field as _Field,
+    Float as _Float,
     Integer as _Integer,
     List as _List,
     Nested as _Nested,
@@ -114,6 +115,17 @@ class Integer(_Integer):
             message=_Integer.default_error_messages['invalid'],
             constraint_id='type',
             constraint='integer',
+        ),
+    })
+
+
+class Float(_Float):
+    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages.update({
+        'invalid': _StringifiedDict(
+            message=_Float.default_error_messages['invalid'],
+            constraint_id='type',
+            constraint='float',
         ),
     })
 
