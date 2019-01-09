@@ -34,6 +34,7 @@ def handle_validation_exception(func):
 class ListSchema(marshmallow.Schema):
     default_sort_column = None
     sort_columns = []
+    searchable_columns = []
 
     direction = fields.String(validate=validate.OneOf(['asc', 'desc']), missing='asc')
     order = fields.WazoOrder(sort_columns=[], default_sort_column=None)
@@ -43,3 +44,11 @@ class ListSchema(marshmallow.Schema):
 
     class Meta:
         strict = True
+
+    @marshmallow.post_load(pass_original=True)
+    def add_searchable_fields(self, data, original_data):
+        for key, value in original_data.items():
+            if key in self.searchable_columns:
+                data.setdefault(key, value)
+
+        return data
