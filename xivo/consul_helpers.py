@@ -89,6 +89,8 @@ class ServiceCatalogRegistration(object):
 
         try:
             self._registerer.deregister()
+        except RegistererError as e:
+            logger.info('failed to deregister %s', e)
         except Exception:
             logger.exception('failed to deregister')
 
