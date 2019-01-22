@@ -116,9 +116,8 @@ class ServiceCatalogRegistration(object):
         try:
             self._registerer.register()
             self._registered = True
-        except RegistererError:
-            logger.debug('failed to register service', exc_info=True)
-            logger.info('registration failed, retrying in %s seconds', self._retry_interval)
+        except RegistererError as e:
+            logger.info('registration failed, retrying in %s seconds %s', self._retry_interval, e)
 
     def _default_check(self):
         return True
