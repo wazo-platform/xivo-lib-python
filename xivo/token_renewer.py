@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
 import itertools
@@ -64,9 +64,15 @@ class TokenRenewer(object):
         )
         try:
             token = self._auth_client.token.new(expiration=self._expiration)
-        except Exception:
+        except Exception as e:
+            response = getattr(e, 'response', None)
+            status_code = getattr(response, 'status_code', None)
             self._renew_time = next(self._renew_time_failed)
-            logger.warning('Creating token with wazo-auth failed. Retrying in %s seconds...', self._renew_time, exc_info=True)
+            logger.warning(
+                'Creating token with wazo-auth failed (%s). Retrying in %s seconds...',
+                status_code,
+                self._renew_time,
+            )
         else:
             self._renew_time = self._RENEW_TIME_COEFFICIENT * self._expiration
             self._notify_all(token['token'])
