@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
 import logging
@@ -89,6 +89,8 @@ class ServiceCatalogRegistration(object):
 
         try:
             self._registerer.deregister()
+        except RegistererError as e:
+            logger.info('failed to deregister %s', e)
         except Exception:
             logger.exception('failed to deregister')
 
@@ -114,9 +116,8 @@ class ServiceCatalogRegistration(object):
         try:
             self._registerer.register()
             self._registered = True
-        except RegistererError:
-            logger.debug('failed to register service', exc_info=True)
-            logger.info('registration failed, retrying in %s seconds', self._retry_interval)
+        except RegistererError as e:
+            logger.info('registration failed, retrying in %s seconds %s', self._retry_interval, e)
 
     def _default_check(self):
         return True
@@ -164,9 +165,16 @@ class Registerer(object):
             raise RegistererError(str(e))
 
     def send_ttl(self):
-        result = self._client.agent.check.ttl_pass(self._check_id)
+        result = None
+
+        try:
+            result = self._client.agent.check.ttl_pass(self._check_id)
+        except ConnectionError as e:
+            logger.info('%s', e)
+
         if not result:
             logger.info('ttl pass failed')
+
         return result
 
     def deregister(self):
