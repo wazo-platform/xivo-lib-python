@@ -14,6 +14,7 @@ from marshmallow.fields import (
     List as _List,
     Nested as _Nested,
     String as _String,
+    URL as _URL,
     UUID as _UUID,
     ValidatedField,
 )
@@ -159,6 +160,17 @@ class String(_String):
             message=_String.default_error_messages['invalid'],
             constraint_id='type',
             constraint='string',
+        ),
+    })
+
+
+class URL(_URL):
+    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages.update({
+        'invalid_url': _StringifiedDict(
+            message=_URL.default_error_messages['invalid'],
+            constraint_id='type',
+            constraint='url',
         ),
     })
 
