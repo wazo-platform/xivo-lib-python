@@ -1,15 +1,26 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from unittest import TestCase
 
 from hamcrest import (
     assert_that,
+    empty,
     has_entries,
 )
 
-from ..mallow_helpers import ListSchema
+from ..mallow_helpers import ListSchema, Schema
+
+
+class TestSchema(TestCase):
+
+    def test_ensure_dict(self):
+        schema = Schema()
+
+        result, error = schema.load(None)
+
+        assert_that(result, empty())
 
 
 class TestListSchema(TestCase):
