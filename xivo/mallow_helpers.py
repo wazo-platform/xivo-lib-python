@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2016-2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from functools import wraps
@@ -52,3 +52,15 @@ class ListSchema(marshmallow.Schema):
                 data.setdefault(key, value)
 
         return data
+
+
+class Schema(marshmallow.Schema):
+
+    class Meta:
+        ordered = True
+        strict = True   # Always strict in marshmallow 3
+
+    # This behavior is fixed in marshmallow 3
+    @marshmallow.pre_load
+    def ensure_dict(self, data):
+        return data or {}
