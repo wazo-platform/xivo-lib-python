@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
@@ -50,19 +50,6 @@ class TestTenantAutodetect(TestCase):
                                                          'tenants': [{'uuid': tenant}]}}
         users = Mock()
         request.headers = {'X-Auth-Token': 'token'}
-
-        result = Tenant.autodetect(tokens, users)
-
-        assert_that(result.uuid, equal_to(tenant))
-
-    @patch('xivo.tenant_helpers.request')
-    def test_given_token_and_tenant_when_autodetect_then_return_tenant(self, request):
-        tenant = 'tenant'
-        tokens = Mock()
-        tokens.from_headers.return_value = {'metadata': {'tenant_uuid': tenant, 'tenants': [{'uuid': tenant}]}}
-        users = Mock()
-        request.headers = {'X-Auth-Token': 'token',
-                           'Wazo-Tenant': tenant}
 
         result = Tenant.autodetect(tokens, users)
 
@@ -172,29 +159,6 @@ class TestTenantFromToken(TestCase):
         result = Tenant.from_token(token)
 
         assert_that(result.uuid, equal_to(tenant))
-
-
-class TestTenantCheckAgainstToken(TestCase):
-
-    def test_given_no_token_metadata_when_check_against_token_then_raise(self):
-        tenant_uuid = 'tenant'
-        token = {'metadata': {}}
-
-        tenant = Tenant(tenant_uuid)
-
-        assert_that(
-            calling(tenant.check_against_token).with_args(token),
-            raises(InvalidTenant)
-        )
-
-    def test_given_token_has_tenant_when_check_against_token_then_return_tenant(self):
-        tenant_uuid = 'tenant'
-        token = {'metadata': {'tenants': [{'uuid': tenant_uuid}]}}
-        tenant = Tenant(tenant_uuid)
-
-        result = tenant.check_against_token(token)
-
-        assert_that(result.uuid, equal_to(tenant_uuid))
 
 
 class TestTenantCheckAgainstUser(TestCase):

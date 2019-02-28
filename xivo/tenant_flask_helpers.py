@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -64,11 +64,6 @@ class Tenant(tenant_helpers.Tenant):
             return tenant
 
         logger.debug('Found tenant "%s" from header', tenant.uuid)
-        try:
-            return tenant.check_against_token(token)
-        except tenant_helpers.InvalidTenant:
-            logger.debug('Tenant invalid against token')
-            pass  # check against user
 
         try:
             return tenant.check_against_user(current_user)

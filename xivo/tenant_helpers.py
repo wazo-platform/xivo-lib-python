@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
@@ -54,11 +54,6 @@ class Tenant(object):
         except InvalidTenant:
             return cls.from_token(token)
 
-        try:
-            return tenant.check_against_token(token)
-        except InvalidTenant:
-            pass  # check against user
-
         user = users.get(token['metadata'].get('uuid'))
         try:
             return tenant.check_against_user(user)
@@ -90,12 +85,6 @@ class Tenant(object):
         self.uuid = uuid
         self.name = name
 
-    def check_against_token(self, token):
-        authorized_tenants = (tenant['uuid'] for tenant in token['metadata'].get('tenants', []))
-        if self.uuid not in authorized_tenants:
-            raise InvalidTenant(self.uuid)
-        return self
-
     def check_against_user(self, user):
         authorized_tenants = (tenant.uuid for tenant in user.tenants())
         if self.uuid not in authorized_tenants:
@@ -117,7 +106,7 @@ class Tokens(object):
     def get(self, token_id):
         try:
             return self._auth.token.get(token_id)
-        except requests.HTTPError as e:
+        except requests.HTTPError:
             raise InvalidToken(token_id)
         except requests.RequestException as e:
             raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
@@ -151,7 +140,7 @@ class User(object):
 
         try:
             tenants = self._auth.users.get_tenants(self._uuid)['items']
-        except requests.HTTPError as e:
+        except requests.HTTPError:
             raise InvalidUser(self._uuid)
         except requests.RequestException as e:
             raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
