@@ -54,6 +54,11 @@ class Tenant(object):
         except InvalidTenant:
             return cls.from_token(token)
 
+        try:
+            return tenant.check_against_token(token)
+        except InvalidTenant:
+            pass  # check against user
+
         user = users.get(token['metadata'].get('uuid'))
         try:
             return tenant.check_against_user(user)
@@ -84,6 +89,11 @@ class Tenant(object):
     def __init__(self, uuid, name=None):
         self.uuid = uuid
         self.name = name
+
+    def check_against_token(self, token):
+        if self.uuid != token['metadata'].get('tenant_uuid'):
+            raise InvalidTenant(self.uuid)
+        return self
 
     def check_against_user(self, user):
         authorized_tenants = (tenant.uuid for tenant in user.tenants())
