@@ -46,8 +46,12 @@ class TestTenantAutodetect(TestCase):
     def test_given_token_no_tenant_when_autodetect_then_return_tenant(self, request):
         tenant = 'tenant'
         tokens = Mock()
-        tokens.from_headers.return_value = {'metadata': {'tenant_uuid': tenant,
-                                                         'tenants': [{'uuid': tenant}]}}
+        tokens.from_headers.return_value = {
+            'metadata': {
+                'tenant_uuid': tenant,
+                'tenants': [{'uuid': tenant}],
+            }
+        }
         users = Mock()
         request.headers = {'X-Auth-Token': 'token'}
 
@@ -60,15 +64,19 @@ class TestTenantAutodetect(TestCase):
         tenant = 'tenant'
         other = 'other'
         tokens = Mock()
-        tokens.from_headers.return_value = {'metadata': {'uuid': 'user',
-                                                         'tenant_uuid': other,
-                                                         'tenants': [
-                                                             {'uuid': other},
-                                                         ]}}
+        tokens.from_headers.return_value = {
+            'metadata': {
+                'uuid': 'user',
+                'tenant_uuid': other,
+                'tenants': [{'uuid': other}],
+            }
+        }
         users = Mock()
         users.get.return_value.tenants.return_value = [Mock(uuid=tenant), Mock(uuid=other)]
-        request.headers = {'X-Auth-Token': 'token',
-                           'Wazo-Tenant': tenant}
+        request.headers = {
+            'X-Auth-Token': 'token',
+            'Wazo-Tenant': tenant,
+        }
 
         result = Tenant.autodetect(tokens, users)
 
@@ -79,15 +87,19 @@ class TestTenantAutodetect(TestCase):
         tenant = 'tenant'
         other = 'other'
         tokens = Mock()
-        tokens.from_headers.return_value = {'metadata': {'uuid': 'user',
-                                                         'tenant_uuid': other,
-                                                         'tenants': [
-                                                             {'uuid': other},
-                                                         ]}}
+        tokens.from_headers.return_value = {
+            'metadata': {
+                'uuid': 'user',
+                'tenant_uuid': other,
+                'tenants': [{'uuid': other}],
+            }
+        }
         users = Mock()
         users.get.return_value.tenants.return_value = []
-        request.headers = {'X-Auth-Token': 'token',
-                           'Wazo-Tenant': tenant}
+        request.headers = {
+            'X-Auth-Token': 'token',
+            'Wazo-Tenant': tenant,
+        }
 
         assert_that(
             calling(Tenant.autodetect).with_args(tokens, users),
@@ -120,8 +132,10 @@ class TestTenantFromHeaders(TestCase):
         tenant = 'tenant1,tenant2'
         request.headers = {'Wazo-Tenant': tenant}
 
-        assert_that(calling(Tenant.from_headers),
-                    raises(InvalidTenant))
+        assert_that(
+            calling(Tenant.from_headers),
+            raises(InvalidTenant)
+        )
 
 
 class TestTenantFromToken(TestCase):
@@ -143,8 +157,7 @@ class TestTenantFromToken(TestCase):
         )
 
     def test_given_too_many_tenants_when_from_token_then_return_tenant(self):
-        token = {'metadata': {'tenants': [{'uuid': 'tenant1'},
-                                          {'uuid': 'tenant2'}]}}
+        token = {'metadata': {'tenants': [{'uuid': 'tenant1'}, {'uuid': 'tenant2'}]}}
 
         assert_that(
             calling(Tenant.from_token).with_args(token),
@@ -153,9 +166,7 @@ class TestTenantFromToken(TestCase):
 
     def test_given_tenant_when_from_token_then_return_tenant(self):
         tenant = 'tenant'
-        token = {'metadata': {'tenant_uuid': tenant,
-                              'tenants': [{'uuid': tenant}]}}
-
+        token = {'metadata': {'tenant_uuid': tenant, 'tenants': [{'uuid': tenant}]}}
         result = Tenant.from_token(token)
 
         assert_that(result.uuid, equal_to(tenant))
