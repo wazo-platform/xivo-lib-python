@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2016-2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import re
@@ -75,6 +75,7 @@ def _log_request(url, response):
 def log_before_request():
     not_printable_content_types = [
         'application/octet-stream',
+        'application/pdf',
     ]
 
     params = {
