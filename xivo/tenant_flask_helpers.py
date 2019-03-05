@@ -64,6 +64,11 @@ class Tenant(tenant_helpers.Tenant):
             return tenant
 
         logger.debug('Found tenant "%s" from header', tenant.uuid)
+        try:
+            return tenant.check_against_token(token)
+        except tenant_helpers.InvalidTenant:
+            logger.debug('Tenant invalid against token')
+            pass  # check against user
 
         try:
             return tenant.check_against_user(current_user)
