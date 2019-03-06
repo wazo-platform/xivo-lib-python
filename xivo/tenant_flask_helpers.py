@@ -31,6 +31,7 @@ def get_token():
     token = g.get('token')
     if not token:
         token = g.token = Tokens(auth_client).from_headers()
+        auth_client.set_token(token.uuid)
     return token
 
 
@@ -40,8 +41,8 @@ token = LocalProxy(get_token)
 def get_current_user():
     current_user = g.get('current_user')
     if not current_user:
-        auth_client.set_token(token['token'])
-        current_user = g.current_user = Users(auth_client).get(token['metadata'].get('uuid'))
+        auth_client.set_token(token.uuid)
+        current_user = g.current_user = Users(auth_client).get(token.user_uuid)
     return current_user
 
 
@@ -68,10 +69,4 @@ class Tenant(tenant_helpers.Tenant):
             return tenant.check_against_token(token)
         except tenant_helpers.InvalidTenant:
             logger.debug('Tenant invalid against token')
-            pass  # check against user
-
-        try:
-            return tenant.check_against_user(current_user)
-        except (tenant_helpers.InvalidTenant, tenant_helpers.InvalidUser):
-            logger.debug('Tenant invalid against user')
             raise tenant_helpers.UnauthorizedTenant(tenant.uuid)

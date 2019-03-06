@@ -57,12 +57,6 @@ class Tenant(object):
         try:
             return tenant.check_against_token(token)
         except InvalidTenant:
-            pass  # check against user
-
-        user = users.get(token['metadata'].get('uuid'))
-        try:
-            return tenant.check_against_user(user)
-        except InvalidTenant:
             raise UnauthorizedTenant(tenant.uuid)
 
     @classmethod
@@ -81,23 +75,19 @@ class Tenant(object):
 
     @classmethod
     def from_token(cls, token):
-        try:
-            return cls(token['metadata']['tenant_uuid'])
-        except KeyError:
+        if not token.tenant_uuid:
             raise InvalidTenant()
+        return cls(uuid=token.tenant_uuid)
 
     def __init__(self, uuid, name=None):
         self.uuid = uuid
         self.name = name
 
     def check_against_token(self, token):
-        if self.uuid != token['metadata'].get('tenant_uuid'):
-            raise InvalidTenant(self.uuid)
-        return self
-
-    def check_against_user(self, user):
-        authorized_tenants = (tenant.uuid for tenant in user.tenants())
-        if self.uuid not in authorized_tenants:
+        if self.uuid == token.tenant_uuid:
+            return self
+        visible_tenants = (tenant.uuid for tenant in token.visible_tenants())
+        if self.uuid not in visible_tenants:
             raise InvalidTenant(self.uuid)
         return self
 
@@ -115,7 +105,7 @@ class Tokens(object):
 
     def get(self, token_id):
         try:
-            return self._auth.token.get(token_id)
+            return Token(self._auth.token.get(token_id), self._auth)
         except requests.HTTPError:
             raise InvalidToken(token_id)
         except requests.RequestException as e:
@@ -126,6 +116,40 @@ class Tokens(object):
         if not token_id:
             raise InvalidToken()
         return self.get(token_id)
+
+
+class Token(object):
+
+    def __init__(self, token_dict, auth):
+        self._auth = auth
+        self._token_dict = token_dict
+
+    @property
+    def uuid(self):
+        return self._token_dict['token']
+
+    @property
+    def infos(self):
+        return dict(self._token_dict)
+
+    @property
+    def tenant_uuid(self):
+        return self._token_dict['metadata'].get('tenant_uuid')
+
+    @property
+    def user_uuid(self):
+        return self._token_dict['metadata'].get('uuid')
+
+    def visible_tenants(self):
+        if not self.tenant_uuid:
+            return []
+
+        try:
+            tenants_list = self._auth.tenants.list(self.tenant_uuid)['items']
+        except requests.RequestException as e:
+            raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
+
+        return [Tenant(tenant['uuid'], tenant['name']) for tenant in tenants_list]
 
 
 class Users(object):
@@ -143,17 +167,3 @@ class User(object):
         self._auth = auth
         self._uuid = uuid
         self._tenants = None
-
-    def tenants(self):
-        if self._tenants is not None:
-            return self._tenants
-
-        try:
-            tenants = self._auth.users.get_tenants(self._uuid)['items']
-        except requests.HTTPError:
-            raise InvalidUser(self._uuid)
-        except requests.RequestException as e:
-            raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
-
-        self._tenants = [Tenant(uuid=tenant['uuid'], name=tenant.get('name')) for tenant in tenants]
-        return self._tenants
