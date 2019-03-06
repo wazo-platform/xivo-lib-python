@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -344,19 +344,19 @@ class TestRemoteServiceFinderListRunningServices(BaseFinderTestCase):
 
     def test_that_returns_services_from_each_nodes(self, requests):
         node_0_service = {"ID": "1c8c13d8-adca-4715-8bf3-04e51509f141",
-                          "Service": "xivo-ctid",
+                          "Service": "xivo-ctid-ng",
                           "Tags": [
                               "f9f0f3bb-f577-4354-9109-9cf6cf7c7adf",
-                              "xivo-ctid",
+                              "xivo-ctid-ng",
                           ],
                           "Port": 9495,
                           "Address": "10.37.0.254",
                           "EnableTagOverride": False}
         node_1_service = {"ID": "1c8c13d8-adca-4715-b1b1-04e51509f141",
-                          "Service": "xivo-ctid",
+                          "Service": "xivo-ctid-ng",
                           "Tags": [
                               "f9f0f3bb-f577-4354-b1b1-9cf6cf7c7adf",
-                              "xivo-ctid",
+                              "xivo-ctid-ng",
                           ],
                           "Port": 9495,
                           "Address": "10.37.1.254",
@@ -373,6 +373,6 @@ class TestRemoteServiceFinderListRunningServices(BaseFinderTestCase):
         requests.get.return_value = Mock(status_code=200, json=Mock(return_value=response))
 
         finder = ServiceFinder(self.consul_config)
-        result = finder._list_running_services('xivo-ctid', 'dc1', None)
+        result = finder._list_running_services('xivo-ctid-ng', 'dc1', None)
 
         assert_that(result, contains(node_0_service, node_1_service))
