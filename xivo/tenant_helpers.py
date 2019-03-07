@@ -47,7 +47,7 @@ class UnauthorizedTenant(rest_api_helpers.APIException):
 class Tenant(object):
 
     @classmethod
-    def autodetect(cls, tokens, users):
+    def autodetect(cls, tokens):
         token = tokens.from_headers()
         try:
             tenant = cls.from_headers()

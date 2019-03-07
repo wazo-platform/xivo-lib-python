@@ -6,9 +6,7 @@ import requests
 from hamcrest import (
     assert_that,
     calling,
-    contains,
     equal_to,
-    has_properties,
     instance_of,
 )
 from mock import Mock, patch
@@ -19,7 +17,6 @@ from unittest import TestCase
 from ..tenant_helpers import (
     InvalidTenant,
     InvalidToken,
-    InvalidUser,
     Tenant,
     Tokens,
     UnauthorizedTenant,
@@ -34,11 +31,10 @@ class TestTenantAutodetect(TestCase):
     def test_given_no_token_when_autodetect_then_raise(self, request):
         tokens = Mock()
         tokens.from_headers.side_effect = InvalidToken
-        users = Mock()
         request.headers = {}
 
         assert_that(
-            calling(Tenant.autodetect).with_args(tokens, users),
+            calling(Tenant.autodetect).with_args(tokens),
             raises(InvalidToken)
         )
 
@@ -47,10 +43,9 @@ class TestTenantAutodetect(TestCase):
         tenant = 'tenant'
         tokens = Mock()
         tokens.from_headers.return_value = Mock(tenant_uuid=tenant)
-        users = Mock()
         request.headers = {'X-Auth-Token': 'token'}
 
-        result = Tenant.autodetect(tokens, users)
+        result = Tenant.autodetect(tokens)
 
         assert_that(result.uuid, equal_to(tenant))
 
@@ -61,10 +56,9 @@ class TestTenantAutodetect(TestCase):
         token.visible_tenants.return_value = [tenant]
         tokens = Mock()
         tokens.from_headers.return_value = token
-        users = Mock()
         request.headers = {'X-Auth-Token': 'token', 'Wazo-Tenant': tenant}
 
-        result = Tenant.autodetect(tokens, users)
+        result = Tenant.autodetect(tokens)
 
         assert_that(result.uuid, equal_to(tenant))
 
@@ -76,13 +70,12 @@ class TestTenantAutodetect(TestCase):
         token.visible_tenants.return_value = [Mock(uuid=tenant), Mock(uuid=other)]
         tokens = Mock()
         tokens.from_headers.return_value = token
-        users = Mock()
         request.headers = {
             'X-Auth-Token': 'token',
             'Wazo-Tenant': tenant,
         }
 
-        result = Tenant.autodetect(tokens, users)
+        result = Tenant.autodetect(tokens)
 
         assert_that(result.uuid, equal_to(tenant))
 
@@ -94,14 +87,13 @@ class TestTenantAutodetect(TestCase):
         token.visible_tenants.return_value = []
         tokens = Mock()
         tokens.from_headers.return_value = token
-        users = Mock()
         request.headers = {
             'X-Auth-Token': 'token',
             'Wazo-Tenant': tenant,
         }
 
         assert_that(
-            calling(Tenant.autodetect).with_args(tokens, users),
+            calling(Tenant.autodetect).with_args(tokens),
             raises(UnauthorizedTenant)
         )
 
