@@ -280,6 +280,19 @@ class TestTokenVisibleTenants(TestCase):
 
         assert_that(result, empty())
 
+    def test_auth_unauthorized(self):
+        auth = Mock()
+        auth.tenants.list.side_effect = HTTPError(response=Mock(status_code=401))
+        token = Token({
+            'metadata': {
+                'tenant_uuid': 'tenant'
+            }
+        }, auth)
+
+        result = token.visible_tenants()
+
+        assert_that(result, contains(has_property('uuid', 'tenant')))
+
     def test_auth_exception(self):
         auth = Mock()
         auth.tenants.list.side_effect = RequestException()
