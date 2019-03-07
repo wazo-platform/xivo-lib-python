@@ -3,21 +3,30 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
+
 from hamcrest import (
     assert_that,
     calling,
+    contains,
+    empty,
     equal_to,
+    has_property,
     instance_of,
 )
 from mock import Mock, patch
+from requests import (
+    HTTPError,
+    RequestException,
+)
+from unittest import TestCase
 from xivo.auth_verifier import AuthServerUnreachable
 from xivo_test_helpers.hamcrest.raises import raises
-from unittest import TestCase
 
 from ..tenant_helpers import (
     InvalidTenant,
     InvalidToken,
     Tenant,
+    Token,
     Tokens,
     UnauthorizedTenant,
     User,
@@ -257,3 +266,56 @@ class TestUsersGet(TestCase):
         result = users.get('user-uuid')
 
         assert_that(result, instance_of(User))
+
+
+class TestTokenVisibleTenants(TestCase):
+
+    def test_without_tenant_uuid(self):
+        auth = Mock()
+        token = Token({
+            'metadata': {}
+        }, auth)
+
+        result = token.visible_tenants()
+
+        assert_that(result, empty())
+
+    def test_auth_exception(self):
+        auth = Mock()
+        auth.tenants.list.side_effect = RequestException()
+        token = Token({
+            'metadata': {
+                'tenant_uuid': 'tenant'
+            }
+        }, auth)
+
+        assert_that(calling(token.visible_tenants).with_args(),
+                    raises(AuthServerUnreachable))
+
+    def test_visible_tenants(self):
+        auth = Mock()
+        auth.tenants.list.return_value = {
+            'items': [
+                {
+                    'name': 'supertenant-name',
+                    'uuid': 'supertenant',
+                }, {
+                    'name': 'subtenant1-name',
+                    'uuid': 'subtenant1',
+                }, {
+                    'name': 'subtenant2-name',
+                    'uuid': 'subtenant2',
+                },
+            ],
+        }
+        token = Token({
+            'metadata': {
+                'tenant_uuid': 'supertenant'
+            }
+        }, auth)
+
+        result = token.visible_tenants()
+
+        assert_that(result, contains(has_property('uuid', 'supertenant'),
+                                     has_property('uuid', 'subtenant1'),
+                                     has_property('uuid', 'subtenant2')))
