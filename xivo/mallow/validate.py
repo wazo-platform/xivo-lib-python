@@ -1,4 +1,4 @@
-# Copyright 2017-2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from marshmallow import ValidationError
@@ -67,10 +67,14 @@ class Length(_Length):
 
     def _format_error(self, value, message):
         msg = super(Length, self)._format_error(value, message)
+        if self.equal:
+            constraint = {'equal': self.equal}
+        else:
+            constraint = {'min': self.min, 'max': self.max}
 
         return {
             'constraint_id': self.constraint_id,
-            'constraint': {'min': self.min, 'max': self.max},
+            'constraint': constraint,
             'message': msg,
         }
 

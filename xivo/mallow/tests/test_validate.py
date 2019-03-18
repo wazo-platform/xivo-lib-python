@@ -1,4 +1,4 @@
-# Copyright 2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -6,6 +6,7 @@ import unittest
 from hamcrest import (
     assert_that,
     empty,
+    has_entries,
     has_entry,
     is_not,
 )
@@ -31,3 +32,19 @@ class TestValidation(unittest.TestCase):
     def test_given_non_string_values_then_return_errors(self):
         _, error = ValidateSchema().load({1: None})
         assert_that(error, is_not(empty))
+
+
+class LengthSchema(Schema):
+    equal = fields.String(validate=validate.Length(equal=2))
+    min_max = fields.String(validate=validate.Length(min=2, max=3))
+
+
+class TestLengthValidation(unittest.TestCase):
+
+    def test_length_equal(self):
+        _, errors = LengthSchema().load({'equal': 'a'})
+        assert_that(errors, {'equal': [has_entries(constraint={'equal': 2})]})
+
+    def test_length_min_max(self):
+        _, errors = LengthSchema().load({'min_max': 'a'})
+        assert_that(errors, {'min_max': [has_entries(constraint={'min': 2, 'max': 3})]})
