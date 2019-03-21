@@ -37,13 +37,25 @@ class ListSchema(marshmallow.Schema):
     searchable_columns = []
 
     direction = fields.String(validate=validate.OneOf(['asc', 'desc']), missing='asc')
-    order = fields.WazoOrder(sort_columns=[], default_sort_column=None)
+    order = fields.String()
     limit = fields.Integer(validate=validate.Range(min=0), missing=None)
     offset = fields.Integer(validate=validate.Range(min=0), missing=0)
     search = fields.String(missing=None)
 
     class Meta:
         strict = True
+
+    def on_bind_field(self, field_name, field_obj):
+        if field_name == 'order':
+            self._set_order_parameters(field_obj)
+
+    def _set_order_parameters(self, field_obj):
+        field_obj.validators = [validate.OneOf(self.sort_columns)]
+        field_obj.missing = self.default_sort_column
+        if self.default_sort_column is None:
+            field_obj.allow_none = True
+        else:
+            field_obj.allow_none = False
 
     @marshmallow.post_load(pass_original=True)
     def add_searchable_fields(self, data, original_data):
