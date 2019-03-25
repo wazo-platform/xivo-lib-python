@@ -147,7 +147,7 @@ class Token(object):
         try:
             tenants_list = self._auth.tenants.list(self.tenant_uuid)['items']
         except requests.HTTPError as e:
-            if e.response and e.response.status_code == 401:
+            if e.response is not None and e.response.status_code == 401:
                 return [Tenant(self.tenant_uuid)]
             raise
         except requests.RequestException as e:
