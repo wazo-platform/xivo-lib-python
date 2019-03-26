@@ -4,10 +4,15 @@
 
 import requests
 
-from flask import request
 from xivo import rest_api_helpers
 from xivo.auth_verifier import extract_token_id_from_header
 from xivo.auth_verifier import AuthServerUnreachable
+
+# Necessary to avoid a dependency in provd
+try:
+    from flask import request
+except ImportError:
+    pass
 
 
 class InvalidTenant(Exception):
