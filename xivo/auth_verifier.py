@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
 import requests
 
 from collections import namedtuple
-from flask import request
 from functools import wraps
 from six import iteritems, text_type
+
+# Necessary to avoid a dependency in provd
+try:
+    from flask import request
+except ImportError:
+    pass
 
 # Postpone the raise to the first use of the Client constructor.
 # wazo-auth uses its own version of the client to avoid using its own
