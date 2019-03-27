@@ -100,6 +100,14 @@ class TestListSchema(TestCase):
 
         assert_that(result, has_entries(order='name'))
 
+    def test_direction_default_direction(self):
+        class Schema(ListSchema):
+            default_direction = 'desc'
+
+        result, _ = Schema().load({})
+
+        assert_that(result, has_entries(direction='desc'))
+
     def test_default_values(self):
         result, _ = ListSchema().load({})
 
