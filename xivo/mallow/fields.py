@@ -18,7 +18,6 @@ from marshmallow.fields import (
     UUID as _UUID,
     ValidatedField,
 )
-from . import validate
 
 ipaddress_available = True
 try:
@@ -211,7 +210,3 @@ class IP(ValidatedField, String):
             return str(ipaddress.ip_address(value))
         except ValueError:
             self.fail('invalid')
-
-
-def WazoOrder(sort_columns, default_sort_column):
-    return String(validate=validate.OneOf(sort_columns), missing=default_sort_column)
