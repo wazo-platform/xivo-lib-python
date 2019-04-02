@@ -34,18 +34,14 @@ class TestSchema(TestCase):
         assert_that(result, empty())
 
     def test_strict(self):
-
         class TestSchema(Schema):
-
             key = fields.String(required=True)
 
         assert_that(calling(TestSchema().load).with_args({}),
                     raises(ValidationError))
 
     def test_ordered(self):
-
         class TestSchema(Schema):
-
             key2 = fields.String(required=True)
             key1 = fields.String(required=True)
 
