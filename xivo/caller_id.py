@@ -1,18 +1,10 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2012-2014 Avencall
+# Copyright 2012-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import re
 
-COMPLETE_CALLER_ID_PATTERN = re.compile('\"(.*)\" \<(\+?\d+)\>')
-
-
-def build_caller_id(caller_id, name, number):
-    if is_complete_caller_id(caller_id):
-        cid_name, cid_number = COMPLETE_CALLER_ID_PATTERN.search(caller_id).groups()
-        return caller_id, cid_name, cid_number
-    else:
-        return '"%s" <%s>' % (name, number), name, number
+COMPLETE_CALLER_ID_PATTERN = re.compile(r'\"(.*)\" \<(\+?\d+)\>')
 
 
 def is_complete_caller_id(caller_id):
