@@ -7,6 +7,7 @@ from marshmallow.validate import (
     Equal as _Equal,
     Length as _Length,
     OneOf as _OneOf,
+    NoneOf as _NoneOf,
     Predicate as _Predicate,
     Range as _Range,
     Regexp as _Regexp,
@@ -89,6 +90,20 @@ class OneOf(_OneOf):
         return {
             'constraint_id': self.constraint_id,
             'constraint': {'choices': self.choices},
+            'message': msg,
+        }
+
+
+class NoneOf(_NoneOf):
+
+    constraint_id = 'ban'
+
+    def _format_error(self, value):
+        msg = super(NoneOf, self)._format_error(value)
+
+        return {
+            'constraint_id': self.constraint_id,
+            'constraint': {'bans': self.iterable},
             'message': msg,
         }
 
