@@ -19,13 +19,18 @@ except ImportError:
 # wazo-auth uses its own version of the client to avoid using its own
 # rest-api to call itself.
 try:
-    from xivo_auth_client import Client
+    from wazo_auth_client import Client
 except ImportError as e:
-    class Client(object):
-        _exc = e
+    # Trying to import xivo_auth_client should be removed in future,
+    # when all services will used wazo-auth-client
+    try:
+        from xivo_auth_client import Client
+    except ImportError:
+        class Client(object):
+            _exc = e
 
-        def __init__(self, *args, **kwargs):
-            raise self._exc
+            def __init__(self, *args, **kwargs):
+                raise self._exc
 
 
 from xivo import rest_api_helpers
