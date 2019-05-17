@@ -8,7 +8,10 @@ from flask import (
     current_app,
     g,
 )
-from xivo_auth_client import Client as AuthClient
+try:
+    from wazo_auth_client import Client as AuthClient
+except ImportError:
+    from xivo_auth_client import Client as AuthClient
 from werkzeug.local import LocalProxy
 from xivo.tenant_helpers import Tokens, Users
 
