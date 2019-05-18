@@ -21,17 +21,11 @@ except ImportError:
 try:
     from wazo_auth_client import Client
 except ImportError as e:
-    # Trying to import xivo_auth_client should be removed in future,
-    # when all services will used wazo-auth-client
-    try:
-        from xivo_auth_client import Client
-    except ImportError:
-        class Client(object):
-            _exc = e
+    class Client(object):
+        _exc = e
 
-            def __init__(self, *args, **kwargs):
-                raise self._exc
-
+        def __init__(self, *args, **kwargs):
+            raise self._exc
 
 from xivo import rest_api_helpers
 
