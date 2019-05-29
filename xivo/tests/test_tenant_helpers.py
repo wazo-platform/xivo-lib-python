@@ -332,3 +332,46 @@ class TestTokenVisibleTenants(TestCase):
         assert_that(result, contains(has_property('uuid', 'supertenant'),
                                      has_property('uuid', 'subtenant1'),
                                      has_property('uuid', 'subtenant2')))
+
+    def test_visible_tenants_with_specified_tenant_uuid(self):
+        auth = Mock()
+        auth.tenants.list.return_value = {
+            'items': [
+                {
+                    'name': 'supertenant-name',
+                    'uuid': 'supertenant',
+                }, {
+                    'name': 'subtenant1-name',
+                    'uuid': 'subtenant1',
+                }, {
+                    'name': 'subtenant2-name',
+                    'uuid': 'subtenant2',
+                },
+            ],
+        }
+        token = Token({
+            'metadata': {
+                'tenant_uuid': 'supertenant'
+            }
+        }, auth)
+
+        result = token.visible_tenants("supertenant")
+
+        assert_that(result, contains(has_property('uuid', 'supertenant'),
+                                     has_property('uuid', 'subtenant1'),
+                                     has_property('uuid', 'subtenant2')))
+
+    def test_auth_unauthorized_with_specified_tenant(self):
+        auth = Mock()
+        auth.tenants.list.side_effect = HTTPError(response=Mock(status_code=401))
+        token = Token({
+            'metadata': {
+                'tenant_uuid': 'tenant'
+            }
+        }, auth)
+
+        result = token.visible_tenants("tenant")
+        assert_that(result, contains(has_property('uuid', 'tenant')))
+
+        assert_that(calling(token.visible_tenants).with_args("other"),
+                    raises(InvalidTenant))
