@@ -49,6 +49,22 @@ class UnauthorizedTenant(rest_api_helpers.APIException):
         )
 
 
+def visible_tenants(auth, tenant_uuid):
+    if not tenant_uuid:
+        return []
+
+    try:
+        tenants_list = auth.tenants.list(tenant_uuid)['items']
+    except requests.HTTPError as e:
+        if e.response is not None and e.response.status_code == 401:
+            return [Tenant(tenant_uuid)]
+        raise
+    except requests.RequestException as e:
+        raise AuthServerUnreachable(auth.host, auth.port, e)
+
+    return [Tenant(tenant['uuid'], tenant['name']) for tenant in tenants_list]
+
+
 class Tenant(object):
 
     @classmethod
@@ -146,19 +162,7 @@ class Token(object):
         return self._token_dict['metadata'].get('uuid')
 
     def visible_tenants(self):
-        if not self.tenant_uuid:
-            return []
-
-        try:
-            tenants_list = self._auth.tenants.list(self.tenant_uuid)['items']
-        except requests.HTTPError as e:
-            if e.response is not None and e.response.status_code == 401:
-                return [Tenant(self.tenant_uuid)]
-            raise
-        except requests.RequestException as e:
-            raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
-
-        return [Tenant(tenant['uuid'], tenant['name']) for tenant in tenants_list]
+        return visible_tenants(self._auth, self.tenant_uuid)
 
 
 class Users(object):

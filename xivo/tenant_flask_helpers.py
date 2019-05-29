@@ -70,3 +70,24 @@ class Tenant(tenant_helpers.Tenant):
         except tenant_helpers.InvalidTenant:
             logger.debug('Tenant invalid against token')
             raise tenant_helpers.UnauthorizedTenant(tenant.uuid)
+
+
+def get_requested_tenant():
+    requested_tenant = g.get('requested_tenant')
+    if not requested_tenant:
+        requested_tenant = g.requested_tenant = Tenant.autodetect()
+    return requested_tenant
+
+
+requested_tenant = LocalProxy(get_requested_tenant)
+
+
+def get_visible_tenants():
+    visible_tenants = g.get('visible_tenants')
+    if not visible_tenants:
+        visible_tenants = g.visible_tenants = tenant_helpers.visible_tenants(
+            auth_client, requested_tenant.uuid)
+    return visible_tenants
+
+
+visible_tenants = LocalProxy(get_visible_tenants)
