@@ -149,6 +149,9 @@ class Token(object):
         if not tenant_uuid:
             tenant_uuid = self.tenant_uuid
 
+        if not tenant_uuid:
+            return []
+
         try:
             tenants_list = self._auth.tenants.list(tenant_uuid)['items']
         except requests.HTTPError as e:
