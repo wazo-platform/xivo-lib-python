@@ -145,15 +145,18 @@ class Token(object):
     def user_uuid(self):
         return self._token_dict['metadata'].get('uuid')
 
-    def visible_tenants(self):
-        if not self.tenant_uuid:
-            return []
+    def visible_tenants(self, tenant_uuid=None):
+        if not tenant_uuid:
+            tenant_uuid = self.tenant_uuid
 
         try:
-            tenants_list = self._auth.tenants.list(self.tenant_uuid)['items']
+            tenants_list = self._auth.tenants.list(tenant_uuid)['items']
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 401:
-                return [Tenant(self.tenant_uuid)]
+                if self.tenant_uuid == tenant_uuid:
+                    return [Tenant(tenant_uuid)]
+                else:
+                    raise InvalidTenant(tenant_uuid)
             raise
         except requests.RequestException as e:
             raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
