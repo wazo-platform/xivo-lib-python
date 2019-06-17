@@ -26,6 +26,7 @@ class Pubsub(object):
         self._subscribers[topic].append(callback)
 
     def publish(self, topic, message):
+        raise RuntimeError("Broken libs")
         logger.debug('Publishing to topic "%s": "%s"', topic, message)
         for callback in self._subscribers[topic]:
             self.publish_one(callback, message)
