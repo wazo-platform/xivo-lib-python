@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013-2014 Avencall
+# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -10,7 +10,6 @@ from .. import line_identity
 
 
 class TestLineIdentity(unittest.TestCase):
-
     def test_line_identity_from_channel(self):
         channel = 'SIP/tc8nb4-00000004'
         expected_line_identity = 'sip/tc8nb4'

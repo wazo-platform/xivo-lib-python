@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2014-2015 Avencall
+# Copyright 2014-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import operator
@@ -14,7 +14,6 @@ from hamcrest import none
 
 
 class TestChainMap(unittest.TestCase):
-
     def test_access_no_result(self):
         m = ChainMap({}, {})
 
@@ -25,8 +24,7 @@ class TestChainMap(unittest.TestCase):
     def test_lookup_order(self):
         cli_config = {}
         environment_config = {'key': 2}
-        file_config = {'key': 3,
-                       'test': 42}
+        file_config = {'key': 3, 'test': 42}
         default_config = {'key': 4}
 
         m = ChainMap(cli_config, environment_config, file_config, default_config)
@@ -48,20 +46,19 @@ class TestChainMap(unittest.TestCase):
                 'password': 'secret',
             }
         }
-        file_config = {
-            'key': {'host': 'other-host',
-                    'password': 'not-secret'}
-        }
-        cli_config = {
-            'key': {'host': 'test-host'},
-        }
+        file_config = {'key': {'host': 'other-host', 'password': 'not-secret'}}
+        cli_config = {'key': {'host': 'test-host'}}
 
         m = ChainMap(cli_config, file_config, default_config)
 
-        expected = {'key': {'host': 'test-host',
-                            'port': 1234,
-                            'username': 'admin',
-                            'password': 'not-secret'}}
+        expected = {
+            'key': {
+                'host': 'test-host',
+                'port': 1234,
+                'username': 'admin',
+                'password': 'not-secret',
+            }
+        }
 
         assert_that(m, equal_to(expected))
         assert_that(cli_config, equal_to({'key': {'host': 'test-host'}}))

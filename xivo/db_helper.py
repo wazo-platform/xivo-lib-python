@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2016 Avencall
+# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
@@ -15,13 +15,18 @@ def create_db_user(cursor, user, password):
 
 
 def db_exists(cursor, name):
-    cursor.execute("""SELECT count(datname) FROM pg_catalog.pg_database WHERE datname=%s""", (name,))
+    cursor.execute(
+        """SELECT count(datname) FROM pg_catalog.pg_database WHERE datname=%s""",
+        (name,),
+    )
     row = cursor.fetchone()
     return row and row[0] > 0
 
 
 def create_db(cursor, db_name, owner):
-    sql = """CREATE DATABASE "{}" WITH OWNER "{}" ENCODING 'UTF8'""".format(db_name, owner)
+    sql = """CREATE DATABASE "{}" WITH OWNER "{}" ENCODING 'UTF8'""".format(
+        db_name, owner
+    )
     cursor.execute(sql)
 
 

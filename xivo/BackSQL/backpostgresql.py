@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2007-2016 Avencall
+# Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import print_function
@@ -14,6 +14,7 @@ __version__ = "$Revision$ $Date$"
 
 import psycopg2
 import psycopg2.extensions
+
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
@@ -39,6 +40,7 @@ __typemap = {
     "charset": str,
 }
 
+
 def __apply_types(params, typemap):
     for k in typemap.iterkeys():
         if k in params:
@@ -47,11 +49,13 @@ def __apply_types(params, typemap):
             else:
                 del params[k]
 
+
 def __dict_from_query(query):
-    print("dfQ=",query)
+    print("dfQ=", query)
     if not query:
         return {}
     return dict(query)
+
 
 def connect_by_uri(uri):
     """General URI syntax:
@@ -65,8 +69,8 @@ def connect_by_uri(uri):
     are not (yet?) allowed as complex Python objects are needed, hard to
     transmit within an URI...
     """
-    puri   = urisup.uri_help_split(uri)
-		#params = __dict_from_query(puri[QUERY])
+    puri = urisup.uri_help_split(uri)
+    # params = __dict_from_query(puri[QUERY])
     params = {}
 
     if puri[AUTHORITY]:
@@ -84,12 +88,14 @@ def connect_by_uri(uri):
         if params['database'] and params['database'][0] == '/':
             params['database'] = params['database'][1:]
 
-    #__apply_types(params, __typemap)
+    # __apply_types(params, __typemap)
 
     return psycopg2.connect(**params)
 
+
 def escape(s):
     return '.'.join(['"%s"' % comp for comp in s.split('.')])
+
 
 def cast(fieldname, type):
     return "%s::%s" % (fieldname, type)

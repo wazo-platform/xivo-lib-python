@@ -18,7 +18,9 @@ except ImportError:
 class InvalidTenant(Exception):
     def __init__(self, tenant_uuid=None):
         if tenant_uuid:
-            super(InvalidTenant, self).__init__('Invalid tenant "{uuid}"'.format(uuid=tenant_uuid))
+            super(InvalidTenant, self).__init__(
+                'Invalid tenant "{uuid}"'.format(uuid=tenant_uuid)
+            )
         else:
             super(InvalidTenant, self).__init__('Invalid tenant')
 
@@ -26,31 +28,31 @@ class InvalidTenant(Exception):
 class InvalidToken(Exception):
     def __init__(self, token_id=None):
         if token_id:
-            super(InvalidToken, self).__init__('Invalid token "{id}"'.format(id=token_id))
+            super(InvalidToken, self).__init__(
+                'Invalid token "{id}"'.format(id=token_id)
+            )
         else:
             super(InvalidToken, self).__init__('Invalid token')
 
 
 class InvalidUser(Exception):
     def __init__(self, user_uuid):
-        super(InvalidUser, self).__init__('Invalid user "{uuid}"'.format(uuid=user_uuid))
+        super(InvalidUser, self).__init__(
+            'Invalid user "{uuid}"'.format(uuid=user_uuid)
+        )
 
 
 class UnauthorizedTenant(rest_api_helpers.APIException):
-
     def __init__(self, tenant_uuid):
         super(UnauthorizedTenant, self).__init__(
             status_code=401,
             message='Unauthorized tenant',
             error_id='unauthorized-tenant',
-            details={
-                'tenant_uuid': str(tenant_uuid),
-            }
+            details={'tenant_uuid': str(tenant_uuid)},
         )
 
 
 class Tenant(object):
-
     @classmethod
     def autodetect(cls, tokens):
         token = tokens.from_headers()
@@ -104,7 +106,6 @@ class Tenant(object):
 
 
 class Tokens(object):
-
     def __init__(self, auth):
         self._auth = auth
 
@@ -124,7 +125,6 @@ class Tokens(object):
 
 
 class Token(object):
-
     def __init__(self, token_dict, auth):
         self._auth = auth
         self._token_dict = token_dict
@@ -168,7 +168,6 @@ class Token(object):
 
 
 class Users(object):
-
     def __init__(self, auth):
         self._auth = auth
 
@@ -177,7 +176,6 @@ class Users(object):
 
 
 class User(object):
-
     def __init__(self, auth, uuid, **kwargs):
         self._auth = auth
         self._uuid = uuid

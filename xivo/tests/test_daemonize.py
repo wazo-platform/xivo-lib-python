@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2014 Avencall
+# Copyright 2014-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -14,7 +14,6 @@ from xivo import daemonize
 @patch('xivo.daemonize.unlock_pidfile')
 @patch('xivo.daemonize.lock_pidfile_or_die')
 class TestPidfileContext(unittest.TestCase):
-
     def test_that_lock_is_called(self, lock_fn, _unlock_fn):
         with daemonize.pidfile_context(sentinel.filename):
             lock_fn.assert_called_once_with(sentinel.filename)

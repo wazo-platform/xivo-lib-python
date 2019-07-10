@@ -18,20 +18,24 @@ from marshmallow.validate import (
 def validate_string_dict(dict_, max_key_length=128, max_value_length=2048):
     for key, value in dict_.items():
         if not (isinstance(key, str) and isinstance(value, str)):
-            raise ValidationError({
-                'message': 'Not a mapping with string keys and string values',
-                'constraint_id': 'key-value-type',
-                'constraint': 'string',
-            })
-        if len(key) > max_key_length or len(value) > max_value_length:
-            raise ValidationError({
-                'message': 'Key or value too long',
-                'constraint_id': 'key-value-length',
-                'constraint': {
-                    'key-max': max_key_length,
-                    'value-max': max_value_length,
+            raise ValidationError(
+                {
+                    'message': 'Not a mapping with string keys and string values',
+                    'constraint_id': 'key-value-type',
+                    'constraint': 'string',
                 }
-            })
+            )
+        if len(key) > max_key_length or len(value) > max_value_length:
+            raise ValidationError(
+                {
+                    'message': 'Key or value too long',
+                    'constraint_id': 'key-value-length',
+                    'constraint': {
+                        'key-max': max_key_length,
+                        'value-max': max_value_length,
+                    },
+                }
+            )
 
 
 class Email(_Email):

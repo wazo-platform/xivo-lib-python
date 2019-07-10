@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2016-2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections import defaultdict
@@ -11,7 +11,6 @@ class Status(object):
 
 
 class StatusAggregator(object):
-
     def __init__(self):
         self._providers = []
 
@@ -30,7 +29,6 @@ def _default_dict():
 
 
 class TokenStatus(object):
-
     def __init__(self):
         self.has_token = False
 

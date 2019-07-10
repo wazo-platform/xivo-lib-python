@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2007-2016 Avencall
+# Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """DBAPI Helper using URI to create talk to various DB
@@ -57,8 +57,8 @@ class cursor(object):
                     instead of tuple based) that are also indexable by
                     their column names.
     """
-    class row(list):
 
+    class row(list):
         def __init__(self, col2idx_map, dbapi2_result):
             list.__init__(self, dbapi2_result)
             self.__col2idx_map = col2idx_map
@@ -70,8 +70,10 @@ class cursor(object):
                 return list.__getitem__(self, self.__col2idx_map[k])
 
         def iteritems(self):
-            return ((k, list.__getitem__(self, pos))
-                    for (k, pos) in self.__col2idx_map.iteritems())
+            return (
+                (k, list.__getitem__(self, pos))
+                for (k, pos) in self.__col2idx_map.iteritems()
+            )
 
     def __init__(self, connection, methods):
         """
@@ -188,7 +190,7 @@ class cursor(object):
         else:
             return self.row(self.__col2idx_map, result)
 
-    def fetchmany(self, size = None):
+    def fetchmany(self, size=None):
         """
         As in DBAPI2.0 (except the fact rows are not tuples but
         lists so if you try to modify them, you will succeed instead of
@@ -242,7 +244,7 @@ class cursor(object):
         "As in DBAPI2.0"
         self.__dbapi2_cursor.setinputsizes(sizes)
 
-    def setoutputsize(self, size, column = None):
+    def setoutputsize(self, size, column=None):
         "As in DBAPI2.0"
         if column is None:
             self.__dbapi2_cursor.setoutputsize(size)
@@ -272,9 +274,9 @@ class cursor(object):
         return cast_(fieldname, type)
 
     description = property(__get_description, None, None, "As in DBAPI2.0")
-    lastrowid   = property(__get_lastrowid, None, None, "As in DBAPI2.0")
-    rowcount    = property(__get_rowcount, None, None, "As in DBAPI2.0")
-    arraysize   = property(__get_arraysize, __set_arraysize, None, "As in DBAPI2.0")
+    lastrowid = property(__get_lastrowid, None, None, "As in DBAPI2.0")
+    rowcount = property(__get_rowcount, None, None, "As in DBAPI2.0")
+    arraysize = property(__get_arraysize, __set_arraysize, None, "As in DBAPI2.0")
 
 
 class connection:
@@ -292,6 +294,7 @@ class connection:
     Cursor Object (it has a slightly different and incompatible method
     .query() instead of .execute())
     """
+
     def __init__(self, sqluri):
         """
         Contructor: takes two arguments
@@ -302,14 +305,14 @@ class connection:
         WARNING: instantiation of this class is private to this module
         and is automatically performed by connect_by_uri()
         """
-        self.sqluri        = sqluri
+        self.sqluri = sqluri
         self.__connect()
-        
+
     def __connect(self):
         """
         Connect to the database.
         """
-        self.__methods     = _get_methods_by_uri(self.sqluri)
+        self.__methods = _get_methods_by_uri(self.sqluri)
         uri_connect_method = self.__methods[METHOD_CONNECT]
 
         self.__dbapi2_conn = uri_connect_method(self.sqluri)
@@ -381,6 +384,7 @@ class connection:
         """
         return self.__dbapi2_conn.cursor()
 
+
 def __compare_api_level(als1, als2):
     lst1 = map(int, als1.split('.'))
     lst2 = map(int, als2.split('.'))
@@ -391,7 +395,10 @@ def __compare_api_level(als1, als2):
     else:
         return 0
 
-def register_uri_backend(uri_scheme, create_method, module, c14n_uri_method, escape, cast):
+
+def register_uri_backend(
+    uri_scheme, create_method, module, c14n_uri_method, escape, cast
+):
     """
     This method is intended to be used by backends only.
 
@@ -417,26 +424,47 @@ def register_uri_backend(uri_scheme, create_method, module, c14n_uri_method, esc
     NotImplementedError is raised.
     """
     try:
-        delta_api =  __compare_api_level(module.apilevel, any_apilevel)
+        delta_api = __compare_api_level(module.apilevel, any_apilevel)
         mod_paramstyle = module.paramstyle
         mod_threadsafety = module.threadsafety
     except NameError:
-        raise NotImplementedError("This module does not support registration of non DBAPI services of at least apilevel 2.0")
+        raise NotImplementedError(
+            "This module does not support registration of non DBAPI services of at least apilevel 2.0"
+        )
     if delta_api < 0 or delta_api > 1:
-        raise NotImplementedError("This module does not support registration of DBAPI services with a specified apilevel of %s" % module.apilevel)
+        raise NotImplementedError(
+            "This module does not support registration of DBAPI services with a specified apilevel of %s"
+            % module.apilevel
+        )
     if mod_paramstyle not in ['pyformat', 'format', 'qmark']:
-        raise NotImplementedError("This module only supports registration of DBAPI services with a 'format' or 'pyformat' 'qmark' paramstyle, not %r" % mod_paramstyle)
+        raise NotImplementedError(
+            "This module only supports registration of DBAPI services with a 'format' or 'pyformat' 'qmark' paramstyle, not %r"
+            % mod_paramstyle
+        )
     if mod_threadsafety < any_threadsafety:
-        raise NotImplementedError("This module does not support registration of DBAPI services of threadsafety %d (more generally under %d)" % (mod_threadsafety, any_threadsafety))
+        raise NotImplementedError(
+            "This module does not support registration of DBAPI services of threadsafety %d (more generally under %d)"
+            % (mod_threadsafety, any_threadsafety)
+        )
     if not urisup.valid_scheme(uri_scheme):
-        raise urisup.InvalidSchemeError("Can't register an invalid URI scheme %r" % uri_scheme)
-    __uri_create_methods[uri_scheme] = (create_method, module, c14n_uri_method, escape, cast)
+        raise urisup.InvalidSchemeError(
+            "Can't register an invalid URI scheme %r" % uri_scheme
+        )
+    __uri_create_methods[uri_scheme] = (
+        create_method,
+        module,
+        c14n_uri_method,
+        escape,
+        cast,
+    )
+
 
 def _get_methods_by_uri(sqluri):
     uri_scheme = urisup.uri_help_split(sqluri)[0]
     if uri_scheme not in __uri_create_methods:
         raise NotImplementedError('Unknown URI scheme "%s"' % str(uri_scheme))
     return __uri_create_methods[uri_scheme]
+
 
 def connect_by_uri(sqluri):
     """
@@ -454,6 +482,7 @@ def connect_by_uri(sqluri):
     """
     return connection(sqluri)
 
+
 def c14n_uri(sqluri):
     """
     Ask the backend to c14n the uri. See register_uri_backend() for
@@ -467,6 +496,14 @@ def c14n_uri(sqluri):
         return sqluri
     return uri_c14n_method(sqluri)
 
-__all__ = ["register_uri_backend", "connect_by_uri", "c14n_uri",
-           "cursor", "connection",
-           "any_paramstyle", "any_threadsafety", "any_apilevel"]
+
+__all__ = [
+    "register_uri_backend",
+    "connect_by_uri",
+    "c14n_uri",
+    "cursor",
+    "connection",
+    "any_paramstyle",
+    "any_threadsafety",
+    "any_apilevel",
+]

@@ -10,7 +10,6 @@ from xivo.caller_id import is_complete_caller_id, extract_number, extract_displa
 
 
 class TestCallerID(unittest.TestCase):
-
     def test_is_complete_caller_id(self):
         cid = '"User One" <1234>'
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013-2016 Avencall
+# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import collections
@@ -10,11 +10,12 @@ agent_channel_regex = re.compile(r'Local/id-(\d+)@agentcallback')
 device_regexp = re.compile(r'(sip|sccp|local|dahdi|iax2)/([\w@/-]+)', re.I)
 
 
-ProtocolInterface = collections.namedtuple('ProtocolInterface', ['protocol', 'interface'])
+ProtocolInterface = collections.namedtuple(
+    'ProtocolInterface', ['protocol', 'interface']
+)
 
 
 class InvalidChannelError(ValueError):
-
     def __init__(self, invalid_channel=None):
         ValueError.__init__(self, 'the channel %s is invalid' % invalid_channel)
 
@@ -48,7 +49,6 @@ def _protocol_interface_from_device(device):
     interface = matches.group(2)
 
     return ProtocolInterface(protocol, interface)
-
 
 
 def agent_id_from_channel(channel):

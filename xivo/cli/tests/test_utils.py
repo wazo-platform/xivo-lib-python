@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013-2014 Avencall
+# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import unicode_literals
@@ -9,7 +9,6 @@ from xivo.cli.utils import compute_ids
 
 
 class TestComputeIDs(unittest.TestCase):
-
     def test_one_id(self):
         self._assertArgId([1], '1')
 

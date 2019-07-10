@@ -21,11 +21,13 @@ except ImportError:
 try:
     from wazo_auth_client import Client
 except ImportError as e:
+
     class Client(object):
         _exc = e
 
         def __init__(self, *args, **kwargs):
             raise self._exc
+
 
 from xivo import rest_api_helpers
 
@@ -37,6 +39,7 @@ def required_acl(acl_pattern, extract_token_id=None):
     def wrapper(func):
         func.acl = _ACLCheck(acl_pattern, extract_token_id)
         return func
+
     return wrapper
 
 
@@ -46,20 +49,16 @@ def no_auth(func):
 
 
 class Unauthorized(rest_api_helpers.APIException):
-
     def __init__(self, token):
         super(Unauthorized, self).__init__(
             status_code=401,
             message='Unauthorized',
             error_id='unauthorized',
-            details={
-                'invalid_token': token
-            }
+            details={'invalid_token': token},
         )
 
 
 class AuthServerUnreachable(rest_api_helpers.APIException):
-
     def __init__(self, host, port, error):
         super(AuthServerUnreachable, self).__init__(
             status_code=503,
@@ -69,12 +68,11 @@ class AuthServerUnreachable(rest_api_helpers.APIException):
                 'auth_server_host': host,
                 'auth_server_port': port,
                 'original_error': str(error),
-            }
+            },
         )
 
 
 class AuthVerifier(object):
-
     def __init__(self, auth_config=None, extract_token_id=None):
         if extract_token_id is None:
             extract_token_id = extract_token_id_from_header
@@ -113,13 +111,17 @@ class AuthVerifier(object):
                 return func(*args, **kwargs)
 
             return self.handle_unauthorized(token_id)
+
         return wrapper
 
     def token(self):
         return self._extract_token_id()
 
     def _required_acl(self, acl_check, args, kwargs):
-        escaped_kwargs = {key: text_type(value).replace(u'.', u'_') for key, value in iteritems(kwargs)}
+        escaped_kwargs = {
+            key: text_type(value).replace(u'.', u'_')
+            for key, value in iteritems(kwargs)
+        }
         return text_type(acl_check.pattern).format(**escaped_kwargs)
 
     def acl(self, decorated_function, *args, **kwargs):
@@ -127,7 +129,9 @@ class AuthVerifier(object):
         return self._required_acl(acl_check, args, kwargs)
 
     def handle_unreachable(self, error):
-        raise AuthServerUnreachable(self._auth_config['host'], self._auth_config['port'], error)
+        raise AuthServerUnreachable(
+            self._auth_config['host'], self._auth_config['port'], error
+        )
 
     def handle_unauthorized(self, token):
         raise Unauthorized(token)
@@ -150,5 +154,4 @@ def extract_token_id_from_query_string():
 
 
 def extract_token_id_from_query_or_header():
-    return (extract_token_id_from_query_string() or
-            extract_token_id_from_header())
+    return extract_token_id_from_query_string() or extract_token_id_from_header()

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -12,7 +12,6 @@ from ..token_renewer import TokenRenewer
 
 
 class TestTokenRenewer(unittest.TestCase):
-
     def setUp(self):
         self.token_id = 'some-token-id'
         self.token = {'token': self.token_id}

@@ -11,13 +11,12 @@ from .rest_api_helpers import APIException
 
 
 class ValidationError(APIException):
-
     def __init__(self, errors):
         super(ValidationError, self).__init__(
             status_code=400,
             message='Sent data is invalid',
             error_id='invalid-data',
-            details=errors
+            details=errors,
         )
 
 
@@ -28,6 +27,7 @@ def handle_validation_exception(func):
             return func(*args, **kwargs)
         except marshmallow.ValidationError as e:
             raise ValidationError(e.messages)
+
     return wrapper
 
 
@@ -73,10 +73,9 @@ class ListSchema(marshmallow.Schema):
 
 
 class Schema(marshmallow.Schema):
-
     class Meta:
         ordered = True
-        strict = True   # Always strict in marshmallow 3
+        strict = True  # Always strict in marshmallow 3
 
     # This behavior is fixed in marshmallow 3
     @marshmallow.pre_load

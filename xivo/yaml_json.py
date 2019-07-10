@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2008-2015 Avencall
+# Copyright 2008-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
@@ -23,4 +23,5 @@ def stringify_keys(obj):
 
 if __name__ == '__main__':
     import doctest
+
     doctest.testmod()

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2017 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import print_function
@@ -19,12 +19,10 @@ class _BaseUnknownCommand(BaseCommand):
 
 
 class PrintingUnknownCommand(_BaseUnknownCommand):
-
     def execute(self):
         print(self._error_msg)
 
 
 class RaisingUnknownCommand(_BaseUnknownCommand):
-
     def execute(self):
         raise Exception(self._error_msg)

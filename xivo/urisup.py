@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2007-2016 Avencall
+# Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Supplementary functions useful to play with URI - very very close to RFC 3986
@@ -13,7 +13,9 @@ __version__ = "$Revision$ $Date$"
 import re
 
 # Right from RFC 3986 section B
-RFC3986_MATCHER = re.compile(r"^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?").match
+RFC3986_MATCHER = re.compile(
+    r"^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?"
+).match
 
 # Near RFC 3986 definitions
 ALPHA = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -30,15 +32,17 @@ USER_CHAR = UNRESERVED + SUB_DELIMS + "%"
 PASSWD_CHAR = UNRESERVED + SUB_DELIMS + "%:"
 REG_NAME_CHAR = UNRESERVED + SUB_DELIMS + "%"
 
-IPV_FUTURE_RE = r"v[\da-fA-F]+\.[" \
-                + re.escape(UNRESERVED + SUB_DELIMS + ":") \
-                + "]+"
+IPV_FUTURE_RE = r"v[\da-fA-F]+\.[" + re.escape(UNRESERVED + SUB_DELIMS + ":") + "]+"
 
 BYTES_VAL = ''.join(map(chr, range(0, 256)))
 
+
 def __allow_to_encdct(charset):
-    enc_charset = set(iter(charset.replace('%','')))
-    return dict(((k in enc_charset) and (k, k) or (k, "%%%02X" % ord(k)) for k in BYTES_VAL))
+    enc_charset = set(iter(charset.replace('%', '')))
+    return dict(
+        ((k in enc_charset) and (k, k) or (k, "%%%02X" % ord(k)) for k in BYTES_VAL)
+    )
+
 
 USER_ENCDCT = __allow_to_encdct(USER_CHAR)
 PASSWD_ENCDCT = __allow_to_encdct(PASSWD_CHAR)
@@ -67,6 +71,7 @@ AUTHORITY_PASSWD = 1
 AUTHORITY_HOST = 2
 AUTHORITY_PORT = 3
 
+
 def __all_in(s, charset):
     if not isinstance(s, unicode):
         s = str(s)
@@ -74,11 +79,15 @@ def __all_in(s, charset):
         s = s.encode('utf8')
     return not s.translate(BYTES_VAL, charset)
 
+
 def __split_sz(s, n):
-    return [s[b:b+n] for b in range(0, len(s), n)]
+    return [s[b : b + n] for b in range(0, len(s), n)]
+
 
 def __valid_IPv4address(potential_ipv4):
-    if potential_ipv4[0] in (HEXDIG + "xX") and __all_in(potential_ipv4[1:], (HEXDIG + ".xX")):
+    if potential_ipv4[0] in (HEXDIG + "xX") and __all_in(
+        potential_ipv4[1:], (HEXDIG + ".xX")
+    ):
         s_ipv4 = potential_ipv4.split('.', 4)
         if len(s_ipv4) == 4:
             try:
@@ -91,6 +100,7 @@ def __valid_IPv4address(potential_ipv4):
             return True
     return False
 
+
 def __valid_h16(h16):
     try:
         i = int(h16, 16)
@@ -98,13 +108,16 @@ def __valid_h16(h16):
     except ValueError:
         return False
 
+
 def __valid_rightIPv6(right_v6):
     if right_v6 == '':
         return 0
     array_v6 = right_v6.split(':', 8)
-    if len(array_v6) > 8 \
-       or (len(array_v6) > 7 and ('.' in right_v6)) \
-       or (not __all_in(''.join(array_v6[:-1]), HEXDIG)):
+    if (
+        len(array_v6) > 8
+        or (len(array_v6) > 7 and ('.' in right_v6))
+        or (not __all_in(''.join(array_v6[:-1]), HEXDIG))
+    ):
         return False
     if '.' in array_v6[-1]:
         if not __valid_IPv4address(array_v6[-1]):
@@ -118,17 +131,18 @@ def __valid_rightIPv6(right_v6):
             return False
     return h16_count + len(array_v6)
 
+
 def __valid_leftIPv6(left_v6):
     if left_v6 == '':
         return 0
     array_v6 = left_v6.split(':', 7)
-    if len(array_v6) > 7 \
-       or (not __all_in(''.join(array_v6), HEXDIG)):
+    if len(array_v6) > 7 or (not __all_in(''.join(array_v6), HEXDIG)):
         return False
     for h16 in array_v6:
         if not __valid_h16(h16):
             return False
     return len(array_v6)
+
 
 def __valid_IPv6address(potential_ipv6):
     sep_pos = potential_ipv6.find("::")
@@ -136,7 +150,7 @@ def __valid_IPv6address(potential_ipv6):
     if sep_pos < 0:
         return __valid_rightIPv6(potential_ipv6) == 8
     elif sep_count == 1:
-        right = __valid_rightIPv6(potential_ipv6[sep_pos+2:])
+        right = __valid_rightIPv6(potential_ipv6[sep_pos + 2 :])
         if right is False:
             return False
         left = __valid_leftIPv6(potential_ipv6[:sep_pos])
@@ -146,59 +160,96 @@ def __valid_IPv6address(potential_ipv6):
     else:
         return False
 
+
 def __valid_IPvFuture(potential_ipvf):
     return bool(re.match(IPV_FUTURE_RE + "$", potential_ipvf))
 
+
 def __valid_IPLiteral(potential_ipliteral):
-    if len(potential_ipliteral) < 2 or potential_ipliteral[0] != '[' \
-       or potential_ipliteral[-1] != ']':
+    if (
+        len(potential_ipliteral) < 2
+        or potential_ipliteral[0] != '['
+        or potential_ipliteral[-1] != ']'
+    ):
         return False
-    return __valid_IPv6address(potential_ipliteral[1:-1]) \
-           or __valid_IPvFuture(potential_ipliteral[1:-1])
+    return __valid_IPv6address(potential_ipliteral[1:-1]) or __valid_IPvFuture(
+        potential_ipliteral[1:-1]
+    )
+
 
 def __valid_query(pquery_tuple):
     for k, v in pquery_tuple:
-        if (k and (not __all_in(k, QUEFRAG_CHAR))) \
-           or (v and (not __all_in(v, QUEFRAG_CHAR))):
+        if (k and (not __all_in(k, QUEFRAG_CHAR))) or (
+            v and (not __all_in(v, QUEFRAG_CHAR))
+        ):
             return False
     return True
+
 
 def valid_scheme(potential_scheme):
     """
     Check whether or not the content of potential_scheme is a valid
     URI scheme
     """
-    return (potential_scheme[0] in ALPHA) \
-           and __all_in(potential_scheme[1:], SCHEME_CHAR)
+    return (potential_scheme[0] in ALPHA) and __all_in(
+        potential_scheme[1:], SCHEME_CHAR
+    )
+
 
 class InvalidURIError(ValueError):
     """Base class of all Exceptions directly raised by this module"""
+
+
 class InvalidSchemeError(InvalidURIError):
     """Invalid content for the scheme part of an URI"""
+
+
 class InvalidAuthorityError(InvalidURIError):
     """Invalid content for the authority part of an URI"""
+
+
 class InvalidUserError(InvalidAuthorityError):
     """Invalid content for the user part of an URI"""
+
+
 class InvalidPasswdError(InvalidAuthorityError):
     """Invalid content for the passwd part of an URI"""
+
+
 class InvalidHostError(InvalidAuthorityError):
     """Invalid content for the host part of an URI"""
+
+
 class InvalidIPv4addressError(InvalidHostError):
     """Invalid content for the IPv4address part of an URI"""
+
+
 class InvalidIPLiteralError(InvalidHostError):
     """Invalid content for the IP-literal part of an URI"""
+
+
 class InvalidRegNameError(InvalidHostError):
     """Invalid content for the reg-name part of an URI"""
+
+
 class InvalidPortError(InvalidAuthorityError):
     """Invalid content for the port part of an URI"""
+
+
 class InvalidPathError(InvalidURIError):
     """Invalid content for the path part of an URI"""
+
+
 class InvalidQueryError(InvalidURIError):
     """Invalid content for the query part of an URI"""
+
+
 class InvalidFragmentError(InvalidURIError):
     """Invalid content for the fragment part of an URI"""
 
+
 PERCENT_CODE_SUB = re.compile(r"\%[\da-fA-F][\da-fA-F]").sub
+
 
 def pct_decode(s):
     """
@@ -220,6 +271,7 @@ def pct_decode(s):
 
     return PERCENT_CODE_SUB(lambda mo: chr(int(mo.group(0)[1:], 16)), s)
 
+
 def pct_encode(s, encdct):
     """
     Return a translated version of s where each character is mapped to a
@@ -240,6 +292,7 @@ def pct_encode(s, encdct):
 
     return ''.join(map(encdct.__getitem__, s))
 
+
 def query_elt_decode(s):
     """
     Return the percent-decoded version of string s, after a plus-to-space
@@ -252,6 +305,7 @@ def query_elt_decode(s):
         return None
     return pct_decode(s.replace('+', ' '))
 
+
 def query_elt_encode(s, encdct):
     """
     Query encode a string, using the encdct parameter to do character
@@ -261,6 +315,7 @@ def query_elt_encode(s, encdct):
     if s is None:
         return None
     return pct_encode(s, encdct).replace(' ', '+')
+
 
 def host_type(host):
     """
@@ -296,6 +351,7 @@ def host_type(host):
         return HOST_IPV4_ADDRESS
     else:
         return HOST_REG_NAME
+
 
 def split_authority(authority):
     """
@@ -339,13 +395,17 @@ def split_authority(authority):
         user, passwd, hostport = None, None, authority
     if hostport:
         if hostport[0] == '[':
-            m = re.match(r"\[([\da-fA-F:\.]+|" + IPV_FUTURE_RE
-                                 + r")\](\:.*|)$", hostport)
+            m = re.match(
+                r"\[([\da-fA-F:\.]+|" + IPV_FUTURE_RE + r")\](\:.*|)$", hostport
+            )
             if m:
                 host = '[' + m.group(1) + ']'
                 port = m.group(2)[1:]
             else:
-                raise InvalidIPLiteralError("Highly invalid IP-literal detected in URI authority %r" % (authority,))
+                raise InvalidIPLiteralError(
+                    "Highly invalid IP-literal detected in URI authority %r"
+                    % (authority,)
+                )
         elif ':' in hostport:
             host, port = hostport.split(':', 1)
         else:
@@ -353,6 +413,7 @@ def split_authority(authority):
     else:
         host, port = None, None
     return (user or None, passwd or None, host or None, port or None)
+
 
 def split_query(query):
     """
@@ -364,17 +425,21 @@ def split_query(query):
     >>> split_query("k1=v1&k2=v+2%12&k3=&k4&&&k5==&=k&==")
     (('k1', 'v1'), ('k2', 'v+2%12'), ('k3', ''), ('k4', None), ('k5', '='), ('', 'k'), ('', '='))
     """
+
     def split_assignment(a):
         sa = a.split('=', 1)
         return len(sa) == 2 and tuple(sa) or (sa[0], None)
+
     assignments = query.split('&')
     return tuple([split_assignment(a) for a in assignments if a])
+
 
 def unsplit_query(query):
     """
     Create a query string using the tuple query with a format as the one
     returned by split_query()
     """
+
     def unsplit_assignment(value):
         x, y = value
         if (x is not None) and (y is not None):
@@ -385,7 +450,9 @@ def unsplit_query(query):
             return '=' + y
         else:
             return ''
+
     return '&'.join(map(unsplit_assignment, query))
+
 
 def basic_urisplit(uri):
     """
@@ -396,6 +463,7 @@ def basic_urisplit(uri):
     """
     p = RFC3986_MATCHER(uri).groups()
     return (p[1], p[3], p[4], p[6], p[8])
+
 
 def uri_split_tree(uri):
     """
@@ -415,9 +483,14 @@ def uri_split_tree(uri):
         authority = split_authority(authority)
     if query:
         query = split_query(query)
-    return (scheme and scheme or None, authority and authority or None,
-            path and path or None, query and query or None,
-            fragment and fragment or None)
+    return (
+        scheme and scheme or None,
+        authority and authority or None,
+        path and path or None,
+        query and query or None,
+        fragment and fragment or None,
+    )
+
 
 def uri_tree_normalize(uri_tree):
     """
@@ -446,8 +519,14 @@ def uri_tree_normalize(uri_tree):
         authority = None
     if query:
         query = filter(lambda x_y: bool(x_y[0]) or bool(x_y[1]), query)
-    return (scheme or None, authority or None, path or None,
-            query or None, fragment or None)
+    return (
+        scheme or None,
+        authority or None,
+        path or None,
+        query or None,
+        fragment or None,
+    )
+
 
 def uri_tree_validate(uri_tree):
     """
@@ -500,16 +579,25 @@ def uri_tree_validate(uri_tree):
             raise InvalidPortError("Invalid port %r" % (port,))
     if path:
         if not __all_in(path, PCHAR):
-            raise InvalidPathError("Invalid path %r - invalid character detected" % (path,))
+            raise InvalidPathError(
+                "Invalid path %r - invalid character detected" % (path,)
+            )
         if authority and path[0] != '/':
-            raise InvalidPathError("Invalid path %r - non-absolute path can't be used with an authority" % (path,))
+            raise InvalidPathError(
+                "Invalid path %r - non-absolute path can't be used with an authority"
+                % (path,)
+            )
         if (not authority) and (not scheme) and (':' in path.split('/', 1)[0]):
-            raise InvalidPathError("Invalid path %r - path-noscheme can't have a ':' if no '/' before" % (path,))
+            raise InvalidPathError(
+                "Invalid path %r - path-noscheme can't have a ':' if no '/' before"
+                % (path,)
+            )
     if query and (not __valid_query(query)):
         raise InvalidQueryError("Invalid splitted query tuple %r" % (query,))
     if fragment and (not __all_in(fragment, QUEFRAG_CHAR)):
         raise InvalidFragmentError("Invalid fragment %r" % (fragment,))
     return uri_tree
+
 
 def uri_tree_decode(uri_tree):
     """
@@ -538,6 +626,7 @@ def uri_tree_decode(uri_tree):
         query = tuple([(query_elt_decode(x), query_elt_decode(y)) for (x, y) in query])
     return (scheme, authority, path, query, fragment)
 
+
 def uri_help_split(uri):
     """
     Return uri_tree_decode(
@@ -545,22 +634,20 @@ def uri_help_split(uri):
                             uri_tree_normalize(
                                     uri_split_tree(uri))))
     """
-    return uri_tree_decode(
-                    uri_tree_validate(
-                            uri_tree_normalize(
-                                    uri_split_tree(uri))))
+    return uri_tree_decode(uri_tree_validate(uri_tree_normalize(uri_split_tree(uri))))
 
-def uri_tree_precode_check(uri_tree, type_host = HOST_REG_NAME):
+
+def uri_tree_precode_check(uri_tree, type_host=HOST_REG_NAME):
     """
     Call this function to validate a raw URI tree before trying to
     encode it.
     """
-    scheme, authority, path, query, fragment = uri_tree # pylint: disable-msg=W0612
+    scheme, authority, path, query, fragment = uri_tree  # pylint: disable-msg=W0612
     if scheme:
         if not valid_scheme(scheme):
             raise InvalidSchemeError("Invalid scheme %r" % (scheme,))
     if authority:
-        user, passwd, host, port = authority # pylint: disable-msg=W0612
+        user, passwd, host, port = authority  # pylint: disable-msg=W0612
         if port and not __all_in(port, DIGIT):
             raise InvalidPortError("Invalid port %r" % (port,))
         if type_host == HOST_IP_LITERAL:
@@ -571,10 +658,14 @@ def uri_tree_precode_check(uri_tree, type_host = HOST_REG_NAME):
                 raise InvalidIPv4addressError("Invalid IPv4address %r" % (host,))
     if path:
         if authority and path[0] != '/':
-            raise InvalidPathError("Invalid path %r - non-absolute path can't be used with an authority" % (path,))
+            raise InvalidPathError(
+                "Invalid path %r - non-absolute path can't be used with an authority"
+                % (path,)
+            )
     return uri_tree
 
-def uri_tree_encode(uri_tree, type_host = HOST_REG_NAME):
+
+def uri_tree_encode(uri_tree, type_host=HOST_REG_NAME):
     """
     Percent/Query encode a raw URI tree.
     """
@@ -599,11 +690,19 @@ def uri_tree_encode(uri_tree, type_host = HOST_REG_NAME):
                 sppath[0] = sppath[0].replace(':', '%3A')
                 path = '/'.join(sppath)
     if query:
-        query = tuple([(query_elt_encode(x, QUERY_KEY_ENCDCT),
-                        query_elt_encode(y, QUERY_VAL_ENCDCT)) for (x, y) in query])
+        query = tuple(
+            [
+                (
+                    query_elt_encode(x, QUERY_KEY_ENCDCT),
+                    query_elt_encode(y, QUERY_VAL_ENCDCT),
+                )
+                for (x, y) in query
+            ]
+        )
     if fragment:
         fragment = pct_encode(fragment, FRAG_ENCDCT)
     return (scheme, authority, path, query, fragment)
+
 
 def uri_unsplit_tree(uri_tree):
     """
@@ -654,6 +753,7 @@ def uri_unsplit_tree(uri_tree):
         uri += '#' + fragment
     return uri
 
+
 def uri_help_unsplit(uri_tree):
     """
     Return uri_unsplit_tree(
@@ -662,13 +762,15 @@ def uri_help_unsplit(uri_tree):
                                    uri_tree_normalize(uri_tree))))
     """
     return uri_unsplit_tree(
-                   uri_tree_encode(
-                           uri_tree_precode_check(
-                                   uri_tree_normalize(uri_tree))))
+        uri_tree_encode(uri_tree_precode_check(uri_tree_normalize(uri_tree)))
+    )
+
 
 def _test():
     import doctest
+
     doctest.testmod()
+
 
 if __name__ == "__main__":
     _test()

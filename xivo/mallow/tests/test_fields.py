@@ -3,12 +3,7 @@
 
 import unittest
 
-from hamcrest import (
-    assert_that,
-    empty,
-    has_entry,
-    is_not,
-)
+from hamcrest import assert_that, empty, has_entry, is_not
 from marshmallow import Schema
 
 from .. import fields
@@ -31,7 +26,6 @@ class AllFieldsSchema(Schema):
 
 
 class TestFields(unittest.TestCase):
-
     def test_when_not_dict_object_then_no_crash_occurs(self):
         _, error = AllFieldsSchema().load(1)
         assert_that(error, is_not(empty))

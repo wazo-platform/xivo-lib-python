@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013-2014 Avencall
+# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import unicode_literals
 
-from xivo.cli.exception import CommandAlreadyRegisteredError,\
-    NoMatchingCommandError
+from xivo.cli.exception import CommandAlreadyRegisteredError, NoMatchingCommandError
 
 
 class CommandRegistry(object):
-
     def __init__(self):
         self._commands = []
 
@@ -54,7 +52,6 @@ class CommandRegistry(object):
 
 
 class _NamedCommandDecorator(object):
-
     def __init__(self, command, name, words):
         self._command = command
         self.name = name

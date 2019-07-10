@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013-2015 Avencall
+# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import unicode_literals
@@ -14,7 +14,6 @@ from xivo.cli.registry import CommandRegistry
 
 
 class TestCommandRegistry(unittest.TestCase):
-
     def setUp(self):
         self.command = Mock()
         self.command_registry = CommandRegistry()
@@ -40,8 +39,9 @@ class TestCommandRegistry(unittest.TestCase):
     def test_get_command_and_args_when_no_match(self):
         words = ['foo', 'bar', '42']
 
-        self.assertRaises(NoMatchingCommandError,
-                          self.command_registry.get_command_and_args, words)
+        self.assertRaises(
+            NoMatchingCommandError, self.command_registry.get_command_and_args, words
+        )
 
     def test_get_commands(self):
         self.command_registry.register_command('foo bar', self.command)
@@ -89,8 +89,12 @@ class TestCommandRegistry(unittest.TestCase):
     def test_register_command_raise_error_if_already_registered(self):
         self.command_registry.register_command('foo bar', self.command)
 
-        self.assertRaises(CommandAlreadyRegisteredError,
-                          self.command_registry.register_command, 'foo bar', self.command)
+        self.assertRaises(
+            CommandAlreadyRegisteredError,
+            self.command_registry.register_command,
+            'foo bar',
+            self.command,
+        )
 
     def _new_command(self):
         command = Mock()

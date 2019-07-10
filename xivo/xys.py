@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2008-2016 Avencall
+# Copyright 2008-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """XIVO YAML Schema - v0.01
@@ -196,7 +196,9 @@ def _maybe_int(s):
 def _split_params(tag_prefix, tag_suffix):
     "Split comma-separated tag_suffix[:-1] and map with _maybe_int"
     if tag_suffix[-1:] != ')':
-        raise ValueError("unbalanced parenthesis in type %s%s" % (tag_prefix, tag_suffix))
+        raise ValueError(
+            "unbalanced parenthesis in type %s%s" % (tag_prefix, tag_suffix)
+        )
     return map(_maybe_int, tag_suffix[:-1].split(','))
 
 
@@ -215,10 +217,10 @@ def add_validator(validator, base_tag, tag=None):
         tag = u'!~' + validator.__name__
     yaml.add_constructor(
         tag,
-        lambda loader, node:
-            ValidatorNode(
-                _construct_node(loader, node, base_tag),
-                validator))
+        lambda loader, node: ValidatorNode(
+            _construct_node(loader, node, base_tag), validator
+        ),
+    )
 
 
 def add_parameterized_validator(param_validator, base_tag, tag_prefix=None):
@@ -241,8 +243,10 @@ def add_parameterized_validator(param_validator, base_tag, tag_prefix=None):
     def multi_constructor(loader, tag_suffix, node):
         def temp_validator(node, schema):
             return param_validator(node, schema, *_split_params(tag_prefix, tag_suffix))
+
         temp_validator.__name__ = str(tag_prefix + tag_suffix)
         return ValidatorNode(_construct_node(loader, node, base_tag), temp_validator)
+
     yaml.add_multi_constructor(tag_prefix, multi_constructor)
 
 
@@ -253,7 +257,9 @@ def _add_validator_internal(validator, base_tag):
 
 def _add_parameterized_validator_internal(param_validator, base_tag):
     "with builtin tag prefixing"
-    add_parameterized_validator(param_validator, base_tag, tag_prefix=u'!~~%s(' % param_validator.__name__)
+    add_parameterized_validator(
+        param_validator, base_tag, tag_prefix=u'!~~%s(' % param_validator.__name__
+    )
 
 
 def enum(nstr, _schema, *symbols):  # pylint: disable-msg=W0613
@@ -310,7 +316,7 @@ def prefixedDec(nstr, schema):
     """
     if not nstr.startswith(schema):
         return False
-    postfix = nstr[len(schema):]
+    postfix = nstr[len(schema) :]
     try:
         int(postfix)
     except ValueError:
@@ -346,7 +352,9 @@ def _transschema(x):
     if isinstance(x, tuple):
         return x.__class__(_transschema(x[0]), *x[1:])
     elif isinstance(x, dict):
-        return dict((_qualify_map(key, _transschema(val)) for key, val in x.iteritems()))
+        return dict(
+            (_qualify_map(key, _transschema(val)) for key, val in x.iteritems())
+        )
     elif isinstance(x, list):
         return map(_transschema, x)
     else:
@@ -367,6 +375,7 @@ Nothing = object()
 # TODO: display the document path to errors, and other error message enhancements
 # TODO: allow error messages from validators
 
+
 def validate(document, schema):
     """
     If the document is valid according to the schema, this function returns
@@ -378,7 +387,11 @@ def validate(document, schema):
         if not validate(document, schema.content):
             return False
         if not schema.validator(document, schema.content):
-            log.error("%r failed to validate with qualifier %s", document, schema.validator.__name__)
+            log.error(
+                "%r failed to validate with qualifier %s",
+                document,
+                schema.validator.__name__,
+            )
             return False
         return True
     elif isinstance(schema, dict):
@@ -431,16 +444,27 @@ def validate(document, schema):
         if isinstance(document, str):
             document = unicode(document)
         if schema.__class__ != document.__class__:
-            log.error("wanted a %s, got a %s", schema.__class__.__name__, document.__class__.__name__)
+            log.error(
+                "wanted a %s, got a %s",
+                schema.__class__.__name__,
+                document.__class__.__name__,
+            )
             return False
         return True
 
 
 __all__ = [
-        'validate', 'load',
-        'seqlen', 'between', 'startswith', 'prefixedDec',
-        'add_validator', 'add_parameterized_validator',
-        'ValidatorNode', 'Optional', 'Mandatory',
+    'validate',
+    'load',
+    'seqlen',
+    'between',
+    'startswith',
+    'prefixedDec',
+    'add_validator',
+    'add_parameterized_validator',
+    'ValidatorNode',
+    'Optional',
+    'Mandatory',
 ]
 
 

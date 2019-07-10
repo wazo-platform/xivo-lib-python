@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2008-2016 Avencall
+# Copyright 2008-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Tests for xivo_config
@@ -16,7 +16,9 @@ from xivo import xivo_config
 from xivo import xys
 
 VALID_CONFIGS = [
-('base', """
+    (
+        'base',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -33,9 +35,11 @@ services:
             voipRange:
             - 192.168.0.100
             - 192.168.0.199
-"""),
-
-('one_unused_vs', """
+""",
+    ),
+    (
+        'one_unused_vs',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -60,9 +64,11 @@ services:
             voipRange:
             - 192.168.0.100
             - 192.168.0.199
-"""),
-
-('vlan_high', """
+""",
+    ),
+    (
+        'vlan_high',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -82,16 +88,19 @@ services:
             voipRange:
             - 192.168.0.100
             - 192.168.0.199
-"""),
-
+""",
+    ),
 ]
 
 INVALID_CONFIGS = [
-
-('i_miss_you', """
-"""),
-
-('hollywood', """
+    (
+        'i_miss_you',
+        """
+""",
+    ),
+    (
+        'hollywood',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -108,9 +117,11 @@ services:
             voipRange:
             - 192.168.0.199
             - 192.168.0.100
-"""),
-
-('outer_space', """
+""",
+    ),
+    (
+        'outer_space',
+        """
 resolvConf: {}
 ipConfs:
   static_001:
@@ -128,9 +139,11 @@ services:
             - 192.168.0.100
             - 192.168.0.199
 outerSpace:
-"""),
-
-('duplicated_nameserver', """
+""",
+    ),
+    (
+        'duplicated_nameserver',
+        """
 resolvConf:
     nameservers:
     - 192.168.0.50
@@ -153,9 +166,11 @@ services:
             voipRange:
             - 192.168.0.100
             - 192.168.0.199
-"""),
-
-('duplicated_referenced_network', """
+""",
+    ),
+    (
+        'duplicated_referenced_network',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -181,9 +196,11 @@ services:
             voipRange:
             - 192.168.0.100
             - 192.168.0.199
-"""),
-
-('services_referenced_net_does_not_exist', """
+""",
+    ),
+    (
+        'services_referenced_net_does_not_exist',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -203,9 +220,11 @@ services:
             voipRange:
             - 192.168.0.100
             - 192.168.0.199
-"""),
-
-('vlans_referenced_net_does_not_exist', """
+""",
+    ),
+    (
+        'vlans_referenced_net_does_not_exist',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -225,9 +244,11 @@ services:
             voipRange:
             - 192.168.0.100
             - 192.168.0.199
-"""),
-
-('netIfaces_referenced_vs_does_not_exist', """
+""",
+    ),
+    (
+        'netIfaces_referenced_vs_does_not_exist',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -247,9 +268,11 @@ services:
             voipRange:
             - 192.168.0.100
             - 192.168.0.199
-"""),
-
-('service_voipServer_is_bcast', """
+""",
+    ),
+    (
+        'service_voipServer_is_bcast',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -269,9 +292,11 @@ services:
             voipRange:
             - 192.168.0.100
             - 192.168.0.199
-"""),
-
-('service_router_is_bcast', """
+""",
+    ),
+    (
+        'service_router_is_bcast',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -292,9 +317,11 @@ services:
             - 192.168.0.100
             - 192.168.0.199
             router: 192.168.0.255
-"""),
-
-('service_router_out_of_network', """
+""",
+    ),
+    (
+        'service_router_out_of_network',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -315,9 +342,11 @@ services:
             - 192.168.0.100
             - 192.168.0.199
             router: 192.168.1.12
-"""),
-
-('service_voip_inverted_range', """
+""",
+    ),
+    (
+        'service_voip_inverted_range',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -337,9 +366,11 @@ services:
             voipRange:
             - 192.168.0.199
             - 192.168.0.100
-"""),
-
-('service_overlapping_ranges_1', """
+""",
+    ),
+    (
+        'service_overlapping_ranges_1',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -362,9 +393,11 @@ services:
             alienRange:
             - 192.168.0.199
             - 192.168.0.210
-"""),
-
-('service_overlapping_ranges_2', """
+""",
+    ),
+    (
+        'service_overlapping_ranges_2',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -387,9 +420,11 @@ services:
             alienRange:
             - 192.168.0.50
             - 192.168.0.100
-"""),
-
-('service_overlapping_ranges_3', """
+""",
+    ),
+    (
+        'service_overlapping_ranges_3',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -412,9 +447,11 @@ services:
             alienRange:
             - 192.168.0.100
             - 192.168.0.199
-"""),
-
-('service_overlapping_ranges_4', """
+""",
+    ),
+    (
+        'service_overlapping_ranges_4',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -437,9 +474,11 @@ services:
             alienRange:
             - 192.168.0.90
             - 192.168.0.210
-"""),
-
-('implicit_bcast_in_voip_range', """
+""",
+    ),
+    (
+        'implicit_bcast_in_voip_range',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -459,9 +498,11 @@ services:
             voipRange:
             - 192.168.0.250
             - 192.168.0.255
-"""),
-
-('explicit_bcast_in_voip_range', """
+""",
+    ),
+    (
+        'explicit_bcast_in_voip_range',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -482,9 +523,11 @@ services:
             voipRange:
             - 192.168.0.12
             - 192.168.0.20
-"""),
-
-('implicit_bcast_in_alien_range', """
+""",
+    ),
+    (
+        'implicit_bcast_in_alien_range',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -507,9 +550,11 @@ services:
             alienRange:
             - 192.168.0.250
             - 192.168.0.255
-"""),
-
-('explicit_bcast_in_alien_range', """
+""",
+    ),
+    (
+        'explicit_bcast_in_alien_range',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -533,9 +578,11 @@ services:
             alienRange:
             - 192.168.0.12
             - 192.168.0.20
-"""),
-
-('voipServer_in_voip_range', """
+""",
+    ),
+    (
+        'voipServer_in_voip_range',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -555,9 +602,11 @@ services:
             voipRange:
             - 192.168.0.100
             - 192.168.0.200
-"""),
-
-('address_in_voip_range', """
+""",
+    ),
+    (
+        'address_in_voip_range',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -577,9 +626,11 @@ services:
             voipRange:
             - 192.168.0.100
             - 192.168.0.200
-"""),
-
-('vlan_too_high', """
+""",
+    ),
+    (
+        'vlan_too_high',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -599,9 +650,11 @@ services:
             voipRange:
             - 192.168.0.100
             - 192.168.0.199
-"""),
-
-('vlan_too_low', """
+""",
+    ),
+    (
+        'vlan_too_low',
+        """
 resolvConf: {}
 ipConfs:
     static_001:
@@ -621,8 +674,8 @@ services:
             voipRange:
             - 192.168.0.100
             - 192.168.0.199
-"""),
-
+""",
+    ),
 ]
 
 
@@ -664,10 +717,16 @@ logging.basicConfig(level=logging.CRITICAL)
 class TestXysXivoConfigValidation(unittest.TestCase):
 
     for p, (test_title, src_conf) in enumerate(VALID_CONFIGS):
-        exec("""def test_valid_%s(self):
+        exec(
+            """def test_valid_%s(self):
                 conf = xivo_config.load_configuration(VALID_CONFIGS[%d][1])
-                self.assertEqual(isinstance(conf, dict), True)""" % (test_title, p))
+                self.assertEqual(isinstance(conf, dict), True)"""
+            % (test_title, p)
+        )
 
     for p, (test_title, src_conf) in enumerate(INVALID_CONFIGS):
-        exec("""def test_invalid_%s(self):
-                self.assertRaises(xivo_config.InvalidConfigurationError, xivo_config.load_configuration, INVALID_CONFIGS[%d][1])""" % (test_title, p))
+        exec(
+            """def test_invalid_%s(self):
+                self.assertRaises(xivo_config.InvalidConfigurationError, xivo_config.load_configuration, INVALID_CONFIGS[%d][1])"""
+            % (test_title, p)
+        )

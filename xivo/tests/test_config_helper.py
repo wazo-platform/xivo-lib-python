@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2014-2016 Avencall
+# Copyright 2014-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from operator import itemgetter
@@ -35,7 +35,8 @@ def _none_existent_filename():
     while True:
         filename = '{}-{}'.format(
             os.path.dirname(__file__),
-            ''.join(random.choice(string.ascii_lowercase) for _ in range(3)))
+            ''.join(random.choice(string.ascii_lowercase) for _ in range(3)),
+        )
         if not os.path.exists(filename):
             return filename
 
@@ -52,7 +53,6 @@ def _new_tmp_dir():
 
 
 class TestPrintErrorHandler(unittest.TestCase):
-
     def setUp(self):
         self.error_handler = PrintErrorHandler()
         self.name = 'foobar'
@@ -74,7 +74,6 @@ class TestPrintErrorHandler(unittest.TestCase):
 
 
 class TestParseConfigFile(unittest.TestCase):
-
     def setUp(self):
         self.error_handler = Mock(ErrorHandler)
         self.parser = ConfigParser(self.error_handler)
@@ -91,15 +90,16 @@ class TestParseConfigFile(unittest.TestCase):
         config_file_content = """\
         !exec
         command: cat {}
-        """.format(other_file.name)
+        """.format(
+            other_file.name
+        )
         config_file = tempfile.NamedTemporaryFile('w+t')
         config_file.write(config_file_content)
         config_file.seek(0)
 
         result = self.parser.parse_config_file(config_file.name)
 
-        assert_that(result, equal_to({'foo': 'bar',
-                                      'bar': 'baz'}))
+        assert_that(result, equal_to({'foo': 'bar', 'bar': 'baz'}))
 
     def test_exec_tag_command_not_found(self):
         config_file_content = """\
@@ -124,7 +124,9 @@ class TestParseConfigFile(unittest.TestCase):
         config_file_content = """\
         !exec
         command: cat {}
-        """.format(other_file.name)
+        """.format(
+            other_file.name
+        )
         config_file = tempfile.NamedTemporaryFile('w+t')
         config_file.write(config_file_content)
         config_file.seek(0)
@@ -139,7 +141,9 @@ class TestParseConfigFile(unittest.TestCase):
         result = self.parser.parse_config_file(no_such_file)
 
         assert_that(result, equal_to({}))
-        self.error_handler.on_parse_config_file_env_error.assert_called_once_with(no_such_file, ANY)
+        self.error_handler.on_parse_config_file_env_error.assert_called_once_with(
+            no_such_file, ANY
+        )
 
     def test_invalid_yaml_raises(self):
         content = """ \
@@ -176,7 +180,6 @@ class TestParseConfigFile(unittest.TestCase):
 
 
 class TestParseConfigDir(unittest.TestCase):
-
     def setUp(self):
         self.error_handler = Mock(ErrorHandler)
         self.parser = ConfigParser(self.error_handler)
@@ -187,7 +190,9 @@ class TestParseConfigDir(unittest.TestCase):
         result = self.parser.parse_config_dir(dirname)
 
         assert_that(result, contains())
-        self.error_handler.on_parse_config_dir_env_error.assert_called_once_with(dirname, ANY)
+        self.error_handler.on_parse_config_dir_env_error.assert_called_once_with(
+            dirname, ANY
+        )
 
     def test_with_only_valid_configs(self):
         dirname = _new_tmp_dir()
@@ -201,10 +206,13 @@ class TestParseConfigDir(unittest.TestCase):
 
         res = self.parser.parse_config_dir(dirname)
 
-        sorted_files = sorted([{'file': f1.name,
-                                'content': {'test': 'one'}},
-                               {'file': f2.name,
-                                'content': {'test': 'two'}}], key=itemgetter('file'))
+        sorted_files = sorted(
+            [
+                {'file': f1.name, 'content': {'test': 'one'}},
+                {'file': f2.name, 'content': {'test': 'two'}},
+            ],
+            key=itemgetter('file'),
+        )
         expected = [entry['content'] for entry in sorted_files]
         assert_that(res, contains(*expected))
 
@@ -221,7 +229,9 @@ class TestParseConfigDir(unittest.TestCase):
         res = self.parser.parse_config_dir(dirname)
 
         assert_that(res, contains({'test': 'one'}))
-        self.error_handler.on_parse_config_dir_parse_exception.assert_called_once_with(os.path.basename(f2.name), ANY)
+        self.error_handler.on_parse_config_dir_parse_exception.assert_called_once_with(
+            os.path.basename(f2.name), ANY
+        )
 
     def test_ignore_dot_files(self):
         dirname = _new_tmp_dir()
@@ -253,16 +263,17 @@ class TestParseConfigDir(unittest.TestCase):
 
 
 class TestReadConfigFileHierarchy(unittest.TestCase):
-
     def setUp(self):
         self.error_handler = Mock(ErrorHandler)
         self.parser = ConfigParser(self.error_handler)
 
     def test_that_the_main_config_file_is_read(self):
         self.parser.parse_config_file = Mock()
-        self.parser.parse_config_file.return_value = {'extra_config_files': '/path/to/extra',
-                                                      'sentinel': 'from_main_file',
-                                                      'main_file_only': True}
+        self.parser.parse_config_file.return_value = {
+            'extra_config_files': '/path/to/extra',
+            'sentinel': 'from_main_file',
+            'main_file_only': True,
+        }
         self.parser.parse_config_dir = Mock()
         self.parser.parse_config_dir.return_value = [{'sentinel': 'from_extra_config'}]
         cli_and_default_config = {
@@ -281,11 +292,9 @@ class TestReadConfigFileHierarchy(unittest.TestCase):
 
 
 class TestGetXiVOUUID(unittest.TestCase):
-
     @patch('xivo.config_helper.os.getenv', return_value=False)
     def test_given_no_uuid_then_raise_error(self, getenv):
-        assert_that(calling(get_xivo_uuid).with_args(Mock()),
-                    raises(UUIDNotFound))
+        assert_that(calling(get_xivo_uuid).with_args(Mock()), raises(UUIDNotFound))
 
     @patch('xivo.config_helper.os.getenv', return_value=XIVO_UUID)
     def test_given_uuid_then_return_uuid(self, getenv):
@@ -297,8 +306,7 @@ class TestGetXiVOUUID(unittest.TestCase):
 class TestSetXiVOUUID(unittest.TestCase):
     @patch('xivo.config_helper.os.getenv', return_value=False)
     def test_given_no_uuid_then_raise_error(self, getenv):
-        assert_that(calling(set_xivo_uuid).with_args({}, Mock()),
-                    raises(UUIDNotFound))
+        assert_that(calling(set_xivo_uuid).with_args({}, Mock()), raises(UUIDNotFound))
 
     @patch('xivo.config_helper.os.getenv', return_value=XIVO_UUID)
     def test_given_uuid_then_set_uuid(self, getenv):

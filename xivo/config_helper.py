@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2014-2016 Avencall
+# Copyright 2014-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import print_function
@@ -23,11 +23,12 @@ class _YAMLExecTag(yaml.YAMLObject):
         with open(os.devnull) as devnull:
             for key, value in node.value:
                 if key.value == 'command':
-                    return yaml.load(subprocess.check_output(value.value.split(' '), stderr=devnull))
+                    return yaml.load(
+                        subprocess.check_output(value.value.split(' '), stderr=devnull)
+                    )
 
 
 class ErrorHandler(object):
-
     def on_parse_config_file_env_error(self, config_file_name, e):
         pass
 
@@ -39,19 +40,23 @@ class ErrorHandler(object):
 
 
 class PrintErrorHandler(ErrorHandler):
-
     def on_parse_config_file_env_error(self, config_file_name, e):
-        print('Could not read config file {}: {}'.format(config_file_name, e), file=sys.stderr)
+        print(
+            'Could not read config file {}: {}'.format(config_file_name, e),
+            file=sys.stderr,
+        )
 
     def on_parse_config_dir_env_error(self, directory_name, e):
-        print('Could not read config dir {}: {}'.format(directory_name, e), file=sys.stderr)
+        print(
+            'Could not read config dir {}: {}'.format(directory_name, e),
+            file=sys.stderr,
+        )
 
     def on_parse_config_dir_parse_exception(self, filename, e):
         print('Could not read config file {}: {}'.format(filename, e), file=sys.stderr)
 
 
 class ConfigParser(object):
-
     def __init__(self, error_handler=PrintErrorHandler()):
         self._error_handler = error_handler
 
@@ -92,7 +97,12 @@ class ConfigParser(object):
 
         return list(_config_generator())
 
-    def read_config_file_hierarchy(self, original_config, config_file_key='config_file', extra_config_dir_key='extra_config_files'):
+    def read_config_file_hierarchy(
+        self,
+        original_config,
+        config_file_key='config_file',
+        extra_config_dir_key='extra_config_files',
+    ):
         '''
         Read a config file and an extra config directory, then return a dictionary
         containing the config read, aggregated by the following priority:
@@ -107,7 +117,9 @@ class ConfigParser(object):
 
         main_config_filename = original_config[config_file_key]
         main_config = self.parse_config_file(main_config_filename)
-        extra_config_file_directory = ChainMap(main_config, original_config)[extra_config_dir_key]
+        extra_config_file_directory = ChainMap(main_config, original_config)[
+            extra_config_dir_key
+        ]
         configs = self.parse_config_dir(extra_config_file_directory)
         configs.append(main_config)
 

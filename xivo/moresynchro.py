@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2007-2016 Avencall
+# Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Supplementary synchronization primitives not provided by 'threading'
@@ -24,7 +24,6 @@ import threading
 
 
 class Once(object):
-
     def __init__(self):
         self._lock = threading.Lock()
         self._initialized = False
@@ -137,7 +136,11 @@ class RWLock:
                 return False
             self.__pending_writers.append(me)
             while True:
-                if not self.__readers and self.__writer is None and self.__pending_writers[0] is me:
+                if (
+                    not self.__readers
+                    and self.__writer is None
+                    and self.__pending_writers[0] is me
+                ):
                     self.__writer = me
                     self.__writer_lock_count = 1
                     self.__pending_writers = self.__pending_writers[1:]

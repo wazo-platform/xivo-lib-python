@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2016 Avencall
+# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
@@ -44,33 +44,39 @@ def main():
     logger.debug('advertise addr: %s', advertise_address)
     logger.debug('enabled: %s', enabled)
 
-    config = {'consul': {'host': 'consul',
-                         'port': 8500,
-                         'token': 'the_one_ring'},
-              'service_discovery': {'advertise_address': advertise_address,
-                                    'advertise_address_interface': 'eth0',
-                                    'advertise_port': 6262,
-                                    'ttl_interval': 30,
-                                    'refresh_interval': 27,
-                                    'retry_interval': 2},
-              'bus': {'username': 'guest',
-                      'password': 'guest',
-                      'host': 'rabbitmq',
-                      'port': 5672,
-                      'exchange_name': 'xivo',
-                      'exchange_type': 'topic'},
-              'uuid': UUID}
+    config = {
+        'consul': {'host': 'consul', 'port': 8500, 'token': 'the_one_ring'},
+        'service_discovery': {
+            'advertise_address': advertise_address,
+            'advertise_address_interface': 'eth0',
+            'advertise_port': 6262,
+            'ttl_interval': 30,
+            'refresh_interval': 27,
+            'retry_interval': 2,
+        },
+        'bus': {
+            'username': 'guest',
+            'password': 'guest',
+            'host': 'rabbitmq',
+            'port': 5672,
+            'exchange_name': 'xivo',
+            'exchange_type': 'topic',
+        },
+        'uuid': UUID,
+    }
 
     if not enabled:
         config['service_discovery']['enabled'] = False
 
     signal.signal(signal.SIGTERM, handler)
-    with ServiceCatalogRegistration('myservice',
-                                    config['uuid'],
-                                    config['consul'],
-                                    config['service_discovery'],
-                                    config['bus'],
-                                    self_check):
+    with ServiceCatalogRegistration(
+        'myservice',
+        config['uuid'],
+        config['consul'],
+        config['service_discovery'],
+        config['bus'],
+        self_check,
+    ):
         app.run(host="0.0.0.0", port=6262)
 
 

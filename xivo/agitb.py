@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013-2016 Avencall
+# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """More comprehensive traceback formatting for AGI in Python.
@@ -41,7 +41,7 @@ __version__ = "$Revision$ $Date$"
 
 import sys
 
-__UNDEF__ = []                          # a special sentinel object
+__UNDEF__ = []  # a special sentinel object
 
 
 def lookup(name, frame, lcals):
@@ -64,8 +64,11 @@ def lookup(name, frame, lcals):
 def scanvars(reader, frame, lcals):
     """Scan one logical line of Python and look up values of variables used."""
     import tokenize, keyword
+
     xvars, lasttoken, parent, prefix, value = [], None, None, '', __UNDEF__
-    for ttype, token, start, end, line in tokenize.generate_tokens(reader):  # pylint: disable-msg=W0612
+    for ttype, token, start, end, line in tokenize.generate_tokens(
+        reader
+    ):  # pylint: disable-msg=W0612
         if ttype == tokenize.NEWLINE:
             break
         if ttype == tokenize.NAME and token not in keyword.kwlist:
@@ -94,10 +97,13 @@ def text(value, context=5):
         etype = etype.__name__
     pyver = 'Python ' + sys.version.split()[0] + ': ' + sys.executable
     date = time.ctime(time.time())
-    head = "%s\n%s\n%s\n" % (str(etype), pyver, date) + '''
+    head = (
+        "%s\n%s\n%s\n" % (str(etype), pyver, date)
+        + '''
 A problem occurred in a Python script.  Here is the sequence of
 function calls leading up to the error, in the order they occurred.
 '''
+    )
 
     frames = []
     records = inspect.getinnerframes(etb, context)
@@ -106,17 +112,27 @@ function calls leading up to the error, in the order they occurred.
         args, varargs, varkw, lcals = inspect.getargvalues(frame)
         call = ''
         if func != '?':
-            call = 'in ' + func + \
-                inspect.formatargvalues(args, varargs, varkw, lcals,
-                    formatvalue=lambda value: '=' + pydoc.text.repr(value))
+            call = (
+                'in '
+                + func
+                + inspect.formatargvalues(
+                    args,
+                    varargs,
+                    varkw,
+                    lcals,
+                    formatvalue=lambda value: '=' + pydoc.text.repr(value),
+                )
+            )
 
         highlight = {}
+
         def reader(lnum=[lnum]):
             highlight[lnum[0]] = 1
             try:
                 return linecache.getline(filen, lnum[0])
             finally:
                 lnum[0] += 1
+
         xvars = scanvars(reader, frame, lcals)
 
         rows = [' %s %s' % (filen, call)]
@@ -153,24 +169,30 @@ function calls leading up to the error, in the order they occurred.
             exception.append('\n%s%s = %s' % (" " * 4, name, value))
 
     import traceback
-    return head + ''.join(frames) + ''.join(exception) + '''
+
+    return (
+        head
+        + ''.join(frames)
+        + ''.join(exception)
+        + '''
 
 The above is a description of an error in a Python program.  Here is
 the original traceback:
 
 %s
-''' % ''.join(traceback.format_exception(etype, evalue, etb))
+'''
+        % ''.join(traceback.format_exception(etype, evalue, etb))
+    )
 
 
 class Hook:
     """A hook to replace sys.excepthook that sends detailed tracebacks to
     Asterisk via agi.verbose() calls."""
 
-    def __init__(self, display=1, logdir=None, context=5, filen=None,
-                  agi=None):
-        self.display = display          # send tracebacks to browser if true
-        self.logdir = logdir            # log tracebacks to files if not None
-        self.context = context          # number of source code lines per frame
+    def __init__(self, display=1, logdir=None, context=5, filen=None, agi=None):
+        self.display = display  # send tracebacks to browser if true
+        self.logdir = logdir  # log tracebacks to files if not None
+        self.context = context  # number of source code lines per frame
         self.file = filen or sys.stderr  # place to send the output
         self.agi = agi
 
@@ -182,12 +204,13 @@ class Hook:
 
         try:
             doc = text(info, self.context)
-        except Exception:               # just in case something goes wrong
+        except Exception:  # just in case something goes wrong
             import traceback
+
             doc = ''.join(traceback.format_exception(*info))
 
         if self.display:
-            if self.agi:   # print to agi
+            if self.agi:  # print to agi
                 for line in doc.split('\n'):
                     self.agi.verbose(line, 4)
             else:
@@ -200,6 +223,7 @@ class Hook:
 
         if self.logdir is not None:
             import os, tempfile
+
             (fd, path) = tempfile.mkstemp(suffix='.txt', dir=self.logdir)
             try:
                 filen = os.fdopen(fd, 'w')
@@ -229,8 +253,7 @@ def enable(agi=None, display=1, logdir=None, context=5):
     The optional argument 'display' can be set to 0 to suppress sending the
     traceback to the Asterisk verbose logs, and 'logdir' can be set to a
     directory to cause tracebacks to be written to files there."""
-    except_hook = Hook(display=display, logdir=logdir,
-                          context=context, agi=agi)
+    except_hook = Hook(display=display, logdir=logdir, context=context, agi=agi)
     sys.excepthook = except_hook
 
     global handler

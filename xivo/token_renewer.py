@@ -23,7 +23,9 @@ class TokenRenewer(object):
         self._stopped = threading.Event()
         self._renew_time = 0
         self._callback_lock = threading.Lock()
-        self._renew_time_failed = itertools.chain((1, 2, 4, 8, 16), itertools.repeat(32))
+        self._renew_time_failed = itertools.chain(
+            (1, 2, 4, 8, 16), itertools.repeat(32)
+        )
 
     def subscribe_to_token_change(self, callback):
         with self._callback_lock:
@@ -60,7 +62,7 @@ class TokenRenewer(object):
         logger.debug(
             'Creating token for "%s" with expiration %s',
             self._auth_client.username,
-            self._expiration
+            self._expiration,
         )
         try:
             token = self._auth_client.token.new(expiration=self._expiration)
@@ -89,7 +91,9 @@ class TokenRenewer(object):
         try:
             callback(token_id)
         except Exception:
-            logger.warning('unexpected exception from token change callback', exc_info=True)
+            logger.warning(
+                'unexpected exception from token change callback', exc_info=True
+            )
 
     def __enter__(self):
         self.start()
