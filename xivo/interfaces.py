@@ -7,6 +7,7 @@
 Copyright (C) 2008-2010  Avencall
 
 """
+from __future__ import print_function
 
 __version__ = "$Revision$ $Date$"
 
@@ -16,7 +17,7 @@ from itertools import islice
 
 
 def warn(msg):
-    print >>sys.stderr, "WARNING:", msg
+    print("WARNING:", msg, file=sys.stderr)
 
 
 class EniBlock:
@@ -279,7 +280,7 @@ class EniCookLineRecipe(object):
             raw_lines = [self.cooked_line + self.post_spaces]
         if self.pre_spaces:
             raw_lines[0] = self.pre_spaces + raw_lines[0]
-        for pos in xrange(len(raw_lines) - 1):
+        for pos in range(len(raw_lines) - 1):
             raw_lines[pos] += '\\\n'
         raw_lines[-1] += '\n'
         return raw_lines

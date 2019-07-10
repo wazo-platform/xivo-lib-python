@@ -103,7 +103,7 @@ def load(lineseq):
     Parse a sequence of lines, each of which contains only a single variable
     assignment statement.  Empty lines and trailing comments are also allowed.
     Return (reslst, resdct)
-    
+
     @reslst is a list of (varname, value, rotl), one per line of @lineseq
     In each (varname, value, rotl) tuple:
         @varname and @value are either two strings or both None,
@@ -113,11 +113,11 @@ def load(lineseq):
         @rotl is a string which contains the "rest of the line" (right
             stripped, and also left stripped iff @varname of the same tuple is
             None).
-    
+
     @resdct == dict([(varname, value)
                      for (varname, value, rotl) in reslst
                      if varname])
-    
+
     NOTE: This implementation is very limited.
     * It does not support any kind of substitution / expression; an exception
       is raised if one is detected.
@@ -129,24 +129,24 @@ def load(lineseq):
     * If on a single line quotes are not correctly balanced, an exception is
       raised.
     * Arrays are not supported.
-    
+
     HOWEVER:
     * The form $'string' with backslash escape sequences _is_ supported.
-    
+
     KNOWN INCOMPATIBILITIES:
     * In bash 3.1.17(1)-release (Debian Etch):
     $ echo -ne $'\c'abc | hd
     00000000  07 62 63                                          |.bc|
-    
+
     'a' disappear for no real reason - and the absence of matching single quote
     is not detected.  Probably a tiny bug in bash - or the spec. is evil.
-    
+
     This implementation will raise an exception if you try to parse something
     like $'\c'abc.  With something like $'\c''abc there will be a mismatch
     between bash and this implementation: bash thinks there are two single
     quoted parts and the second if unfinished, while this implementation thinks
     $'\c'' is the only single quoted part and abc is unquoted.
-    """
+    """  # noqa: W605
     reslst = []
     resdct = {}
 
@@ -441,17 +441,17 @@ def slow_set_assign(reslst, varname, new_value):
 
 
 # Identity character translaction table, see str.translate
-ID_CHR = ''.join(map(chr, xrange(0, 256)))
+ID_CHR = ''.join(map(chr, range(0, 256)))
 
 # String that only contains normal non control ascii characters,
 # even excluding \n \t \v \r etc...
-NORMAL_ASCII = ''.join(map(chr, xrange(32, 127)))
+NORMAL_ASCII = ''.join(map(chr, range(32, 127)))
 
 
 def single_escape_char(o):
     """
     Given @o, return (c, coded).
-    
+
     @o is the ordinal of the considered character.
     @c is the corresponding character: c == chr(o)
     @coded is the representation of @c in the SINGLE_QUOTED_WITH_ESCAPING
@@ -472,14 +472,14 @@ def single_escape_char(o):
 # SINGLE_QUOTED_WITH_ESCAPING context
 # key: character to be coded
 # value: coded representation of the character
-SINGLE_ESCAPE_TABLE = dict((single_escape_char(x) for x in xrange(0, 256)))
+SINGLE_ESCAPE_TABLE = dict((single_escape_char(x) for x in range(0, 256)))
 
 
 # Transformation table used to code characters for the
 # DOUBLE_QUOTED context
 # key: character to be coded
 # value: coded representation of the character
-DOUBLE_ESCAPE_TABLE = dict(((chr(x), chr(x)) for x in xrange(32, 127)))
+DOUBLE_ESCAPE_TABLE = dict(((chr(x), chr(x)) for x in range(32, 127)))
 DOUBLE_ESCAPE_TABLE['"'] = '\\"'
 DOUBLE_ESCAPE_TABLE["\\"] = "\\\\"
 DOUBLE_ESCAPE_TABLE['$'] = "\\$"

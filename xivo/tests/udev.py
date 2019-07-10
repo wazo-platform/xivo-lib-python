@@ -13,9 +13,9 @@ __version__ = "$Revision$ $Date$"
 import unittest
 import logging
 
-logging.basicConfig(level=logging.CRITICAL)
-
 from xivo import udev
+
+logging.basicConfig(level=logging.CRITICAL)
 
 
 class TestRulesParser(unittest.TestCase):

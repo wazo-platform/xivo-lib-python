@@ -15,12 +15,11 @@ __version__ = "$Revision$ $Date$"
 import psycopg2
 import psycopg2.extensions
 
-psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
-psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)  # noqa: E402
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)  # noqa: E402
 
 from xivo import anysql
 from xivo import urisup
-from xivo.urisup import SCHEME, AUTHORITY, PATH, QUERY, FRAGMENT, uri_help_split
 
 __typemap = {
     "host": str,
@@ -73,8 +72,8 @@ def connect_by_uri(uri):
     # params = __dict_from_query(puri[QUERY])
     params = {}
 
-    if puri[AUTHORITY]:
-        user, passwd, host, port = puri[AUTHORITY]
+    if puri[urisup.AUTHORITY]:
+        user, passwd, host, port = puri[urisup.AUTHORITY]
         if user:
             params['user'] = user
         if passwd:
@@ -83,8 +82,8 @@ def connect_by_uri(uri):
             params['host'] = host
         if port:
             params['port'] = port
-    if puri[PATH]:
-        params['database'] = puri[PATH]
+    if puri[urisup.PATH]:
+        params['database'] = puri[urisup.PATH]
         if params['database'] and params['database'][0] == '/':
             params['database'] = params['database'][1:]
 

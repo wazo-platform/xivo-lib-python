@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2008-2014 Avencall
+# Copyright 2008-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """System functions
@@ -54,7 +54,7 @@ def file_writelines_flush_sync(path, lines):
     Fill file at @path with @lines then flush all buffers
     (Python and system buffers)
     """
-    fp = file(path, "w")
+    fp = open(path, "w")
     try:
         fp.writelines(lines)
         flush_sync_file_object(fp)
@@ -71,4 +71,4 @@ def file_w_create_directories(filepath):
     dirname = os.path.dirname(filepath)
     if dirname and dirname != os.path.curdir and not os.path.isdir(dirname):
         os.makedirs(dirname)
-    return file(filepath, "w")
+    return open(filepath, "w")

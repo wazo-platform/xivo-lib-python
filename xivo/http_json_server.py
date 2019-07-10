@@ -46,6 +46,9 @@ import cgi
 import traceback
 import sys
 
+import six
+
+
 CMD_R = 0
 CMD_RW = 1
 
@@ -74,7 +77,7 @@ class Command(object):
 class HttpReqError(Exception):
     """
     Catched in HttpReqHandler.common_req() which calls .report().
-    
+
     Used to implement the unicity of the response to a single request,
     in a consistent way.
     """
@@ -103,7 +106,7 @@ class HttpReqError(Exception):
 def _encode_if(value, encoding='iso-8859-1'):
     # transform value returned by json.loads to something similar to what
     # cjson.decode would have returned
-    if isinstance(value, unicode):
+    if isinstance(value, six.text_types):
         return value.encode(encoding)
     elif isinstance(value, list):
         return [_encode_if(v, encoding) for v in value]
@@ -216,10 +219,10 @@ class HttpReqHandler(BaseHTTPRequestHandler):
 
             key = x[0][:lbracket]
 
-            if not ret.has_key(key):
+            if key not in ret:
                 ret[key] = {}
 
-            matched = re.findall('\[([^\]]*)\]', x[0][lbracket:])
+            matched = re.findall(r'\[([^\]]*)\]', x[0][lbracket:])
             nb = len(matched)
 
             if nb == 0:
@@ -235,13 +238,13 @@ class HttpReqHandler(BaseHTTPRequestHandler):
 
             for i, k in enumerate(matched):
                 if k == '':
-                    while ref.has_key(j):
+                    while j in ref:
                         j += 1
                     k = j
 
                 if i == (nb - 1):
                     ref[k] = value
-                elif not ref.has_key(k) or (nb > i and not isinstance(ref[k], dict)):
+                elif k not in ref or (nb > i and not isinstance(ref[k], dict)):
                     ref[k] = {}
 
                 ref = ref[k]
@@ -389,7 +392,7 @@ def register(handler, op, safe_init=None, at_start=None, name=None):
     @safe_init: called by the safe_init() function of this module
     @at_start: called once just before the server starts
     @name: name of the command (if not name, handler.__name__ is used)
-    
+
     prototypes:
         handler(args)
         safe_init(options)
@@ -411,7 +414,7 @@ def register(handler, op, safe_init=None, at_start=None, name=None):
 def sigterm_handler(signum, stack_frame):
     """
     Just tell the server to exit.
-    
+
     WARNING: There are race conditions, for example with TimeoutSocket.accept.
     We don't care: the user can just rekill the process after like 1 sec. if
     the first kill did not work.

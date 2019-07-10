@@ -7,9 +7,7 @@ import unittest
 from hamcrest import assert_that, equal_to
 from mock import patch, sentinel, ANY
 
-from xivo.http_helpers import log_request, log_request_hide_token
-
-from ..http_helpers import log_request, log_request_hide_token, LazyHeaderFormatter
+from xivo.http_helpers import log_request, log_request_hide_token, LazyHeaderFormatter
 
 
 class TestLogRequest(unittest.TestCase):

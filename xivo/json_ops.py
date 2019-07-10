@@ -13,6 +13,8 @@ TODO:
 
 __version__ = "$Revision$ $Date$"
 
+import six
+
 
 class _EType(object):  # pylint: disable-msg=R0903
     "cosmetic class"
@@ -28,8 +30,8 @@ EXISTS = _EType()
 def _get_match(op, tree):
     """
     Return a list of (path, value) extracted from @tree that matches the
-    pattern represented by @op.  
-    
+    pattern represented by @op.
+
     last part of @op:
         '=': value is a subtree
         '!': value is EXISTS
@@ -66,7 +68,7 @@ def _get_match(op, tree):
             ]
         else:
             return []
-    elif isinstance(curop, basestring):
+    elif isinstance(curop, six.string_types):
         if isinstance(tree, dict) and curop in tree:
             return [
                 ((curop,) + path, val) for (path, val) in _get_match(remop, tree[curop])

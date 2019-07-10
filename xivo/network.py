@@ -22,9 +22,9 @@ log = logging.getLogger("xivo.network")  # pylint: disable-msg=C0103
 # CONFIG
 
 PROC_NET_VLAN = "/proc/net/vlan"
-VLAN_CONFIG_PARSER = re.compile('^\s*([^\s]+)\s*\|\s*(\d+)\s*\|\s*([^\s]+)\s*$').match
+VLAN_CONFIG_PARSER = re.compile(r'^\s*([^\s]+)\s*\|\s*(\d+)\s*\|\s*([^\s]+)\s*$').match
 VLAN_NAME_SPLITTER = re.compile(
-    '^(?:vlan(\d+)|(\W+)\.(\d+)|(?!vlan)[^\.]*\.(\d+))$'
+    r'^(?:vlan(\d+)|(\W+)\.(\d+)|(?!vlan)[^\.]*\.(\d+))$'
 ).match
 
 SYS_CLASS_NET = "/sys/class/net"
@@ -116,7 +116,9 @@ def cmp_lexdec(x_str, y_str):
     """
     Compare the splitted versions of x_str and y_str
     """
-    return cmp(split_lexdec(x_str), split_lexdec(y_str))
+    x = split_lexdec(x_str)
+    y = split_lexdec(y_str)
+    return (x > y) - (x < y)
 
 
 def sorted_lst_lexdec(seqof_lexdec_str):
@@ -164,7 +166,7 @@ def get_filtered_ifnames(ifname_match_func=lambda x: True):
 def is_linux_dummy_if(ifname):
     """
     Return True if ifname seems to be a dummy interface
-    
+
     NOTE: flaky test, as a dummy interface can be renamed:
       $> ip link set name ethX dev dummyY
     """
@@ -196,22 +198,21 @@ def get_linux_vlan_config(ifname=None):
     if not os.access(configpath, os.R_OK):
         return False
 
-    config = file(configpath)
+    with open(configpath, 'r') as config:
+        r = {}
 
-    r = {}
+        for line in config.readlines():
+            parsed = VLAN_CONFIG_PARSER(line)
+            if parsed:
+                r[parsed.group(1)] = {
+                    'vlan-id': int(parsed.group(2)),
+                    'vlan-raw-device': parsed.group(3),
+                }
 
-    for line in config.readlines():
-        parsed = VLAN_CONFIG_PARSER(line)
-        if parsed:
-            r[parsed.group(1)] = {
-                'vlan-id': int(parsed.group(2)),
-                'vlan-raw-device': parsed.group(3),
-            }
+        if ifname is not None:
+            return r.get(ifname, False)
 
-    if ifname is not None:
-        return r.get(ifname, False)
-
-    return r
+        return r
 
 
 def get_vlan_info_from_ifname(ifname):
@@ -315,9 +316,8 @@ def is_interface_plugged(ifname):
     WARNING: Only works on physical interfaces
     """
     try:
-        return bool(
-            int(file(os.path.join(SYS_CLASS_NET, ifname, CARRIER)).read().strip())
-        )
+        with open(os.path.join(SYS_CLASS_NET, ifname, CARRIER), 'r') as f:
+            return bool(int(f.read().strip()))
     except IOError:
         return False
 
@@ -326,28 +326,32 @@ def get_interface_flags(ifname):
     """
     Return the interface flags
     """
-    return int(file(os.path.join(SYS_CLASS_NET, ifname, FLAGS)).read().strip(), 16)
+    with open(os.path.join(SYS_CLASS_NET, ifname, FLAGS), 'r') as f:
+        return int(f.read().strip(), 16)
 
 
 def get_interface_hwaddress(ifname):
     """
     Return the hardware address
     """
-    return file(os.path.join(SYS_CLASS_NET, ifname, HWADDRESS)).read().strip()
+    with open(os.path.join(SYS_CLASS_NET, ifname, HWADDRESS), 'r') as f:
+        return f.read().strip()
 
 
 def get_interface_hwtypeid(ifname):
     """
     Return the hardware type id
     """
-    return int(file(os.path.join(SYS_CLASS_NET, ifname, HWTYPE)).read().strip())
+    with open(os.path.join(SYS_CLASS_NET, ifname, HWTYPE), 'r') as f:
+        return int(f.read().strip())
 
 
 def get_interface_mtu(ifname):
     """
     Return the interface mtu
     """
-    return int(file(os.path.join(SYS_CLASS_NET, ifname, MTU)).read().strip())
+    with open(os.path.join(SYS_CLASS_NET, ifname, MTU), 'r') as f:
+        return int(f.read().strip())
 
 
 def normalize_ipv4_address(addr):
@@ -518,10 +522,11 @@ def netmask_invert(mask):
     return tuple([m ^ 0xFF for m in mask])
 
 
+_m = None
 _valid_netmask = frozenset(
     [
         struct.unpack("BBBB", struct.pack(">L", 0xFFFFFFFF ^ ((1 << _m) - 1)))
-        for _m in xrange(0, 33)
+        for _m in range(0, 33)
     ]
 )
 del _m

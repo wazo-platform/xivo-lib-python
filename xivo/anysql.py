@@ -141,7 +141,7 @@ class cursor(object):
                 self.__dbapi2_cursor.execute(tmp_query)
             else:
                 self.__dbapi2_cursor.execute(tmp_query, parameters)
-        except Exception as e:
+        except Exception:
             # try to reconnect
             self.__connection.reconnect()
             self.__dbapi2_cursor = self.__connection._get_raw_cursor()
@@ -163,7 +163,7 @@ class cursor(object):
 
         try:
             self.__dbapi2_cursor.executemany(tmp_query, seq_of_parameters)
-        except Exception as e:
+        except Exception:
             self.__connection.reconnect()
             self.__dbapi2_cursor = self.__connection._get_raw_cursor()
 
@@ -179,7 +179,7 @@ class cursor(object):
         """
         try:
             result = self.__dbapi2_cursor.fetchone()
-        except Exception as e:
+        except Exception:
             self.__connection.reconnect()
             self.__dbapi2_cursor = self.__connection._get_raw_cursor()
 
@@ -204,7 +204,7 @@ class cursor(object):
                 manyrows = self.__dbapi2_cursor.fetchmany()
             else:
                 manyrows = self.__dbapi2_cursor.fetchmany(size)
-        except Exception as e:
+        except Exception:
             self.__connection.reconnect()
             self.__dbapi2_cursor = self.__connection._get_raw_cursor()
 
@@ -229,7 +229,7 @@ class cursor(object):
         """
         try:
             allrows = self.__dbapi2_cursor.fetchall()
-        except Exception as e:
+        except Exception:
             self.__connection.reconnect()
             self.__dbapi2_cursor = self.__connection._get_raw_cursor()
 

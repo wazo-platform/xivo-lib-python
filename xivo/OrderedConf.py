@@ -131,15 +131,12 @@ from ConfigParser import (
     NoSectionError,
     DuplicateSectionError,
     NoOptionError,
-    InterpolationError,
-    InterpolationMissingOptionError,
-    InterpolationSyntaxError,
-    InterpolationDepthError,
     ParsingError,
     MissingSectionHeaderError,
 )
 
 import re
+from six.renames import reduce
 
 
 SECTCRE = re.compile(r'\[' r'(?P<header>[^]]+)' r'\]')  # [  # very permissive!  # ]
@@ -202,8 +199,8 @@ class SectionDesc:
     method of an OrderedRawConf instance.  That means that you can
     simply do, for example:
 
-	conf = OrderedRawConf(None, "/etc/somecoolconfig.conf")
-	for section in c:
+        conf = OrderedRawConf(None, "/etc/somecoolconfig.conf")
+        for section in c:
             print section.get_name()
             print section.ordered_items()
             ...
@@ -249,8 +246,8 @@ class SectionDesc:
 
         Return the unordered list of (name, value) option pairs of this
         section.  If multiple options with the same canonical name (as
-	per 'opt_trans' of the corresponding OrderedRawConf object)
-	exist, only the first one of each different set will be
+        per 'opt_trans' of the corresponding OrderedRawConf object)
+        exist, only the first one of each different set will be
         returned.
 
     ordered_items(self)
@@ -868,7 +865,7 @@ class OrderedRawConf:
         with a name of the form _(.*)_by_section_token() of this class
         with the correct iterable section token abstract descriptor.
         """
-        for i in xrange(len(self._sections[0])):
+        for i in range(len(self._sections[0])):
             yield SectionDesc(self, i)
 
     __iter__ = iter_sections
@@ -919,7 +916,7 @@ class OrderedRawConf:
         return [k for k, v in self._sectup_by_tok(i)[0]]
 
     def _iter_options_by_sectup(self, sectup):
-        for j in xrange(len(sectup[0])):
+        for j in range(len(sectup[0])):
             yield OptionDesc(self, (sectup, j))
 
     def _iter_options_by_section_token(self, i):

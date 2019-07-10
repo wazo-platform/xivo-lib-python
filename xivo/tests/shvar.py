@@ -277,8 +277,8 @@ class TestShVar(unittest.TestCase):
         self.escape_helper('"')
         self.escape_helper("'")
         self.escape_helper("\xe9")
-        self.escape_helper(''.join((chr(c) for c in xrange(32, 127))))
-        self.escape_helper(''.join((chr(c) for c in xrange(1, 256))))
+        self.escape_helper(''.join((chr(c) for c in range(32, 127))))
+        self.escape_helper(''.join((chr(c) for c in range(1, 256))))
 
     def format_helper(self, initial_content):
         # 1) parse

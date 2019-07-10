@@ -15,7 +15,7 @@ at the top of your script.  The optional arguments to enable() are:
 
     agi         - the agi handle to write verbose messages to
     display     - if true (default), tracebacks are displayed on the asterisk
-                  console (used with the agi option) 
+                  console (used with the agi option)
     logdir      - if set, tracebacks are written to files in this directory
     context     - number of lines of source code to show for each stack frame
 
@@ -32,14 +32,25 @@ If you do not pass anything to handler() it will use sys.exc_info().
 This script was adapted from Ka-Ping Yee's cgitb.
 
 Modification by Proformatique:
-	PyDoc of enable() corrected. (it was the same as in cgitb)
+        PyDoc of enable() corrected. (it was the same as in cgitb)
 """
 
 __author__ = 'Matthew Nicholson'
 # original __version__ = '0.1.0'
 __version__ = "$Revision$ $Date$"
 
+import keyword
+import inspect
+import linecache
+import os
+import pydoc
 import sys
+import tempfile
+import time
+import traceback
+import tokenize
+import types
+
 
 __UNDEF__ = []  # a special sentinel object
 
@@ -52,7 +63,7 @@ def lookup(name, frame, lcals):
         return 'global', frame.f_globals[name]
     if '__builtins__' in frame.f_globals:
         builtins = frame.f_globals['__builtins__']
-        if type(builtins) is type({}):
+        if isinstance(builtins, dict):
             if name in builtins:
                 return 'builtin', builtins[name]
         else:
@@ -63,7 +74,6 @@ def lookup(name, frame, lcals):
 
 def scanvars(reader, frame, lcals):
     """Scan one logical line of Python and look up values of variables used."""
-    import tokenize, keyword
 
     xvars, lasttoken, parent, prefix, value = [], None, None, '', __UNDEF__
     for ttype, token, start, end, line in tokenize.generate_tokens(
@@ -90,10 +100,9 @@ def scanvars(reader, frame, lcals):
 
 def text(value, context=5):
     """Return a plain text document describing a given traceback."""
-    import os, types, time, traceback, linecache, inspect, pydoc
 
     etype, evalue, etb = value
-    if type(etype) is types.ClassType:
+    if isinstance(etype, types.ClassType):
         etype = etype.__name__
     pyver = 'Python ' + sys.version.split()[0] + ': ' + sys.executable
     date = time.ctime(time.time())
@@ -163,12 +172,10 @@ function calls leading up to the error, in the order they occurred.
         frames.append('\n%s\n' % '\n'.join(rows))
 
     exception = ['%s: %s' % (str(etype), str(evalue))]
-    if type(evalue) is types.InstanceType:
+    if isinstance(evalue, types.InstanceType):
         for name in dir(evalue):
             value = pydoc.text.repr(getattr(evalue, name))
             exception.append('\n%s%s = %s' % (" " * 4, name, value))
-
-    import traceback
 
     return (
         head
@@ -205,8 +212,6 @@ class Hook:
         try:
             doc = text(info, self.context)
         except Exception:  # just in case something goes wrong
-            import traceback
-
             doc = ''.join(traceback.format_exception(*info))
 
         if self.display:
@@ -222,7 +227,6 @@ class Hook:
             self.file.write('A problem occurred in a python script\n')
 
         if self.logdir is not None:
-            import os, tempfile
 
             (fd, path) = tempfile.mkstemp(suffix='.txt', dir=self.logdir)
             try:

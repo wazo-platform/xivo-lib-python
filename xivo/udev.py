@@ -189,7 +189,7 @@ def base_attr_strip_opt(key):
     """
     Behave as base_attr_key(), except when the @base result is a key in
     @KEY_OPT_ATTR: in this case return base, None
-    
+
     REM: base_attr_key() can raise a ValueError, so base_attr_strip_opt()
     can raise a ValueError too.
     """
@@ -203,11 +203,11 @@ def base_attr_strip_opt(key):
 def parse_rule(mline):
     """
     Parse @mline quite like add_to_rules() does in udev.
-    
+
     If the rule is syntaxically invalid, this function returns None.
     If the rule is not too much syntaxically invalid, this function
     returns (rule, reconstructible_rule).
-    
+
     @rule is a dictionary with the following structure:
     { key_attr_1: { attr_1: [op_1, val_1],
                     attr_2: [op_2, val_2],
@@ -219,7 +219,7 @@ def parse_rule(mline):
     @KEY_ATTR, @attr_{p} can be any string, @op_{q} is an udev rule
     operator in ('==', '!=', '+=', '=', ':='), @val_{r} can be any string,
     and @key_{s} is an element of the "key in dict" column of @KEY.
-    
+
     @reconstructible_rule is a list with the following structure:
     [elem, ...]
     where @elem is a list of the first subgroups as they are in
@@ -228,7 +228,7 @@ def parse_rule(mline):
     @reconstructible_rule store even the unrecognized keys, so when the
     line is reconstructed using it it is possible to avoid unnecessary
     changes.
-    
+
     NOTE: the "key in dict" columns are a subset of the keys of @KEY or
     @KEY_ATTR and the sets are disjoint.
     """
@@ -316,7 +316,7 @@ def parse_file_nolock(rules_file):
     """
     Parse the @rules_file with parse_lines()
     """
-    return parse_lines(file(rules_file))
+    return parse_lines(open(rules_file, 'r'))
 
 
 def parse_file(rules_file):
@@ -366,10 +366,10 @@ def replace_simple_op_values(recons, repl):
     """
     @recons is a list in the format of @reconstructible_rule described in
     pydoc of parse_rule().
-    
+
     This function returns a reconstructed rule line in which operations and
     values are replaced by using those of @repl for each corresponding key.
-    
+
     WARNING: only works for keys in @KEY
     """
     modified_recons = deepcopy(recons)
@@ -402,7 +402,7 @@ def replace_simple(lines, match_repl_lst):
     """
     Transform @lines (generate the output) by doing some replacement in
     rules according to @match_repl_lst.
-    
+
     @match_repl_lst: [(match, repl), ...]
     @match: Dictionary (see format in parse_rule() pydoc)
             There will be a match iff for each key of @match, a
@@ -414,7 +414,7 @@ def replace_simple(lines, match_repl_lst):
            You can only use simple entries in this dictionary (in the form
            @key_{s} described in parse_rule() pydoc; possible keys are
            listed in @KEY).
-    
+
     WARNING: There will be no continued line in output; any line which was
     continued in input will be transformed into its non-continued
     equivalent.  Also lines will be left stripped.
@@ -432,7 +432,7 @@ def replace_simple(lines, match_repl_lst):
         match_repl = find(
             match_repl_lst, (lambda mr: match_rule(rule_recons[0], mr[0]))
         )
-        if match_repl == None:
+        if match_repl is None:
             yield mline + "\n"
             continue
 
@@ -445,7 +445,7 @@ def replace_simple_in_file_nolock(rules_file, match_repl_lst):
     Change the lines of @rules_file using replace_simple()
     """
     system.file_writelines_flush_sync(
-        rules_file + ".tmp", replace_simple(file(rules_file), match_repl_lst)
+        rules_file + ".tmp", replace_simple(open(rules_file, 'r'), match_repl_lst)
     )
     os.rename(rules_file + ".tmp", rules_file)
 
@@ -531,19 +531,19 @@ def rename_persistent_net_rules(src_dst_lst, out_renamer):
     @src_dst_lst: [(src, dst), ...]
         where @src is a network interface name that appears in
         "z25_persistent-net.rules" and must be renamed to @dst
-    
+
     @out_renamer:
         class that implements non udev procedures needed to complete the
         renaming operations
-        
+
         Must implement the following interface:
-        
+
         class out_renamer:
             def __init__(self, src_dst_lst, pure_dst_set):
                 Instantiation is tried just after initial checks.
                 __init__() can do its own additional checks (and raise
                 an exception on failure).
-                
+
                 @src_dst_lst:
                     directly passed from the same argument of
                     rename_persistent_net_rules()
@@ -551,17 +551,17 @@ def rename_persistent_net_rules(src_dst_lst, out_renamer):
                 @pure_dst_set:
                     set of target names that are not also source names
                     must not be modified (can be saved)
-            
+
             def edit(self):
                 called after "z25_persistent-net.rules" has been modified
-            
+
             def preup(self):
                 called just before the attempt to re-up the interfaces
-            
+
             def rollback(self):
                 called if an exception is raised resulting in a potential
                 need to undo the work of edit
-    
+
     XXX: On external failure (kill -9, power outage), a small time window
     remains where the configuration could be leaved in an inconsistent
     state.
@@ -636,7 +636,7 @@ def rename_persistent_net_rules(src_dst_lst, out_renamer):
             trigger()
 
             context.preup()
-        except:
+        except BaseException:
             log.exception(
                 "rename_persistent_net_rules: error during ethernet interface renaming, will rollback"
             )
