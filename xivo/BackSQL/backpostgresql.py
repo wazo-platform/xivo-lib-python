@@ -18,8 +18,9 @@ import psycopg2.extensions
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)  # noqa: E402
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)  # noqa: E402
 
+from six.moves.urllib import parse
+
 from xivo import anysql
-from xivo import urisup
 
 __typemap = {
     "host": str,
@@ -68,22 +69,20 @@ def connect_by_uri(uri):
     are not (yet?) allowed as complex Python objects are needed, hard to
     transmit within an URI...
     """
-    puri = urisup.uri_help_split(uri)
-    # params = __dict_from_query(puri[QUERY])
+
+    puri = parse.urlsplit(uri)
     params = {}
 
-    if puri[urisup.AUTHORITY]:
-        user, passwd, host, port = puri[urisup.AUTHORITY]
-        if user:
-            params['user'] = user
-        if passwd:
-            params['password'] = passwd
-        if host:
-            params['host'] = host
-        if port:
-            params['port'] = port
-    if puri[urisup.PATH]:
-        params['database'] = puri[urisup.PATH]
+    if puri.username:
+        params['user'] = puri.username
+    if puri.password:
+        params['password'] = puri.password
+    if puri.hostname:
+        params['host'] = puri.hostname
+    if puri.port:
+        params['port'] = puri.port
+    if puri.path:
+        params['database'] = puri.path
         if params['database'] and params['database'][0] == '/':
             params['database'] = params['database'][1:]
 

@@ -13,7 +13,7 @@ WARNING: this module is not DBAPI 2.0 compliant by itself
 __version__ = "$Revision$ $Date$"
 
 import logging
-from xivo import urisup
+from six.moves.urllib import parse
 
 __uri_create_methods = {}
 
@@ -446,10 +446,6 @@ def register_uri_backend(
             "This module does not support registration of DBAPI services of threadsafety %d (more generally under %d)"
             % (mod_threadsafety, any_threadsafety)
         )
-    if not urisup.valid_scheme(uri_scheme):
-        raise urisup.InvalidSchemeError(
-            "Can't register an invalid URI scheme %r" % uri_scheme
-        )
     __uri_create_methods[uri_scheme] = (
         create_method,
         module,
@@ -460,7 +456,7 @@ def register_uri_backend(
 
 
 def _get_methods_by_uri(sqluri):
-    uri_scheme = urisup.uri_help_split(sqluri)[0]
+    uri_scheme = parse.urlsplit(sqluri)[0]
     if uri_scheme not in __uri_create_methods:
         raise NotImplementedError('Unknown URI scheme "%s"' % str(uri_scheme))
     return __uri_create_methods[uri_scheme]
