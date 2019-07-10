@@ -25,13 +25,13 @@ class TokenRenewer(object):
         self._callback_lock = threading.Lock()
         self._renew_time_failed = itertools.chain((1, 2, 4, 8, 16), itertools.repeat(32))
 
-    def subscribe_to_token_change(self, callback):
+    def subscribe_to_token_change(self, callback, detail=False):
         with self._callback_lock:
-            self._callbacks.append(callback)
+            self._callbacks.append((callback, detail))
 
-    def subscribe_to_next_token_change(self, callback):
+    def subscribe_to_next_token_change(self, callback, detail=False):
         with self._callback_lock:
-            self._callbacks_tmp.append(callback)
+            self._callbacks_tmp.append((callback, detail))
 
     def start(self):
         if self._started:
@@ -75,15 +75,18 @@ class TokenRenewer(object):
             )
         else:
             self._renew_time = self._RENEW_TIME_COEFFICIENT * self._expiration
-            self._notify_all(token['token'])
+            self._notify_all(token)
 
-    def _notify_all(self, token_id):
+    def _notify_all(self, token):
         with self._callback_lock:
             callbacks = list(self._callbacks + self._callbacks_tmp)
             self._callbacks_tmp = []
 
-        for callback in callbacks:
-            self._notify(callback, token_id)
+        for callback, detail in callbacks:
+            if detail:
+                self._notify(callback, token)
+            else:
+                self._notify(callback, token['token'])
 
     def _notify(self, callback, token_id):
         try:
