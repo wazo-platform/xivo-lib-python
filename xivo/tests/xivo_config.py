@@ -10,10 +10,10 @@ Copyright (C) 2008-2010  Avencall
 
 __version__ = "$Revision$ $Date$"
 
+import logging
 import unittest
 
 from xivo import xivo_config
-from xivo import xys
 
 VALID_CONFIGS = [
     (
@@ -709,24 +709,30 @@ services:
             router?: !~ipv4_address 192.168.1.254
 """
 
-import logging
-
 logging.basicConfig(level=logging.CRITICAL)
 
 
 class TestXysXivoConfigValidation(unittest.TestCase):
+    pass
 
-    for p, (test_title, src_conf) in enumerate(VALID_CONFIGS):
-        exec(
-            """def test_valid_%s(self):
-                conf = xivo_config.load_configuration(VALID_CONFIGS[%d][1])
-                self.assertEqual(isinstance(conf, dict), True)"""
-            % (test_title, p)
+
+for p, (test_title, src_conf) in enumerate(VALID_CONFIGS):
+
+    def testMethod(self):
+        conf = xivo_config.load_configuration(VALID_CONFIGS[p][1])
+        self.assertEqual(isinstance(conf, dict), True)
+
+    setattr(TestXysXivoConfigValidation, 'test_valid_{}'.test_title, testMethod)
+
+for p, (test_title, src_conf) in enumerate(INVALID_CONFIGS):
+
+    def testMethod(self):
+        self.assertRaises(
+            xivo_config.InvalidConfigurationError,
+            xivo_config.load_configuration,
+            INVALID_CONFIGS[p][1],
         )
 
-    for p, (test_title, src_conf) in enumerate(INVALID_CONFIGS):
-        exec(
-            """def test_invalid_%s(self):
-                self.assertRaises(xivo_config.InvalidConfigurationError, xivo_config.load_configuration, INVALID_CONFIGS[%d][1])"""
-            % (test_title, p)
-        )
+    setattr(
+        TestXysXivoConfigValidation, 'test_invalid_{}'.format(test_title), testMethod
+    )
