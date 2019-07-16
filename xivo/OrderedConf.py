@@ -136,7 +136,7 @@ from ConfigParser import (
 )
 
 import re
-from six.renames import reduce
+from six.moves import reduce
 
 
 SECTCRE = re.compile(r'\[' r'(?P<header>[^]]+)' r'\]')  # [  # very permissive!  # ]
