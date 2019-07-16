@@ -683,7 +683,7 @@ class AGI:
         res, value = result['result']
         if res == '0':
             raise AGIDBError(
-                'Unable to put vaule in databale: family=%s, key=%s, value=%s'
+                'Unable to put value in database: family=%s, key=%s, value=%s'
                 % (family, key, value)
             )
 
