@@ -1,8 +1,8 @@
 # -*- coding: utf8 -*-
 """Ordered Configuration Parser useful when the order of options counts.
 
-Copyright 2001-2019 The Wazo Authors  (see the AUTHORS file)
-Copyright (C) 2007-2016  Avencall
+Copyright (c) 2001, 2002, 2003, 2004 Python Software Foundation;
+Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
 
 This module derives from the ConfigParser module distributed in Python 2.4.4
 
@@ -117,8 +117,8 @@ See the the classes PyDoc for full description.
 
 __version__ = "$Revision$ $Date$"
 __license__ = """
-    Copyright 2001-2019 The Wazo Authors  (see the AUTHORS file)
-    Copyright (C) 2007-2010  Avencall
+    Copyright (c) 2001, 2002, 2003, 2004 Python Software Foundation;
+    Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
                                         All Rights Reserved
 
     Under PSF LICENSE AGREEMENT FOR PYTHON

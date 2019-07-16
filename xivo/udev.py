@@ -125,7 +125,7 @@ OP_MATCH_NOMATCH = ('==', '!=')
 
 
 KEY_ATTR = {
-    # key in file    # key in dict  # allowed operations
+    # key in file: (key in dict, allowed operations)
     'ATTR': ('ATTR', OP_ALL),
     'ATTRS': ('ATTRS', OP_ALL),
     'SYSFS': ('ATTRS', OP_ALL),
@@ -137,7 +137,7 @@ KEY_OPT_ATTR = ('IMPORT', 'NAME')
 
 
 KEY = {
-    # key in file    # key in dict  # allowed operations
+    # key in file: (key in dict, allowed operations)
     'ACTION': ('ACTION', OP_MATCH_NOMATCH),
     'DEVPATH': ('DEVPATH', OP_MATCH_NOMATCH),
     'KERNEL': ('KERNEL', OP_MATCH_NOMATCH),

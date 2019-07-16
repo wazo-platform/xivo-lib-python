@@ -164,8 +164,8 @@ class AGI:
 
     @staticmethod
     def _quote(string):
-        return '"%s"' % str(string).replace('\\', '\\\\').replace('"', '\\"').replace(
-            '\n', ' '
+        return '"%s"' % (
+            str(string).replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ')
         )
 
     def _handle_sighup(self, _signum, _frame):
@@ -280,9 +280,7 @@ class AGI:
         transmission of text.
         Throw AGIError on error/hangup.
         """
-        self.execute('SEND TEXT', self._quote(text))['result'][
-            0
-        ]  # pylint: disable-msg=W0104
+        self.execute('SEND TEXT', self._quote(text))['result'][0]
 
     def receive_char(self, timeout=DEFAULT_TIMEOUT):
         """
@@ -438,9 +436,10 @@ class AGI:
         escape_digits = self._process_digit_list(escape_digits)
         if format_string:
             format_string = self._quote(format_string)
-        res = self.execute('SAY DATETIME', seconds, escape_digits, format_string, zone)[
-            'result'
-        ][0]
+        result = self.execute(
+            'SAY DATETIME', seconds, escape_digits, format_string, zone
+        )
+        res, _ = result['result']  # pylint: disable-msg=W0612
         return self.code_to_char(res)
 
     def get_data(self, filename, timeout=DEFAULT_TIMEOUT, max_digits=255):
