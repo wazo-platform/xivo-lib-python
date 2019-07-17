@@ -2,15 +2,6 @@
 # Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""HTTP JSON Server
-
-Copyright (C) 2007-2010  Avencall
-
-"""
-
-__version__ = "$Revision$ $Date$"
-
-
 # TODO: a configuration option to send the backtraces
 # or not to the client in error report
 
@@ -30,7 +21,7 @@ __version__ = "$Revision$ $Date$"
 
 from BaseHTTPServer import BaseHTTPRequestHandler
 from xivo.ThreadingHTTPServer import ThreadingHTTPServer
-from xivo import urisup
+from six.moves.urllib import parse
 import signal
 import logging
 import re
@@ -259,13 +250,16 @@ class HttpReqHandler(BaseHTTPRequestHandler):
         (path, query, fragment)
         """
         try:
-            path, query, fragment = urisup.uri_help_split(self.path)[2:]
+            parsed_uri = parse.urlsplit(self.path)
+            path = parsed_uri.path
+            query = parsed_uri.query
+            fragment = parsed_uri.fragment
 
             if not path:
                 path = "/"
 
             if path[0] != "/":
-                raise urisup.InvalidURIError('path %r does not start with "/"' % path)
+                raise Exception('path %r does not start with "/"' % path)
 
             path = re.sub("^/+", "/", path, 1)
 
@@ -274,7 +268,7 @@ class HttpReqHandler(BaseHTTPRequestHandler):
 
             return path, query, fragment
 
-        except urisup.InvalidURIError as e:
+        except Exception as e:
             log.error("invalid URI: %s", e)
             raise HttpReqError(400, str(e))
 
