@@ -33,7 +33,7 @@ To use this library please see the example :
 
 __version__ = "$Revision$ $Date$"
 __license__ = """
-    Copyright (C) 2007-2013 Avencall
+    Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
     Copyright (C) 2004 Karl Putland
     Upstream Original Author: Karl Putland <kputland@users.sourceforge.net>
 
@@ -55,7 +55,7 @@ __license__ = """
 #     - AGI._quote does escaping
 #     - small optimization in AGI.send_command()
 #     - DEBUG_PASSTHROUGH in AGI.get_result() so that scripts can be tested
-#	as if 200 is returned to all AGI commands.
+# 	as if 200 is returned to all AGI commands.
 #     - removed stderr
 #     - removed double quoting from database_get()
 #     - replaced a reference to old style ListType with a call to isinstance(..., list)
@@ -72,10 +72,20 @@ DEFAULT_RECORD = 20000  # 20sec record time
 re_code = re.compile(r'(^\d*)\s*(.*)')
 re_kv = re.compile(r'(?P<key>\w+)=(?P<value>[^\s]+)\s*(?:\((?P<data>.*)\))*')
 
-__all__ = ['AGIException', 'AGIError', 'AGIUnknownError', 'AGIAppError',
-           'AGIHangup', 'AGISIGHUPHangup', 'AGISIGPIPEHangup',
-           'AGIResultHangup', 'AGIDBError', 'AGIUsageError',
-           'AGIInvalidCommand', 'AGI']
+__all__ = [
+    'AGIException',
+    'AGIError',
+    'AGIUnknownError',
+    'AGIAppError',
+    'AGIHangup',
+    'AGISIGHUPHangup',
+    'AGISIGPIPEHangup',
+    'AGIResultHangup',
+    'AGIDBError',
+    'AGIUsageError',
+    'AGIInvalidCommand',
+    'AGI',
+]
 
 
 class AGIException(Exception):
@@ -142,7 +152,7 @@ class AGI:
         while 1:
             line = sys.stdin.readline().strip()
             if line == '':
-                #blank line signals end
+                # blank line signals end
                 break
             key_data = line.split(':', 1)
             key = key_data[0].strip()
@@ -154,7 +164,9 @@ class AGI:
 
     @staticmethod
     def _quote(string):
-        return '"%s"' % str(string).replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ')
+        return '"%s"' % (
+            str(string).replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ')
+        )
 
     def _handle_sighup(self, _signum, _frame):
         """Handle the SIGHUP signal"""
@@ -268,7 +280,7 @@ class AGI:
         transmission of text.
         Throw AGIError on error/hangup.
         """
-        self.execute('SEND TEXT', self._quote(text))['result'][0]  # pylint: disable-msg=W0104
+        self.execute('SEND TEXT', self._quote(text))['result'][0]
 
     def receive_char(self, timeout=DEFAULT_TIMEOUT):
         """
@@ -306,7 +318,9 @@ class AGI:
         res = response['result'][0]
         return self.code_to_char(res)
 
-    def control_stream_file(self, filename, escape_digits='', skipms=3000, fwd='', rew='', pause=''):
+    def control_stream_file(
+        self, filename, escape_digits='', skipms=3000, fwd='', rew='', pause=''
+    ):
         """
         Send the given file, allowing playback to be interrupted by the given
         digits, if any.  escape_digits is a string '12345' or a list of
@@ -317,7 +331,15 @@ class AGI:
         extension must not be included in the filename.
         """
         escape_digits = self._process_digit_list(escape_digits)
-        response = self.execute('CONTROL STREAM FILE', self._quote(filename), escape_digits, self._quote(skipms), self._quote(fwd), self._quote(rew), self._quote(pause))
+        response = self.execute(
+            'CONTROL STREAM FILE',
+            self._quote(filename),
+            escape_digits,
+            self._quote(skipms),
+            self._quote(fwd),
+            self._quote(rew),
+            self._quote(pause),
+        )
         res = response['result'][0]
         return self.code_to_char(res)
 
@@ -330,7 +352,9 @@ class AGI:
         """
         res = self.execute('SEND IMAGE', filename)['result'][0]
         if res != '0':
-            raise AGIAppError('Channel falure on channel %s' % self.env.get('agi_channel', 'UNKNOWN'))
+            raise AGIAppError(
+                'Channel falure on channel %s' % self.env.get('agi_channel', 'UNKNOWN')
+            )
 
     def say_digits(self, digits, escape_digits=''):
         """
@@ -412,7 +436,10 @@ class AGI:
         escape_digits = self._process_digit_list(escape_digits)
         if format_string:
             format_string = self._quote(format_string)
-        res = self.execute('SAY DATETIME', seconds, escape_digits, format_string, zone)['result'][0]
+        result = self.execute(
+            'SAY DATETIME', seconds, escape_digits, format_string, zone
+        )
+        res, _ = result['result']  # pylint: disable-msg=W0612
         return self.code_to_char(res)
 
     def get_data(self, filename, timeout=DEFAULT_TIMEOUT, max_digits=255):
@@ -481,7 +508,15 @@ class AGI:
         self.set_extension(extension)
         self.set_priority(priority)
 
-    def record_file(self, filename, file_format='gsm', escape_digits='#', timeout=DEFAULT_RECORD, offset=0, beep='beep'):
+    def record_file(
+        self,
+        filename,
+        file_format='gsm',
+        escape_digits='#',
+        timeout=DEFAULT_RECORD,
+        offset=0,
+        beep='beep',
+    ):
         """
         agi.record_file(filename, file_format, escape_digits, timeout=DEFAULT_TIMEOUT, offset=0, beep='beep') --> None
         Record to a file until a given dtmf digit in the sequence is received.
@@ -491,7 +526,15 @@ class AGI:
         offset without exceeding the end of the file.
         """
         escape_digits = self._process_digit_list(escape_digits)
-        res = self.execute('RECORD FILE', self._quote(filename), file_format, escape_digits, timeout, offset, beep)['result'][0]
+        res = self.execute(
+            'RECORD FILE',
+            self._quote(filename),
+            file_format,
+            escape_digits,
+            timeout,
+            offset,
+            beep,
+        )['result'][0]
         return self.code_to_char(res)
 
     def set_autohangup(self, secs):
@@ -586,7 +629,9 @@ class AGI:
         """
         try:
             if channel:
-                result = self.execute('GET FULL VARIABLE', self._quote(name), self._quote(channel))
+                result = self.execute(
+                    'GET FULL VARIABLE', self._quote(name), self._quote(channel)
+                )
             else:
                 result = self.execute('GET FULL VARIABLE', self._quote(name))
 
@@ -615,11 +660,16 @@ class AGI:
         result = self.execute('DATABASE GET', self._quote(family), self._quote(key))
         res, value = result['result']
         if res == '0':
-            raise AGIDBError('Key not found in database: family=%s, key=%s' % (family, key))
+            raise AGIDBError(
+                'Key not found in database: family=%s, key=%s' % (family, key)
+            )
         elif res == '1':
             return value
         else:
-            raise AGIError('Unknown exception for : family=%s, key=%s, result=%s' % (family, key, pprint.pformat(result)))
+            raise AGIError(
+                'Unknown exception for : family=%s, key=%s, result=%s'
+                % (family, key, pprint.pformat(result))
+            )
 
     def database_put(self, family, key, value):
         """
@@ -627,10 +677,15 @@ class AGI:
         Add or update an entry in the Asterisk database for a given family,
         key, and value.
         """
-        result = self.execute('DATABASE PUT', self._quote(family), self._quote(key), self._quote(value))
+        result = self.execute(
+            'DATABASE PUT', self._quote(family), self._quote(key), self._quote(value)
+        )
         res, value = result['result']
         if res == '0':
-            raise AGIDBError('Unable to put vaule in databale: family=%s, key=%s, value=%s' % (family, key, value))
+            raise AGIDBError(
+                'Unable to put value in database: family=%s, key=%s, value=%s'
+                % (family, key, value)
+            )
 
     def database_del(self, family, key):
         """
@@ -640,7 +695,9 @@ class AGI:
         result = self.execute('DATABASE DEL', self._quote(family), self._quote(key))
         res, _ = result['result']  # pylint: disable-msg=W0612
         if res == '0':
-            raise AGIDBError('Unable to delete from database: family=%s, key=%s' % (family, key))
+            raise AGIDBError(
+                'Unable to delete from database: family=%s, key=%s' % (family, key)
+            )
 
     def database_deltree(self, family, key=''):
         """
@@ -651,7 +708,9 @@ class AGI:
         result = self.execute('DATABASE DELTREE', self._quote(family), self._quote(key))
         res, _ = result['result']  # pylint: disable-msg=W0612
         if res == '0':
-            raise AGIDBError('Unable to delete tree from database: family=%s, key=%s' % (family, key))
+            raise AGIDBError(
+                'Unable to delete tree from database: family=%s, key=%s' % (family, key)
+            )
 
     def noop(self):
         """

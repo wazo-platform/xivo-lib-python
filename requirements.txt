@@ -4,7 +4,7 @@ git+https://github.com/wazo-pbx/xivo-lib-rest-client.git
 cheroot==6.5.2
 flask==1.0.2
 netifaces==0.10.4
-psycopg2==2.6.2
+psycopg2>=2.6.2
 pyyaml==3.12
 python-consul==0.7.0
 marshmallow==2.16.3

@@ -69,14 +69,17 @@ class LazyHeaderFormatter(object):
 
 
 def _log_request(url, response):
-    current_app.logger.info('response: (%s) %s %s %s', request.remote_addr, request.method, url, response.status_code)
+    current_app.logger.info(
+        'response: (%s) %s %s %s',
+        request.remote_addr,
+        request.method,
+        url,
+        response.status_code,
+    )
 
 
 def log_before_request():
-    not_printable_content_types = [
-        'application/octet-stream',
-        'application/pdf',
-    ]
+    not_printable_content_types = ['application/octet-stream', 'application/pdf']
 
     params = {
         'method': request.method,
@@ -84,7 +87,10 @@ def log_before_request():
         'headers': LazyHeaderFormatter(request.headers),
     }
 
-    if request.data and request.headers.get('Content-Type') not in not_printable_content_types:
+    if (
+        request.data
+        and request.headers.get('Content-Type') not in not_printable_content_types
+    ):
         try:
             params['data'] = request.data.decode('utf-8')
         except UnicodeDecodeError:

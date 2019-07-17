@@ -1,4 +1,4 @@
-# Copyright 2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from sqlalchemy import event
@@ -16,7 +16,7 @@ def handle_db_restart():
         cursor = dbapi_connection.cursor()
         try:
             cursor.execute("SELECT 1")
-        except:
+        except BaseException:
             # raise DisconnectionError - pool will try
             # connecting again up to three times before raising.
             raise exc.DisconnectionError()

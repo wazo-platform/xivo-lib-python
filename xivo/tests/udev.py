@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2008-2014 Avencall
+# Copyright 2008-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Tests for xivo.udev
@@ -13,13 +13,12 @@ __version__ = "$Revision$ $Date$"
 import unittest
 import logging
 
-logging.basicConfig(level=logging.CRITICAL)
-
 from xivo import udev
+
+logging.basicConfig(level=logging.CRITICAL)
 
 
 class TestRulesParser(unittest.TestCase):
-
     def test_iter_multilines(self):
         lines = [
             "# a comment\n",
@@ -46,7 +45,7 @@ class TestRulesParser(unittest.TestCase):
             "This multiline is \\\n",
             "# not a comment\n",
             "\n",
-            "can we parse this at end of file? \\\n"
+            "can we parse this at end of file? \\\n",
         ]
         multilines = [
             "# a comment",
@@ -67,7 +66,7 @@ class TestRulesParser(unittest.TestCase):
             "",
             "This multiline is # not a comment",
             "",
-            "can we parse this at end of file? "
+            "can we parse this at end of file? ",
         ]
 
         calc_mlines = list(udev.iter_multilines(lines))
@@ -88,8 +87,8 @@ class TestRulesParser(unittest.TestCase):
         parsed = {
             'SUBSYSTEM': ['==', "net"],
             'DRIVERS': ['==', "?*"],
-            'ATTRS': { 'address': ['==', "00:04:55:e3:91:77"] },
-            'NAME': ['=', "eth0"]
+            'ATTRS': {'address': ['==', "00:04:55:e3:91:77"]},
+            'NAME': ['=', "eth0"],
         }
         result = udev.parse_rule(mline)
         self.assertEqual(parsed, result[0])
@@ -111,9 +110,7 @@ class TestRulesParser(unittest.TestCase):
             [", ", 'ATTRS{address}', "", '==', "", '00:04:55:e3:91:77'],
             [", ", 'NAME', "", '=', "", 'eth0'],
         ]
-        repl = {
-            'NAME': ['=', "eth1"]
-        }
+        repl = {'NAME': ['=', "eth1"]}
         result_line = 'SUBSYSTEM=="net", DRIVERS=="?*", ATTRS{address}=="00:04:55:e3:91:77", NAME="eth1"'
         self.assertEqual(result_line, udev.replace_simple_op_values(recons, repl))
 

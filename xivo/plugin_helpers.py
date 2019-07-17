@@ -1,4 +1,4 @@
-# Copyright 2017 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -19,7 +19,9 @@ def on_load_failure(_, entrypoint, exception):
 
 
 def on_missing_entrypoints(missing_names):
-    logger.error('Unable to load plugins because the entrypoint is missing: %s', missing_names)
+    logger.error(
+        'Unable to load plugins because the entrypoint is missing: %s', missing_names
+    )
 
 
 def load_plugin(ext, *load_args, **load_kwargs):
@@ -40,7 +42,7 @@ def load(namespace, names, dependencies):
         name_order=True,
         on_load_failure_callback=on_load_failure,
         on_missing_entrypoints_callback=on_missing_entrypoints,
-        invoke_on_load=True
+        invoke_on_load=True,
     )
 
     manager.map(load_plugin, dependencies)

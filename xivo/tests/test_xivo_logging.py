@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2014-2016 Avencall
+# Copyright 2014-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -27,7 +27,6 @@ from xivo.xivo_logging import silence_loggers
 
 @patch('xivo.xivo_logging.logging')
 class TestLogging(TestCase):
-
     def test_setup_logging_with_log_file_then_setup_logging_in_log_file(self, logging):
         log_file = 'my_log_file.log'
         root_logger = logging.getLogger.return_value
@@ -75,7 +74,9 @@ class TestLogging(TestCase):
 
         root_logger.setLevel.assert_called_once_with(logging.ERROR)
 
-    def test_setup_logging_with_loglevel_and_debug_then_log_level_is_debug(self, logging):
+    def test_setup_logging_with_loglevel_and_debug_then_log_level_is_debug(
+        self, logging
+    ):
         log_file = Mock()
         root_logger = logging.getLogger.return_value
 
@@ -114,7 +115,9 @@ class TestLoggingOutput(TestCase):
     def setUp(self):
         _, self.file_name = tempfile.mkstemp()
 
-    def test_setup_logging_when_log_in_info_level_then_log_in_stdout(self, stdout, stderr):
+    def test_setup_logging_when_log_in_info_level_then_log_in_stdout(
+        self, stdout, stderr
+    ):
         message = 'test info'
 
         setup_logging(self.file_name)
@@ -123,7 +126,9 @@ class TestLoggingOutput(TestCase):
         assert_that(stdout.getvalue(), contains_string(message))
         assert_that(stderr.getvalue(), has_length(0))
 
-    def test_setup_logging_when_log_in_warning_level_then_log_in_stdout(self, stdout, stderr):
+    def test_setup_logging_when_log_in_warning_level_then_log_in_stdout(
+        self, stdout, stderr
+    ):
         message = ''
 
         setup_logging(self.file_name)
@@ -132,7 +137,9 @@ class TestLoggingOutput(TestCase):
         assert_that(stdout.getvalue(), contains_string(message))
         assert_that(stderr.getvalue(), equal_to(''))
 
-    def test_setup_logging_when_log_in_error_level_then_log_in_stderr(self, stdout, stderr):
+    def test_setup_logging_when_log_in_error_level_then_log_in_stderr(
+        self, stdout, stderr
+    ):
         message = 'test error'
         _, file_name = tempfile.mkstemp()
 
@@ -144,7 +151,6 @@ class TestLoggingOutput(TestCase):
 
 
 class TestLogLevelByName(TestCase):
-
     def test_get_log_level_by_name_when_unknown_then_raise_valueerror(self):
         self.assertRaises(ValueError, get_log_level_by_name, 'not a log level name')
 
@@ -164,7 +170,6 @@ class TestLogLevelByName(TestCase):
 
 
 class TestSilenceLoggers(TestCase):
-
     @patch('xivo.xivo_logging.logging')
     def test_that_loggers_are_leveled_down(self, mocked_logging):
         loggers = {}

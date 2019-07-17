@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2007-2017 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -35,7 +35,10 @@ class Pubsub(object):
         try:
             callback(message)
         except Exception as e:
-            logger.debug('Publishing failed. Running exception handler "%s"', self._exception_handler)
+            logger.debug(
+                'Publishing failed. Running exception handler "%s"',
+                self._exception_handler,
+            )
             self._exception_handler(callback, message, e)
 
     def unsubscribe(self, topic, callback):

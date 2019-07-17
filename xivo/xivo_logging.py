@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2014-2016 Avencall
+# Copyright 2014-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import io
 import logging
 import sys
 
@@ -18,6 +17,7 @@ class _StreamToLogger(object):
     Copyright 2011 by Ferry Boender
     SPDX-License-Identifier: GPL-2.0+
     """
+
     def __init__(self, logger, log_level=logging.INFO):
         self.logger = logger
         self.log_level = log_level
@@ -44,7 +44,13 @@ class _LogLevelFilter(logging.Filter):
         return self._level_filter(record.levelno)
 
 
-def setup_logging(log_file, foreground=False, debug=False, log_level=DEFAULT_LOG_LEVEL, log_format=DEFAULT_LOG_FORMAT):
+def setup_logging(
+    log_file,
+    foreground=False,
+    debug=False,
+    log_level=DEFAULT_LOG_LEVEL,
+    log_format=DEFAULT_LOG_FORMAT,
+):
     '''
     logger.*  ------------------------ v
     sys.stdout > streamtologger(INFO)  > logger > streamhandler(level<ERROR) > sys.stdout
@@ -86,7 +92,9 @@ def silence_loggers(logger_names, level):
 
 
 def excepthook(exception_class, exception_instance, traceback):
-    logging.getLogger().critical(exception_instance, exc_info=(exception_class, exception_instance, traceback))
+    logging.getLogger().critical(
+        exception_instance, exc_info=(exception_class, exception_instance, traceback)
+    )
 
 
 def get_log_level_by_name(log_level_name):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2008-2014 Avencall
+# Copyright 2008-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Read / Write variables defined in bash format
@@ -16,7 +16,7 @@ files that are under /etc/default/
 __version__ = "$Revision$ $Date$"
 
 import re
-import string # pylint: disable-msg=W0612
+import string  # pylint: disable-msg=W0612
 
 
 FORBIDDEN_VARNAMES = ('IFS', '_')
@@ -38,11 +38,15 @@ ANSI_C_ESCAPED_CODE = {
     # see the SINGLE_QUOTED_ESC_{OCTA,HEXA,CTRL} states
 }
 
+
 class ShParseAssignState(object):
     """States for function load()"""
+
     __slots__ = ('name',)
+
     def __init__(self, name):
         self.name = name
+
 
 UNQUOTED = ShParseAssignState('UNQUOTED')
 ESCAPED = ShParseAssignState('ESCAPED')
@@ -56,13 +60,14 @@ SINGLE_QUOTED_ESC_HEXA = ShParseAssignState('SINGLE_QUOTED_ESC_HEXA')
 SINGLE_QUOTED_ESC_CTRL = ShParseAssignState('SINGLE_QUOTED_ESC_CTRL')
 
 DOLLAR_UNQUOTED_UNSUP = string.ascii_letters + string.digits + '-$_@*?!{([#"'
-DOLLAR_QUOTED_UNSUP   = string.ascii_letters + string.digits + '-$_@*?!{([#'
+DOLLAR_QUOTED_UNSUP = string.ascii_letters + string.digits + '-$_@*?!{([#'
 
 
 class Error(Exception):
     """
     Base class for exceptions of this module.
     """
+
     pass
 
 
@@ -70,6 +75,7 @@ class NotAssignmentError(Error):
     """
     Exception raised when a line is not an assignment in the bash syntax.
     """
+
     pass
 
 
@@ -78,6 +84,7 @@ class ComplexStatementError(Error):
     Exception raised when the statement being processed is not a simple
     assignment.
     """
+
     pass
 
 
@@ -87,6 +94,7 @@ class UnsupportedAssignmentError(Error):
     well be valid) but is using shell features that are not available in this
     module.
     """
+
     pass
 
 
@@ -95,7 +103,7 @@ def load(lineseq):
     Parse a sequence of lines, each of which contains only a single variable
     assignment statement.  Empty lines and trailing comments are also allowed.
     Return (reslst, resdct)
-    
+
     @reslst is a list of (varname, value, rotl), one per line of @lineseq
     In each (varname, value, rotl) tuple:
         @varname and @value are either two strings or both None,
@@ -105,11 +113,11 @@ def load(lineseq):
         @rotl is a string which contains the "rest of the line" (right
             stripped, and also left stripped iff @varname of the same tuple is
             None).
-    
+
     @resdct == dict([(varname, value)
                      for (varname, value, rotl) in reslst
                      if varname])
-    
+
     NOTE: This implementation is very limited.
     * It does not support any kind of substitution / expression; an exception
       is raised if one is detected.
@@ -121,46 +129,48 @@ def load(lineseq):
     * If on a single line quotes are not correctly balanced, an exception is
       raised.
     * Arrays are not supported.
-    
+
     HOWEVER:
     * The form $'string' with backslash escape sequences _is_ supported.
-    
+
     KNOWN INCOMPATIBILITIES:
     * In bash 3.1.17(1)-release (Debian Etch):
     $ echo -ne $'\c'abc | hd
     00000000  07 62 63                                          |.bc|
-    
+
     'a' disappear for no real reason - and the absence of matching single quote
     is not detected.  Probably a tiny bug in bash - or the spec. is evil.
-    
+
     This implementation will raise an exception if you try to parse something
     like $'\c'abc.  With something like $'\c''abc there will be a mismatch
     between bash and this implementation: bash thinks there are two single
     quoted parts and the second if unfinished, while this implementation thinks
     $'\c'' is the only single quoted part and abc is unquoted.
-    """
+    """  # noqa: W605
     reslst = []
     resdct = {}
-    
+
     for linenum, line in enumerate(lineseq):
-        
+
         unit = line.strip()
-        
+
         if (not unit) or (unit[0] == '#'):
             reslst.append((None, None, unit))
             continue
-        
+
         match_assign = VariableAssignmentMatch(unit)
         if not match_assign:
             raise NotAssignmentError("not an assignment: l%d: %r" % (linenum + 1, unit))
         varname, right_part = match_assign.groups()
-        
+
         if varname in FORBIDDEN_VARNAMES:
-            raise UnsupportedAssignmentError("unsupported variable name in assignment: l%d: %r" % (linenum + 1, unit))
-        
+            raise UnsupportedAssignmentError(
+                "unsupported variable name in assignment: l%d: %r" % (linenum + 1, unit)
+            )
+
         splitted_value = []
         pos_rotl = len(right_part)
-        
+
         state = UNQUOTED
         can_tilde_expand = True
         skip_next = False
@@ -169,15 +179,15 @@ def load(lineseq):
         esc_ctrl_count = 0
         accu = 0
         semicolon_seen = False
-        
+
         for pos, (char, next) in enumerate(map(None, right_part, right_part[1:])):
-            
+
             if skip_next:
                 skip_next = False
                 continue
-            
+
             if state is UNQUOTED:
-                
+
                 if char in ' \t;':
                     if char == ";":
                         semicolon_seen = True
@@ -185,7 +195,10 @@ def load(lineseq):
                     state = FINISHED
                     continue
                 elif char in "|&()<>":
-                    raise ComplexStatementError("complex statements (beginning with an assignment) are not supported - faulty line: l%d: %r" % (linenum + 1, unit))
+                    raise ComplexStatementError(
+                        "complex statements (beginning with an assignment) are not supported - faulty line: l%d: %r"
+                        % (linenum + 1, unit)
+                    )
                 elif char == "'":
                     state = SINGLE_QUOTED
                     continue
@@ -194,7 +207,10 @@ def load(lineseq):
                     continue
                 elif char == "\\":
                     if next is None:
-                        raise UnsupportedAssignmentError("continued lines are not supported - faulty line: l%d: %r" % (linenum + 1, unit))
+                        raise UnsupportedAssignmentError(
+                            "continued lines are not supported - faulty line: l%d: %r"
+                            % (linenum + 1, unit)
+                        )
                     else:
                         state = ESCAPED
                         continue
@@ -204,62 +220,83 @@ def load(lineseq):
                         skip_next = True
                         continue
                     elif next in DOLLAR_UNQUOTED_UNSUP:
-                        raise UnsupportedAssignmentError("parameter / arithmetic expansion and command substitution are not supported - faulty line: l%d: %r" % (linenum + 1, unit))
+                        raise UnsupportedAssignmentError(
+                            "parameter / arithmetic expansion and command substitution are not supported - faulty line: l%d: %r"
+                            % (linenum + 1, unit)
+                        )
                     else:
-                        pass # handled as a normal char
+                        pass  # handled as a normal char
                 elif can_tilde_expand and char == "~":
-                    raise UnsupportedAssignmentError("tilde expansion is not supported - faulty line: l%d: %r" % (linenum + 1, unit))
+                    raise UnsupportedAssignmentError(
+                        "tilde expansion is not supported - faulty line: l%d: %r"
+                        % (linenum + 1, unit)
+                    )
                 elif char == "`":
-                    raise UnsupportedAssignmentError("command substitution is not supported - faulty line: l%d: %r" % (linenum + 1, unit))
+                    raise UnsupportedAssignmentError(
+                        "command substitution is not supported - faulty line: l%d: %r"
+                        % (linenum + 1, unit)
+                    )
                 elif char in "*?[":
-                    raise UnsupportedAssignmentError("pathname expansion is not supported - faulty line: l%d: %r" % (linenum + 1, unit))
-                
-                can_tilde_expand = (char == ':')
+                    raise UnsupportedAssignmentError(
+                        "pathname expansion is not supported - faulty line: l%d: %r"
+                        % (linenum + 1, unit)
+                    )
+
+                can_tilde_expand = char == ':'
                 splitted_value.append(char)
-            
+
             elif state is ESCAPED:
-                
+
                 splitted_value.append(char)
-                
+
                 state = UNQUOTED
                 can_tilde_expand = False
-            
+
             elif state is DOUBLE_QUOTED:
-                
+
                 if char == '"':
                     state = UNQUOTED
                     can_tilde_expand = False
                     continue
                 elif char == "\\":
                     if next is None:
-                        raise UnsupportedAssignmentError("continued lines are not supported - faulty line: l%d: %r" % (linenum + 1, unit))
+                        raise UnsupportedAssignmentError(
+                            "continued lines are not supported - faulty line: l%d: %r"
+                            % (linenum + 1, unit)
+                        )
                     elif next in '\\"$`':
                         splitted_value.append(next)
                         skip_next = True
                         continue
                     else:
-                        pass # handled as a normal char
+                        pass  # handled as a normal char
                 elif char == "$":
                     if next in DOLLAR_QUOTED_UNSUP:
-                        raise UnsupportedAssignmentError("parameter / arithmetic expansion and command substitution are not supported - faulty line: l%d: %r" % (linenum + 1, unit))
+                        raise UnsupportedAssignmentError(
+                            "parameter / arithmetic expansion and command substitution are not supported - faulty line: l%d: %r"
+                            % (linenum + 1, unit)
+                        )
                     else:
-                        pass # handled as a normal char
+                        pass  # handled as a normal char
                 elif char == '`':
-                    raise UnsupportedAssignmentError("command substitution is not supported - faulty line: l%d: %r" % (linenum + 1, unit))
-                
+                    raise UnsupportedAssignmentError(
+                        "command substitution is not supported - faulty line: l%d: %r"
+                        % (linenum + 1, unit)
+                    )
+
                 splitted_value.append(char)
-            
+
             elif state is SINGLE_QUOTED:
-                
+
                 if char == "'":
                     state = UNQUOTED
                     can_tilde_expand = False
                     continue
-                
+
                 splitted_value.append(char)
-            
+
             elif state is SINGLE_QUOTED_WITH_ESCAPING:
-                
+
                 if char == "'":
                     state = UNQUOTED
                     can_tilde_expand = False
@@ -284,27 +321,27 @@ def load(lineseq):
                         state = SINGLE_QUOTED_ESC_CTRL
                         continue
                     else:
-                        pass # handled as a normal char
-                
+                        pass  # handled as a normal char
+
                 splitted_value.append(char)
-            
+
             elif state is SINGLE_QUOTED_ESC_OCTAL:
-                
+
                 accu = accu * 8 + int(char, 8)
                 esc_octal_count += 1
-                
+
                 if esc_octal_count == 3 or (next not in '01234567'):
                     splitted_value.append(chr(accu & 0xFF))
                     accu = 0
                     state = SINGLE_QUOTED_WITH_ESCAPING
-            
+
             elif state is SINGLE_QUOTED_ESC_HEXA:
-                
+
                 if esc_hexa_count > 0:
                     accu = accu * 16 + int(char, 16)
-                
+
                 esc_hexa_count += 1
-                
+
                 if esc_octal_count == 3 or (next not in string.hexdigits):
                     if esc_hexa_count == 1:
                         splitted_value.append('\\')
@@ -313,20 +350,23 @@ def load(lineseq):
                         splitted_value.append(chr(accu & 0xFF))
                     accu = 0
                     state = SINGLE_QUOTED_WITH_ESCAPING
-            
+
             elif state is SINGLE_QUOTED_ESC_CTRL:
-                
+
                 if esc_ctrl_count == 0:
                     if next is None:
-                        raise UnsupportedAssignmentError("continued lines are not supported - faulty line: l%d: %r" % (linenum + 1, unit))
+                        raise UnsupportedAssignmentError(
+                            "continued lines are not supported - faulty line: l%d: %r"
+                            % (linenum + 1, unit)
+                        )
                 else:
                     splitted_value.append(chr(ord(char) & 31))
                     state = SINGLE_QUOTED_WITH_ESCAPING
-                
+
                 esc_ctrl_count += 1
-            
+
             elif state is FINISHED:
-                
+
                 if char in " \t":
                     if next is None:
                         break
@@ -336,25 +376,34 @@ def load(lineseq):
                     break
                 elif char == ';':
                     if semicolon_seen:
-                        raise ComplexStatementError("multiple semicolons detected - faulty line: l%d: %r" % (linenum + 1, unit))
+                        raise ComplexStatementError(
+                            "multiple semicolons detected - faulty line: l%d: %r"
+                            % (linenum + 1, unit)
+                        )
                     else:
                         semicolon_seen = True
                         continue
                 else:
-                    raise ComplexStatementError("complex and multiple statements (beginning with an assignment) are not supported - faulty line: l%d: %r" % (linenum + 1, unit))
-        
+                    raise ComplexStatementError(
+                        "complex and multiple statements (beginning with an assignment) are not supported - faulty line: l%d: %r"
+                        % (linenum + 1, unit)
+                    )
+
         else:
             if state is UNQUOTED:
                 state = FINISHED
             if state is not FINISHED:
-                raise UnsupportedAssignmentError("state is %s but should be FINISHED - probably trying to parse a continued line - this is not supported - faulty line: l%d: %r" % (state.name, linenum + 1, unit))
-        
+                raise UnsupportedAssignmentError(
+                    "state is %s but should be FINISHED - probably trying to parse a continued line - this is not supported - faulty line: l%d: %r"
+                    % (state.name, linenum + 1, unit)
+                )
+
         value = ''.join(splitted_value)
         rotl = right_part[pos_rotl:]
-        
+
         reslst.append((varname, value, rotl))
         resdct[varname] = value
-    
+
     return reslst, resdct
 
 
@@ -365,7 +414,7 @@ def strip_overridden_assignments(reslst):
     """
     lines_to_remove = []
     previous_assign = {}
-    for p, (varname, value, rotl) in enumerate(reslst): # pylint: disable-msg=W0612
+    for p, (varname, value, rotl) in enumerate(reslst):  # pylint: disable-msg=W0612
         if varname is not None:
             line = previous_assign.get(varname)
             if line is not None:
@@ -383,7 +432,7 @@ def slow_set_assign(reslst, varname, new_value):
     was affected to @varname to @new_value.
     If no such @varname has been found, append a new one.
     """
-    for p, (var_scan, val_scan, rotl) in enumerate(reslst): # pylint: disable-msg=W0612
+    for p, (var_scan, val_scan, rotl) in enumerate(reslst):  # pylint: disable-msg=W0612
         if var_scan == varname:
             reslst[p] = (varname, new_value, rotl)
             return
@@ -392,17 +441,17 @@ def slow_set_assign(reslst, varname, new_value):
 
 
 # Identity character translaction table, see str.translate
-ID_CHR = ''.join(map(chr, xrange(0, 256)))
+ID_CHR = ''.join(map(chr, range(0, 256)))
 
 # String that only contains normal non control ascii characters,
 # even excluding \n \t \v \r etc...
-NORMAL_ASCII = ''.join(map(chr, xrange(32, 127)))
+NORMAL_ASCII = ''.join(map(chr, range(32, 127)))
 
 
 def single_escape_char(o):
     """
     Given @o, return (c, coded).
-    
+
     @o is the ordinal of the considered character.
     @c is the corresponding character: c == chr(o)
     @coded is the representation of @c in the SINGLE_QUOTED_WITH_ESCAPING
@@ -423,16 +472,16 @@ def single_escape_char(o):
 # SINGLE_QUOTED_WITH_ESCAPING context
 # key: character to be coded
 # value: coded representation of the character
-SINGLE_ESCAPE_TABLE = dict((single_escape_char(x) for x in xrange(0, 256)))
+SINGLE_ESCAPE_TABLE = dict((single_escape_char(x) for x in range(0, 256)))
 
 
 # Transformation table used to code characters for the
 # DOUBLE_QUOTED context
 # key: character to be coded
 # value: coded representation of the character
-DOUBLE_ESCAPE_TABLE = dict(((chr(x), chr(x)) for x in xrange(32, 127)))
+DOUBLE_ESCAPE_TABLE = dict(((chr(x), chr(x)) for x in range(32, 127)))
 DOUBLE_ESCAPE_TABLE['"'] = '\\"'
-DOUBLE_ESCAPE_TABLE["\\"] = "\\\\" 
+DOUBLE_ESCAPE_TABLE["\\"] = "\\\\"
 DOUBLE_ESCAPE_TABLE['$'] = "\\$"
 DOUBLE_ESCAPE_TABLE['`'] = "\\`"
 

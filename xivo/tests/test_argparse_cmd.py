@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013-2014 Avencall
+# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
 import mock
 import sys
 import unittest
-from xivo.argparse_cmd import AbstractSubcommand, Subcommands, \
-    CommandExecutor, AbstractCommand, execute_command
+from xivo.argparse_cmd import (
+    AbstractSubcommand,
+    Subcommands,
+    CommandExecutor,
+    AbstractCommand,
+    execute_command,
+)
 
 
 def _new_parser():
@@ -68,7 +73,9 @@ class TestCommandExecutor(unittest.TestCase):
     def test_execute_calls_command_configure_subcommands(self):
         self.command_executor.execute([])
 
-        self.mock_command.configure_subcommands.assert_called_once_with(self.mock_subcommand)
+        self.mock_command.configure_subcommands.assert_called_once_with(
+            self.mock_subcommand
+        )
 
     def test_execute_calls_subcommand_configure_parser(self):
         self.command_executor.execute([])
@@ -110,7 +117,9 @@ class TestAbstractCommand(unittest.TestCase):
     def test_configure_subcommands_raises_exception(self):
         mock_subcommands = mock.Mock(spec=Subcommands)
 
-        self.assertRaises(Exception, self.command.configure_subcommands, mock_subcommands)
+        self.assertRaises(
+            Exception, self.command.configure_subcommands, mock_subcommands
+        )
 
     def test_pre_execute_does_nothing(self):
         mock_parsed_args = mock.Mock()
@@ -136,8 +145,12 @@ class TestSubcommands(unittest.TestCase):
         self.subcommands.configure_parser(_new_parser())
 
         self.assertTrue(foo_subcommand.configure_parser.called)
-        self.assertTrue(isinstance(_first_call_args(foo_subcommand.configure_parser),
-                                   argparse.ArgumentParser))
+        self.assertTrue(
+            isinstance(
+                _first_call_args(foo_subcommand.configure_parser),
+                argparse.ArgumentParser,
+            )
+        )
 
     def _new_mock_subcommand(self, name):
         mock_subcommand = mock.Mock(spec=AbstractSubcommand)

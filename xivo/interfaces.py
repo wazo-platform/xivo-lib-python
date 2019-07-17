@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2008-2016 Avencall
+# Copyright 2008-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """/etc/network/interfaces parser
@@ -7,6 +7,7 @@
 Copyright (C) 2008-2010  Avencall
 
 """
+from __future__ import print_function
 
 __version__ = "$Revision$ $Date$"
 
@@ -14,8 +15,10 @@ import re
 import sys
 from itertools import islice
 
+
 def warn(msg):
-    print >> sys.stderr, "WARNING:", msg
+    print("WARNING:", msg, file=sys.stderr)
+
 
 class EniBlock:
     """
@@ -28,6 +31,7 @@ class EniBlock:
       that is it contains neither blank lines nor comments, and raw
       continuated lines (terminated by a backslash) are joined
     """
+
     def __init__(self):
         self.raw_lines = []
         self.cooked_lines = []
@@ -41,13 +45,16 @@ class EniBlock:
     def append_cooked_line(self, line):
         self.cooked_lines.append(line)
 
+
 class EniBlockSpace(EniBlock):
     """
     A block of insignificant lines, i.e. blank lines or comments.
     Obviously, let B be an instance of EniBlockSpace:
     * B.cooked_line is empty
     """
+
     pass
+
 
 class EniBlockWithIfName(EniBlock):
     """
@@ -56,26 +63,33 @@ class EniBlockWithIfName(EniBlock):
     let B be an instance of EniBlockWithIfName:
     * B.ifname contains the name of this related network interface
     """
+
     def __init__(self, ifname):
         EniBlock.__init__(self)
         self.ifname = ifname
+
 
 class EniBlockMapping(EniBlockWithIfName):
     """
     A mapping stanza of interfaces(5)
     """
+
     pass
+
 
 class EniBlockIface(EniBlockWithIfName):
     """
     An logical interface stanza of interfaces(5)
     """
+
     pass
+
 
 class EniBlockFamily(EniBlockIface):
     """
     A family block
     """
+
     def __init__(self, ifname, method):
         EniBlockIface.__init__(self, ifname)
         if method in self.METHODS:
@@ -83,39 +97,36 @@ class EniBlockFamily(EniBlockIface):
         else:
             raise ValueError("Method: %r should be in %r" % (method, self.METHODS))
 
+
 class EniBlockFamilyInet(EniBlockFamily):
     """
     An inet address family block
     """
-    family  = 'inet'
-    METHODS = ('loopback',
-               'static',
-               'manual',
-               'dhcp',
-               'bootp',
-               'ppp',
-               'wvdial')
+
+    family = 'inet'
+    METHODS = ('loopback', 'static', 'manual', 'dhcp', 'bootp', 'ppp', 'wvdial')
     pass
+
 
 class EniBlockFamilyIPX(EniBlockFamily):
     """
     An IPX address family block
     """
-    family  = 'ipx'
-    METHODS = ('static',
-               'dynamic')
+
+    family = 'ipx'
+    METHODS = ('static', 'dynamic')
     pass
+
 
 class EniBlockFamilyInet6(EniBlockFamily):
     """
     An Inet6 address family block
     """
-    family  = 'inet6'
-    METHODS = ('loopback',
-               'static',
-               'manual',
-               'v4tunnel')
+
+    family = 'inet6'
+    METHODS = ('loopback', 'static', 'manual', 'v4tunnel')
     pass
+
 
 class EniBlockAllow(EniBlock):
     """
@@ -131,10 +142,7 @@ class EniBlockAllow(EniBlock):
     * B.allow_list contains the list of allowed interfaces
     """
 
-    ALLOWUP_CLASSES = ('allow-hotplug',
-                       'allow-ifplugd',
-                       'allow-auto',
-                       'auto')
+    ALLOWUP_CLASSES = ('allow-hotplug', 'allow-ifplugd', 'allow-auto', 'auto')
 
     def __init__(self, allow_kw, allow_list):
         EniBlock.__init__(self)
@@ -143,18 +151,23 @@ class EniBlockAllow(EniBlock):
         elif allow_kw == "auto":
             self.allowup = "auto"
         else:
-            raise ValueError("allow_kw should start with \"allow-\" or be egal to \"auto\"")
+            raise ValueError(
+                "allow_kw should start with \"allow-\" or be egal to \"auto\""
+            )
         self.allow_kw = allow_kw
         self.allow_list = allow_list
+
 
 class EniBlockUnknown(EniBlock):
     """
     An unknown (invalid) stanza of interfaces(5)
     """
+
     pass
 
+
 def raw_2_contd_coockedPart(rawl):
-    has_newline = (rawl[-1:] == '\n')
+    has_newline = rawl[-1:] == '\n'
     if has_newline:
         contd = rawl[-2:-1] == '\\'
     else:
@@ -162,27 +175,34 @@ def raw_2_contd_coockedPart(rawl):
     if (not has_newline) and (not contd):
         return contd, rawl
     else:
-        return contd, rawl[:-has_newline-contd]
+        return contd, rawl[: -has_newline - contd]
+
 
 MatchLeadingSpaces = re.compile(r'(\s)*').match
+
+
 def leading_spaces(s):
     return MatchLeadingSpaces(s).group()
 
+
 SearchTrailingSpaces = re.compile(r'(\s)*$').search
+
+
 def trailing_spaces(s):
     return SearchTrailingSpaces(s).group()
+
 
 class EniCookLineRecipe(object):
 
     # NOTE: only on 'allow-' / 'auto' stanzas
 
     __slots__ = (
-            'first_raw_line',
-            'nb_raw_lines',
-            'pre_spaces',
-            'post_spaces',
-            'list_cooked_splitter',
-            'cooked_line',
+        'first_raw_line',
+        'nb_raw_lines',
+        'pre_spaces',
+        'post_spaces',
+        'list_cooked_splitter',
+        'cooked_line',
     )
 
     def __init__(self, raw_lines, warnfunc=warn):
@@ -203,7 +223,10 @@ class EniCookLineRecipe(object):
             if not contd:
                 break
         else:
-            warnfunc("last line is continued in block of raw lines: " + repr(part_cooked_lines))
+            warnfunc(
+                "last line is continued in block of raw lines: "
+                + repr(part_cooked_lines)
+            )
         while part_cooked_lines and not part_cooked_lines[-1].strip():
             part_cooked_lines.pop()
         list_splitter = [len(cooked_part) for cooked_part in part_cooked_lines]
@@ -213,7 +236,11 @@ class EniCookLineRecipe(object):
         self.post_spaces = trailing_spaces(joined)
         len_pre_spaces = len(self.pre_spaces)
         end_useful = len(joined) - len(self.post_spaces)
-        self.list_cooked_splitter = [ p - len_pre_spaces for p in list_splitter if len_pre_spaces <= p <= end_useful ]
+        self.list_cooked_splitter = [
+            p - len_pre_spaces
+            for p in list_splitter
+            if len_pre_spaces <= p <= end_useful
+        ]
         self.cooked_line = joined[len_pre_spaces:end_useful]
 
     def remove_part(self, cmin, cmax):
@@ -237,21 +264,33 @@ class EniCookLineRecipe(object):
 
     def get_updated_raw_lines(self):
         if self.list_cooked_splitter:
-            raw_lines = [ self.cooked_line[pmin:pmax] for pmin, pmax in zip([0] + self.list_cooked_splitter, self.list_cooked_splitter) ]
-            if self.post_spaces or (self.list_cooked_splitter[-1] < len(self.cooked_line)):
-                raw_lines.append(self.cooked_line[self.list_cooked_splitter[-1]:] + self.post_spaces)
+            raw_lines = [
+                self.cooked_line[pmin:pmax]
+                for pmin, pmax in zip(
+                    [0] + self.list_cooked_splitter, self.list_cooked_splitter
+                )
+            ]
+            if self.post_spaces or (
+                self.list_cooked_splitter[-1] < len(self.cooked_line)
+            ):
+                raw_lines.append(
+                    self.cooked_line[self.list_cooked_splitter[-1] :] + self.post_spaces
+                )
         else:
-            raw_lines = [ self.cooked_line + self.post_spaces ]
+            raw_lines = [self.cooked_line + self.post_spaces]
         if self.pre_spaces:
             raw_lines[0] = self.pre_spaces + raw_lines[0]
-        for pos in xrange(len(raw_lines)-1):
+        for pos in range(len(raw_lines) - 1):
             raw_lines[pos] += '\\\n'
         raw_lines[-1] += '\n'
         return raw_lines
 
     def update_block(self, block):
         block.cooked_lines[0] = self.cooked_line
-        block.raw_lines[self.first_raw_line:self.first_raw_line+self.nb_raw_lines] = self.get_updated_raw_lines()
+        block.raw_lines[
+            self.first_raw_line : self.first_raw_line + self.nb_raw_lines
+        ] = self.get_updated_raw_lines()
+
 
 def parse(lines, warnfunc=warn):
     """
@@ -368,7 +407,9 @@ def parse(lines, warnfunc=warn):
         if new_block:
             if start_of_last_comment:
                 new_space_block = EniBlockSpace()
-                new_space_block.extend_raw_lines(islice(current_raw, 0, start_of_last_comment))
+                new_space_block.extend_raw_lines(
+                    islice(current_raw, 0, start_of_last_comment)
+                )
                 del current_raw[0:start_of_last_comment]
                 del current_raw_iscomment[0:start_of_last_comment]
                 start_of_last_comment = 0
@@ -397,6 +438,7 @@ def parse(lines, warnfunc=warn):
 
     return block_list
 
+
 def get_mapping_dests(block_list, base, full):
     """
     Walk in mappings, looking for logical interfaces.  Return the set of
@@ -420,6 +462,7 @@ def get_mapping_dests(block_list, base, full):
             logicals.add(splitted[2])
     return logicals
 
+
 # TODO: Take account of vlan interface name like vlan42 with option vlan-raw-device
 # TODO: Take account of alias interface name for example: eth0.42:0 and vlan42:0
 def normalize_vlan(ifname):
@@ -433,6 +476,7 @@ def normalize_vlan(ifname):
         left, right = ifname.split(".")
         return "%s.%d" % (left, int(right))
 
+
 def ifname_in_base_full(ifname, base, full):
     """
     Test if the interface name in 'ifname' is in the list 'full' or is a
@@ -444,6 +488,7 @@ def ifname_in_base_full(ifname, base, full):
     norm_vlan_ifname = normalize_vlan(ifname)
     left = norm_vlan_ifname.rsplit(".", 1)[0]
     return (norm_vlan_ifname in full) or (left in base)
+
 
 # TODO: Add a set of unmapped alias interface names (eth0:0)
 def ifname_in_base_full_mapsymbs(ifname, base, full, mapsymbs):
@@ -460,6 +505,7 @@ def ifname_in_base_full_mapsymbs(ifname, base, full, mapsymbs):
     'base'
     """
     return ifname in mapsymbs or ifname_in_base_full(ifname, base, full)
+
 
 def allowed(block_list, warnfunc=warn):
     """

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2007-2016 Avencall
+# Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """HTTP JSON Server
@@ -15,7 +15,7 @@ __version__ = "$Revision$ $Date$"
 # or not to the client in error report
 
 # TODO: catch disconnections in wfile.write, send_* and end_headers
-# (and maybe others) and log them with a simple short line instead of 
+# (and maybe others) and log them with a simple short line instead of
 # logging the complete Broken pipe exception (or in some cases nothing!)
 
 # TODO: locks and implements SIGHUP (by reloading the configuration)
@@ -37,6 +37,7 @@ import re
 import socket
 import select
 import errno
+
 try:
     import json
 except ImportError:
@@ -45,10 +46,13 @@ import cgi
 import traceback
 import sys
 
+import six
+
+
 CMD_R = 0
 CMD_RW = 1
 
-log = logging.getLogger('http_json_server') # pylint: disable-msg=C0103
+log = logging.getLogger('http_json_server')  # pylint: disable-msg=C0103
 
 _killed = False
 
@@ -61,6 +65,7 @@ class Command(object):
     """
     Each registration results in an instance of this class being created.
     """
+
     def __init__(self, name, handler, op, safe_init, at_start):
         self.handler = handler
         self.name = name
@@ -72,7 +77,7 @@ class Command(object):
 class HttpReqError(Exception):
     """
     Catched in HttpReqHandler.common_req() which calls .report().
-    
+
     Used to implement the unicity of the response to a single request,
     in a consistent way.
     """
@@ -84,7 +89,7 @@ class HttpReqError(Exception):
         self.json = json
         msg = text or BaseHTTPRequestHandler.responses[code][1]
         Exception.__init__(self, msg)
-    
+
     def report(self, req_handler):
         "Send a response corresponding to this error to the client"
         if self.exc:
@@ -101,13 +106,15 @@ class HttpReqError(Exception):
 def _encode_if(value, encoding='iso-8859-1'):
     # transform value returned by json.loads to something similar to what
     # cjson.decode would have returned
-    if isinstance(value, unicode):
+    if isinstance(value, six.text_types):
         return value.encode(encoding)
     elif isinstance(value, list):
         return [_encode_if(v, encoding) for v in value]
     elif isinstance(value, dict):
-        return dict((_encode_if(k, encoding), _encode_if(v, encoding)) for
-                    (k, v) in value.iteritems())
+        return dict(
+            (_encode_if(k, encoding), _encode_if(v, encoding))
+            for (k, v) in value.iteritems()
+        )
     else:
         return value
 
@@ -148,8 +155,7 @@ class HttpReqHandler(BaseHTTPRequestHandler):
             else:
                 message = ''
         if self.request_version != 'HTTP/0.9':
-            self.wfile.write("%s %d %s\r\n" %
-                             (self.protocol_version, code, message))
+            self.wfile.write("%s %d %s\r\n" % (self.protocol_version, code, message))
             # print (self.protocol_version, code, message)
         self.send_header('Server', self.version_string())
         self.send_header('Date', self.date_time_string())
@@ -160,29 +166,24 @@ class HttpReqHandler(BaseHTTPRequestHandler):
         self.send_header("Connection", "close")
         self.send_header("Content-Type", "text/html")
         self.end_headers()
-        self.wfile.write(self.error_message_format % {
-            'code': code,
-            'message': message,
-            'explain': self.responses[code][1]
-        })
+        self.wfile.write(
+            self.error_message_format
+            % {'code': code, 'message': message, 'explain': self.responses[code][1]}
+        )
 
     def send_error_msgtxt(self, code, text):
         "text will be in a <pre> bloc"
         self.send_error_explain(
-            code,
-            ''.join(("<pre>\n", cgi.escape(text), "</pre>\n"))
+            code, ''.join(("<pre>\n", cgi.escape(text), "</pre>\n"))
         )
 
     def send_error_json(self, code, text):
         "send an error to the client. text message is formatted	in a json stream"
         self.send_response(code)
-        self.send_header("Connection"  , "close")
+        self.send_header("Connection", "close")
         self.send_header("Content-Type", "application/json")
         self.end_headers()
-        self.wfile.write(json.dumps({
-            'code'   : code,
-            'message': text,
-        }))
+        self.wfile.write(json.dumps({'code': code, 'message': text}))
 
     def send_exception(self, code, exc_info=None):
         "send an error response including a backtrace to the client"
@@ -205,23 +206,23 @@ class HttpReqHandler(BaseHTTPRequestHandler):
                 value = x[1]
             else:
                 value = None
-       
-            if not x[0] or x[0].find(']') == -1: 
+
+            if not x[0] or x[0].find(']') == -1:
                 ret[x[0]] = value
                 continue
-        
+
             lbracket = x[0].find('[')
 
-            if lbracket == -1: 
+            if lbracket == -1:
                 ret[x[0]] = value
                 continue
 
             key = x[0][:lbracket]
 
-            if not ret.has_key(key):
+            if key not in ret:
                 ret[key] = {}
 
-            matched = re.findall('\[([^\]]*)\]', x[0][lbracket:])
+            matched = re.findall(r'\[([^\]]*)\]', x[0][lbracket:])
             nb = len(matched)
 
             if nb == 0:
@@ -237,14 +238,13 @@ class HttpReqHandler(BaseHTTPRequestHandler):
 
             for i, k in enumerate(matched):
                 if k == '':
-                    while ref.has_key(j):
+                    while j in ref:
                         j += 1
                     k = j
 
                 if i == (nb - 1):
                     ref[k] = value
-                elif not ref.has_key(k) \
-                or (nb > i and not isinstance(ref[k], dict)):
+                elif k not in ref or (nb > i and not isinstance(ref[k], dict)):
                     ref[k] = {}
 
                 ref = ref[k]
@@ -260,13 +260,13 @@ class HttpReqHandler(BaseHTTPRequestHandler):
         """
         try:
             path, query, fragment = urisup.uri_help_split(self.path)[2:]
-            
+
             if not path:
                 path = "/"
-            
+
             if path[0] != "/":
                 raise urisup.InvalidURIError('path %r does not start with "/"' % path)
-            
+
             path = re.sub("^/+", "/", path, 1)
 
             if query:
@@ -277,7 +277,7 @@ class HttpReqHandler(BaseHTTPRequestHandler):
         except urisup.InvalidURIError as e:
             log.error("invalid URI: %s", e)
             raise HttpReqError(400, str(e))
-    
+
     @staticmethod
     def json_from_get(cmd, urlparams=None):
         """
@@ -291,7 +291,7 @@ class HttpReqHandler(BaseHTTPRequestHandler):
 
         res = _cmd_r[cmd].handler({}, urlparams)
         return json.dumps(res)
-    
+
     def json_from_post(self, cmd, urlparams=None):
         """
         Callback for .execute_command() for POST requests
@@ -313,7 +313,7 @@ class HttpReqHandler(BaseHTTPRequestHandler):
             raise HttpReqError(411)
         if clen < 0:
             raise HttpReqError(411)
-        
+
         json_params = self.rfile.read(clen)
         try:
             params = _encode_if(json.loads(json_params))
@@ -325,24 +325,24 @@ class HttpReqHandler(BaseHTTPRequestHandler):
 
         res = _cmd_rw[cmd].handler(params, urlparams)
         return json.dumps(res)
-    
+
     def common_req(self, execute, send_body=True):
         "Common code for GET and POST requests"
         cmd = None
         try:
             try:
-                path, query, fragment = self.pathify() # pylint: disable-msg=W0612
+                path, query, fragment = self.pathify()  # pylint: disable-msg=W0612
                 cmd = path[1:]
                 res_json = execute(cmd, query)
 
             except HttpReqError as e:
                 log.warning('HttpReqError while executing %s: %s', cmd, e.text)
                 e.report(self)
-            
+
             except Exception:
                 try:
-                    self.send_exception(500) # XXX 500
-                except Exception: # pylint: disable-msg=W0703
+                    self.send_exception(500)  # XXX 500
+                except Exception:  # pylint: disable-msg=W0703
                     pass
                 raise
 
@@ -359,7 +359,7 @@ class HttpReqHandler(BaseHTTPRequestHandler):
                     self.wfile.write(res_json)
                     self.wfile.write("\n")
 
-        except Exception: # pylint: disable-msg=W0703
+        except Exception:  # pylint: disable-msg=W0703
             log.exception("exception - cmd=%r - method=%r", cmd, self.command)
 
     def do_GET(self):
@@ -392,7 +392,7 @@ def register(handler, op, safe_init=None, at_start=None, name=None):
     @safe_init: called by the safe_init() function of this module
     @at_start: called once just before the server starts
     @name: name of the command (if not name, handler.__name__ is used)
-    
+
     prototypes:
         handler(args)
         safe_init(options)
@@ -402,19 +402,19 @@ def register(handler, op, safe_init=None, at_start=None, name=None):
         name = handler.__name__
     if name in _commands:
         raise ValueError("%s is already registred" % name)
-    
+
     _commands[name] = Command(name, handler, op, safe_init, at_start)
-    
+
     if op == CMD_R:
         _cmd_r[name] = _commands[name]
-    else: # op == CMD_RW
+    else:  # op == CMD_RW
         _cmd_rw[name] = _commands[name]
 
 
 def sigterm_handler(signum, stack_frame):
     """
     Just tell the server to exit.
-    
+
     WARNING: There are race conditions, for example with TimeoutSocket.accept.
     We don't care: the user can just rekill the process after like 1 sec. if
     the first kill did not work.
@@ -430,8 +430,7 @@ def run(options):
     Start and execute the server
     """
     http_server = KillableThreadingHTTPServer(
-        (options.listen_addr, options.listen_port),
-        HttpReqHandler
+        (options.listen_addr, options.listen_port), HttpReqHandler
     )
 
     for name, cmd in _commands.iteritems():
@@ -448,7 +447,7 @@ def run(options):
                 log.debug("interrupted system call")
             else:
                 raise
-    
+
     log.info("exiting")
 
 

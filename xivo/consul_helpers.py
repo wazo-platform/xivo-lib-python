@@ -46,17 +46,24 @@ class MissingConfigurationError(RegistererError):
 
 
 class ServiceCatalogRegistration(object):
-
-    def __init__(self, service_name, uuid, consul_config,
-                 service_discovery_config, bus_config, check=None):
+    def __init__(
+        self,
+        service_name,
+        uuid,
+        consul_config,
+        service_discovery_config,
+        bus_config,
+        check=None,
+    ):
         self._enabled = service_discovery_config.get('enabled', True)
         if not self._enabled:
             logger.debug('service discovery has been disabled')
             return
 
         self._check = check or self._default_check
-        self._registerer = NotifyingRegisterer(service_name, uuid, consul_config,
-                                               service_discovery_config, bus_config)
+        self._registerer = NotifyingRegisterer(
+            service_name, uuid, consul_config, service_discovery_config, bus_config
+        )
 
         self._retry_interval = service_discovery_config['retry_interval']
         self._refresh_interval = service_discovery_config['refresh_interval']
@@ -117,14 +124,17 @@ class ServiceCatalogRegistration(object):
             self._registerer.register()
             self._registered = True
         except RegistererError as e:
-            logger.info('registration failed, retrying in %s seconds %s', self._retry_interval, e)
+            logger.info(
+                'registration failed, retrying in %s seconds %s',
+                self._retry_interval,
+                e,
+            )
 
     def _default_check(self):
         return True
 
 
 class Registerer(object):
-
     def __init__(self, name, uuid, consul_config, service_discovery_config):
         self._service_id = str(uuid4())
         self._service_name = name
@@ -144,22 +154,28 @@ class Registerer(object):
         return Consul(**self._consul_config)
 
     def register(self):
-        logger.info('Registering %s on Consul as %s with %s:%s',
-                    self._service_name,
-                    self._service_id,
-                    self._advertise_address,
-                    self._advertise_port)
+        logger.info(
+            'Registering %s on Consul as %s with %s:%s',
+            self._service_name,
+            self._service_id,
+            self._advertise_address,
+            self._advertise_port,
+        )
 
         try:
             ttl_check = Check.ttl(self._ttl_interval)
-            registered = self._client.agent.service.register(self._service_name,
-                                                             service_id=self._service_id,
-                                                             address=self._advertise_address,
-                                                             port=self._advertise_port,
-                                                             check=ttl_check,
-                                                             tags=self._tags)
+            registered = self._client.agent.service.register(
+                self._service_name,
+                service_id=self._service_id,
+                address=self._advertise_address,
+                port=self._advertise_port,
+                check=ttl_check,
+                tags=self._tags,
+            )
             if not registered:
-                raise RegistererError('{} registration on Consul failed'.format(self._service_name))
+                raise RegistererError(
+                    '{} registration on Consul failed'.format(self._service_name)
+                )
 
         except (ConnectionError, ConsulException) as e:
             raise RegistererError(str(e))
@@ -178,9 +194,11 @@ class Registerer(object):
         return result
 
     def deregister(self):
-        logger.info('Deregistering %s from Consul services: %s',
-                    self._service_name,
-                    self._service_id)
+        logger.info(
+            'Deregistering %s from Consul services: %s',
+            self._service_name,
+            self._service_id,
+        )
 
         try:
             client = self._client
@@ -208,7 +226,11 @@ def _find_address(main_iface):
                 return True
         return False
 
-    ifaces = [main_iface] + [iface for iface in netifaces.interfaces() if _is_valid_iface_name(iface)] + ['lo']
+    ifaces = (
+        [main_iface]
+        + [iface for iface in netifaces.interfaces() if _is_valid_iface_name(iface)]
+        + ['lo']
+    )
     for iface in ifaces:
         try:
             for config in netifaces.ifaddresses(iface).get(netifaces.AF_INET, []):
@@ -226,11 +248,15 @@ class NotifyingRegisterer(Registerer):
     bus_uri_pattern = 'amqp://{username}:{password}@{host}:{port}//'
 
     def __init__(self, name, uuid, consul_config, service_discovery_config, bus_config):
-        super(NotifyingRegisterer, self).__init__(name, uuid, consul_config, service_discovery_config)
+        super(NotifyingRegisterer, self).__init__(
+            name, uuid, consul_config, service_discovery_config
+        )
         self._bus_config = bus_config
         self._marshaler = Marshaler(uuid)
         try:
-            self._bus_url = bus_config.get('uri') or self.bus_uri_pattern.format(**bus_config)
+            self._bus_url = bus_config.get('uri') or self.bus_uri_pattern.format(
+                **bus_config
+            )
         except KeyError as e:
             raise MissingConfigurationError(str(e))
 
@@ -259,8 +285,9 @@ class NotifyingRegisterer(Registerer):
     def _send_msg(self, msg):
         try:
             with Connection(self._bus_url) as conn:
-                exchange = Exchange(self._bus_config['exchange_name'],
-                                    self._bus_config['exchange_type'])
+                exchange = Exchange(
+                    self._bus_config['exchange_name'], self._bus_config['exchange_type']
+                )
                 producer = Producer(conn, exchange=exchange, auto_declare=True)
                 publisher = Publisher(producer, self._marshaler)
                 publisher.publish(msg)
@@ -268,24 +295,31 @@ class NotifyingRegisterer(Registerer):
             raise RegistererError('failed to publish on rabbitmq')
 
     def _new_deregistered_event(self):
-        return event.ServiceDeregisteredEvent(self._service_name,
-                                              self._service_id,
-                                              self._tags)
+        return event.ServiceDeregisteredEvent(
+            self._service_name, self._service_id, self._tags
+        )
 
     def _new_registered_event(self):
-        return event.ServiceRegisteredEvent(self._service_name,
-                                            self._service_id,
-                                            self._advertise_address,
-                                            self._advertise_port,
-                                            self._tags)
+        return event.ServiceRegisteredEvent(
+            self._service_name,
+            self._service_id,
+            self._advertise_address,
+            self._advertise_port,
+            self._tags,
+        )
 
 
 class ServiceFinder(object):
-
     def __init__(self, consul_config):
-        self._dc_url = '{scheme}://{host}:{port}/v1/catalog/datacenters'.format(**consul_config)
-        self._health_url = '{scheme}://{host}:{port}/v1/health/service'.format(**consul_config)
-        self._service_url = '{scheme}://{host}:{port}/v1/catalog/service'.format(**consul_config)
+        self._dc_url = '{scheme}://{host}:{port}/v1/catalog/datacenters'.format(
+            **consul_config
+        )
+        self._health_url = '{scheme}://{host}:{port}/v1/health/service'.format(
+            **consul_config
+        )
+        self._service_url = '{scheme}://{host}:{port}/v1/catalog/service'.format(
+            **consul_config
+        )
         self._verify = consul_config.get('verify', True)
         self._token = consul_config.get('token')
 
@@ -297,8 +331,7 @@ class ServiceFinder(object):
         return services
 
     def _get_datacenters(self):
-        response = requests.get(self._dc_url,
-                                verify=self._verify)
+        response = requests.get(self._dc_url, verify=self._verify)
         self._assert_ok(response)
         return response.json()
 

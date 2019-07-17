@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2016-2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
@@ -26,7 +26,9 @@ class ServiceConsumer(ConsumerMixin):
 
     def __init__(self, connection, message_queue):
         self.connection = connection
-        self._queue = kombu.Queue(exchange=self._exchange, routing_key=self._routing_key)
+        self._queue = kombu.Queue(
+            exchange=self._exchange, routing_key=self._routing_key
+        )
         self._received_messages = message_queue
         self._is_running = False
 
@@ -63,11 +65,15 @@ class _BaseTest(AssetLaunchingTestCase):
         self._run_docker_compose_cmd(['rm', '-f', self.service])
 
         if not enabled:
-            self._run_docker_compose_cmd(['run', '-d', '-e', 'DISABLED=1', self.service])
+            self._run_docker_compose_cmd(
+                ['run', '-d', '-e', 'DISABLED=1', self.service]
+            )
         elif not ip:
             self._run_docker_compose_cmd(['run', '-d', self.service])
         else:
-            self._run_docker_compose_cmd(['run', '-d', '-e', 'ADVERTISE_ADDR={}'.format(ip), self.service])
+            self._run_docker_compose_cmd(
+                ['run', '-d', '-e', 'ADVERTISE_ADDR={}'.format(ip), self.service]
+            )
 
         status = self.service_status('myservice')
 
@@ -79,8 +85,11 @@ class _BaseTest(AssetLaunchingTestCase):
             self._run_cmd('docker stop --time 20 {}'.format(id_))
 
     def _run_docker_compose_cmd(self, cmd):
-        self._run_cmd('docker-compose {} {}'.format(' '.join(self._docker_compose_options()),
-                                                    ' '.join(cmd)))
+        self._run_cmd(
+            'docker-compose {} {}'.format(
+                ' '.join(self._docker_compose_options()), ' '.join(cmd)
+            )
+        )
 
 
 class TestServiceDiscoveryDisabled(_BaseTest):
@@ -88,7 +97,6 @@ class TestServiceDiscoveryDisabled(_BaseTest):
     asset = 'service_discovery_disabled'
 
     def test_that_my_service_can_start_when_service_disc_is_disabled(self):
-
         def logs_says_disabled():
             url = 'http://{}:{}/0.1/infos'.format(ip, 6262)
             try:
@@ -96,7 +104,10 @@ class TestServiceDiscoveryDisabled(_BaseTest):
             except Exception:
                 raise AssertionError('service is not available')
             assert_that(r.status_code, equal_to(200))
-            assert_that(self.service_logs(), contains_string('service discovery has been disabled'))
+            assert_that(
+                self.service_logs(),
+                contains_string('service discovery has been disabled'),
+            )
 
         with self.myservice(enabled=False) as ip:
             until.assert_(logs_says_disabled, tries=10)
@@ -126,7 +137,7 @@ class TestServiceDiscovery(_BaseTest):
             username='guest',
             password='guest',
             host='localhost',
-            port=self.service_port(5672, 'rabbitmq')
+            port=self.service_port(5672, 'rabbitmq'),
         )
         with kombu.Connection(bus_url) as conn:
             conn.ensure_connection()
@@ -172,7 +183,9 @@ class TestServiceDiscovery(_BaseTest):
 
     def test_that_the_bus_message_is_received_on_stop_when_rabbitmq_is_restarted(self):
         with self.myservice() as ip:
-            self.assert_registered_msg_received(ip)  # to remove the message from the queue
+            self.assert_registered_msg_received(
+                ip
+            )  # to remove the message from the queue
             self.stop_listening()
             self._run_cmd('docker-compose restart rabbitmq')
             self.start_listening()

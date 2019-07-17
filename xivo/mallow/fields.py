@@ -27,7 +27,6 @@ except ImportError:
 
 
 class _StringifiedDict(dict):
-
     def format(self, *args, **kwargs):
         self['message'] = self.get('message', '').format(*args, **kwargs)
         return self
@@ -38,7 +37,7 @@ class Field(_Field):
         'null': _StringifiedDict(
             message=_Field.default_error_messages['null'],
             constraint_id='not_null',
-            constraint='not_null'
+            constraint='not_null',
         ),
         'required': _StringifiedDict(
             message=_Field.default_error_messages['required'],
@@ -55,134 +54,158 @@ class Field(_Field):
 
 class Boolean(_Boolean):
     default_error_messages = dict(Field.default_error_messages)
-    default_error_messages.update({
-        'invalid': _StringifiedDict(
-            message=_Boolean.default_error_messages['invalid'],
-            constraint_id='type',
-            constraint='boolean'
-        ),
-    })
+    default_error_messages.update(
+        {
+            'invalid': _StringifiedDict(
+                message=_Boolean.default_error_messages['invalid'],
+                constraint_id='type',
+                constraint='boolean',
+            )
+        }
+    )
 
 
 class Date(_Date):
     default_error_messages = dict(Field.default_error_messages)
-    default_error_messages.update({
-        'invalid': _StringifiedDict(
-            message=_Date.default_error_messages['invalid'],
-            constraint_id='type',
-            constraint='date',
-        ),
-    })
+    default_error_messages.update(
+        {
+            'invalid': _StringifiedDict(
+                message=_Date.default_error_messages['invalid'],
+                constraint_id='type',
+                constraint='date',
+            )
+        }
+    )
 
 
 class DateTime(_DateTime):
     default_error_messages = dict(Field.default_error_messages)
-    default_error_messages.update({
-        'invalid': _StringifiedDict(
-            message=_DateTime.default_error_messages['invalid'],
-            constraint_id='type',
-            constraint='datetime',
-        ),
-    })
+    default_error_messages.update(
+        {
+            'invalid': _StringifiedDict(
+                message=_DateTime.default_error_messages['invalid'],
+                constraint_id='type',
+                constraint='datetime',
+            )
+        }
+    )
 
 
 class Dict(_Dict):
     default_error_messages = dict(Field.default_error_messages)
-    default_error_messages.update({
-        'invalid': _StringifiedDict(
-            message=_Dict.default_error_messages['invalid'],
-            constraint_id='type',
-            constraint='dict',
-        ),
-    })
+    default_error_messages.update(
+        {
+            'invalid': _StringifiedDict(
+                message=_Dict.default_error_messages['invalid'],
+                constraint_id='type',
+                constraint='dict',
+            )
+        }
+    )
 
 
 class Email(_Email):
     default_error_messages = dict(Field.default_error_messages)
-    default_error_messages.update({
-        'invalid': _StringifiedDict(
-            message=_Email.default_error_messages['invalid'],
-            constraint_id='type',
-            constraint='email',
-        ),
-    })
+    default_error_messages.update(
+        {
+            'invalid': _StringifiedDict(
+                message=_Email.default_error_messages['invalid'],
+                constraint_id='type',
+                constraint='email',
+            )
+        }
+    )
 
 
 class Integer(_Integer):
     default_error_messages = dict(Field.default_error_messages)
-    default_error_messages.update({
-        'invalid': _StringifiedDict(
-            message=_Integer.default_error_messages['invalid'],
-            constraint_id='type',
-            constraint='integer',
-        ),
-    })
+    default_error_messages.update(
+        {
+            'invalid': _StringifiedDict(
+                message=_Integer.default_error_messages['invalid'],
+                constraint_id='type',
+                constraint='integer',
+            )
+        }
+    )
 
 
 class Float(_Float):
     default_error_messages = dict(Field.default_error_messages)
-    default_error_messages.update({
-        'invalid': _StringifiedDict(
-            message=_Float.default_error_messages['invalid'],
-            constraint_id='type',
-            constraint='float',
-        ),
-    })
+    default_error_messages.update(
+        {
+            'invalid': _StringifiedDict(
+                message=_Float.default_error_messages['invalid'],
+                constraint_id='type',
+                constraint='float',
+            )
+        }
+    )
 
 
 class List(_List):
     default_error_messages = dict(Field.default_error_messages)
-    default_error_messages.update({
-        'invalid': _StringifiedDict(
-            message=_List.default_error_messages['invalid'],
-            constraint_id='type',
-            constraint='list',
-        ),
-    })
+    default_error_messages.update(
+        {
+            'invalid': _StringifiedDict(
+                message=_List.default_error_messages['invalid'],
+                constraint_id='type',
+                constraint='list',
+            )
+        }
+    )
 
 
 class Nested(_Nested):
     default_error_messages = dict(Field.default_error_messages)
-    default_error_messages.update({
-        'type': _StringifiedDict(
-            message=_Nested.default_error_messages['type'],
-            constraint_id='type',
-            constraint='dict',
-        ),
-    })
+    default_error_messages.update(
+        {
+            'type': _StringifiedDict(
+                message=_Nested.default_error_messages['type'],
+                constraint_id='type',
+                constraint='dict',
+            )
+        }
+    )
 
 
 class String(_String):
     default_error_messages = dict(Field.default_error_messages)
-    default_error_messages.update({
-        'invalid': _StringifiedDict(
-            message=_String.default_error_messages['invalid'],
-            constraint_id='type',
-            constraint='string',
-        ),
-    })
+    default_error_messages.update(
+        {
+            'invalid': _StringifiedDict(
+                message=_String.default_error_messages['invalid'],
+                constraint_id='type',
+                constraint='string',
+            )
+        }
+    )
 
 
 class URL(_URL):
     default_error_messages = dict(Field.default_error_messages)
-    default_error_messages.update({
-        'invalid_url': _StringifiedDict(
-            message=_URL.default_error_messages['invalid'],
-            constraint_id='type',
-            constraint='url',
-        ),
-    })
+    default_error_messages.update(
+        {
+            'invalid_url': _StringifiedDict(
+                message=_URL.default_error_messages['invalid'],
+                constraint_id='type',
+                constraint='url',
+            )
+        }
+    )
 
 
 class UUID(_UUID):
     default_error_messages = dict(Field.default_error_messages)
-    default_error_messages.update({
-        'invalid_uuid': _StringifiedDict(
-            message=_UUID.default_error_messages['invalid_uuid'],
-            constraint_id='type',
-            constraint='uuid',
-        ),
-    })
+    default_error_messages.update(
+        {
+            'invalid_uuid': _StringifiedDict(
+                message=_UUID.default_error_messages['invalid_uuid'],
+                constraint_id='type',
+                constraint='uuid',
+            )
+        }
+    )
 
 
 class Constant(_Constant):
@@ -192,11 +215,15 @@ class Constant(_Constant):
 class IP(ValidatedField, String):
 
     default_error_messages = dict(Field.default_error_messages)
-    default_error_messages.update({
-        'invalid': {'message': 'Not a valid IP address.',
-                    'constraint_id': 'type',
-                    'constraint': 'ip_address'},
-    })
+    default_error_messages.update(
+        {
+            'invalid': {
+                'message': 'Not a valid IP address.',
+                'constraint_id': 'type',
+                'constraint': 'ip_address',
+            }
+        }
+    )
 
     def __init__(self, *args, **kwargs):
         if not ipaddress_available:

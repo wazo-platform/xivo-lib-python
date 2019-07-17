@@ -1,21 +1,12 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
 import unittest
 
-from hamcrest import (
-    assert_that,
-    calling,
-    equal_to,
-    raises,
-)
-from mock import (
-    Mock,
-    patch,
-    sentinel as s,
-)
+from hamcrest import assert_that, calling, equal_to, raises
+from mock import Mock, patch, sentinel as s
 from ..auth_verifier import (
     AuthServerUnreachable,
     AuthVerifier,
@@ -31,7 +22,6 @@ def function_with_acl(pattern):
 
 
 class StubVerifier(AuthVerifier):
-
     def token(self):
         return s.token
 
@@ -43,7 +33,6 @@ class StubVerifier(AuthVerifier):
 
 
 class TestAuthVerifier(unittest.TestCase):
-
     def test_set_client(self):
         auth_verifier = AuthVerifier()
 
@@ -54,10 +43,12 @@ class TestAuthVerifier(unittest.TestCase):
     @patch('xivo.auth_verifier.Client')
     def test_set_config(self, auth_client_init):
         auth_verifier = AuthVerifier()
-        config = {'host': s.host,
-                  'username': s.username,
-                  'password': s.password,
-                  'key_file': s.key_file}
+        config = {
+            'host': s.host,
+            'username': s.username,
+            'password': s.password,
+            'key_file': s.key_file,
+        }
         expected_config = {'host': s.host}
 
         auth_verifier.set_config(config)
@@ -205,9 +196,15 @@ class TestAuthVerifier(unittest.TestCase):
         auth_verifier = AuthVerifier()
         auth_verifier.set_config({'host': s.host, 'port': s.port})
 
-        assert_that(calling(auth_verifier.handle_unreachable).with_args(None), raises(AuthServerUnreachable))
+        assert_that(
+            calling(auth_verifier.handle_unreachable).with_args(None),
+            raises(AuthServerUnreachable),
+        )
 
     def test_handle_unauthorized(self):
         auth_verifier = AuthVerifier()
 
-        assert_that(calling(auth_verifier.handle_unauthorized).with_args(None), raises(Unauthorized))
+        assert_that(
+            calling(auth_verifier.handle_unauthorized).with_args(None),
+            raises(Unauthorized),
+        )

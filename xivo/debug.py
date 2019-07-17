@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013-2014 Avencall
+# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import functools
@@ -26,6 +26,7 @@ def _no_op_decorator(fun):
 @_debug
 def trace_duration(fun):
     fun_name = fun.__name__
+
     @functools.wraps(fun)
     def aux(*args, **kwargs):
         start_time = time.time()
@@ -33,15 +34,18 @@ def trace_duration(fun):
         duration = time.time() - start_time
         logger.info('Execution of %r took %.3fs', fun_name, duration)
         return result
+
     return aux
 
 
 @_debug
 def trace_call(fun):
     fun_name = fun.__name__
+
     @functools.wraps(fun)
     def aux(*args, **kwargs):
         logger.info('Executing %r', fun_name)
         result = fun(*args, **kwargs)
         return result
+
     return aux

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2008-2016 Avencall
+# Copyright 2008-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Interworking with udev
@@ -24,7 +24,7 @@ from xivo import system
 from xivo import network
 
 
-log = logging.getLogger("xivo.udev") # pylint: disable-msg=C0103
+log = logging.getLogger("xivo.udev")  # pylint: disable-msg=C0103
 
 
 PERSISTENT_NET_RULES_FILE = "/etc/udev/rules.d/z25_persistent-net.rules"
@@ -125,11 +125,11 @@ OP_MATCH_NOMATCH = ('==', '!=')
 
 
 KEY_ATTR = {
-    # key in file    # key in dict  # allowed operations
-    'ATTR' :        ('ATTR',        OP_ALL, ),
-    'ATTRS' :       ('ATTRS',       OP_ALL, ),
-    'SYSFS' :       ('ATTRS',       OP_ALL, ),
-    'ENV':          ('ENV',         OP_ALL, ),
+    # key in file: (key in dict, allowed operations)
+    'ATTR': ('ATTR', OP_ALL),
+    'ATTRS': ('ATTRS', OP_ALL),
+    'SYSFS': ('ATTRS', OP_ALL),
+    'ENV': ('ENV', OP_ALL),
 }
 
 
@@ -137,30 +137,30 @@ KEY_OPT_ATTR = ('IMPORT', 'NAME')
 
 
 KEY = {
-    # key in file    # key in dict  # allowed operations
-    'ACTION':       ('ACTION',      OP_MATCH_NOMATCH, ),
-    'DEVPATH':      ('DEVPATH',     OP_MATCH_NOMATCH, ),
-    'KERNEL':       ('KERNEL',      OP_MATCH_NOMATCH, ),
-    'SUBSYSTEM':    ('SUBSYSTEM',   OP_MATCH_NOMATCH, ),
-    'DRIVER':       ('DRIVER',      OP_MATCH_NOMATCH, ),
-    'KERNELS':      ('KERNELS',     OP_MATCH_NOMATCH, ),
-    'ID':           ('KERNELS',     OP_MATCH_NOMATCH, ),
-    'SUBSYSTEMS':   ('SUBSYSTEMS',  OP_MATCH_NOMATCH, ),
-    'BUS':          ('SUBSYSTEMS',  OP_MATCH_NOMATCH, ),
-    'DRIVERS':      ('DRIVERS',     OP_MATCH_NOMATCH, ),
-    'PROGRAM':      ('PROGRAM',     OP_ALL, ),
-    'RESULT':       ('RESULT',      OP_MATCH_NOMATCH, ),
-    'IMPORT':       ('IMPORT',      OP_ALL, ),
-    'RUN':          ('RUN',         OP_ALL, ),
-    'WAIT_FOR_SYSFS': ('WAIT_FOR_SYSFS', OP_ALL, ),
-    'LABEL':        ('LABEL',       OP_ALL, ),
-    'GOTO':         ('GOTO',        OP_ALL, ),
-    'NAME':         ('NAME',        OP_ALL, ),
-    'SYMLINK':      ('SYMLINK',     OP_ALL, ),
-    'OWNER':        ('OWNER',       OP_ALL, ),
-    'GROUP':        ('GROUP',       OP_ALL, ),
-    'MODE':         ('MODE',        OP_ALL, ),
-    'OPTIONS':      ('OPTIONS',     OP_ALL, ),
+    # key in file: (key in dict, allowed operations)
+    'ACTION': ('ACTION', OP_MATCH_NOMATCH),
+    'DEVPATH': ('DEVPATH', OP_MATCH_NOMATCH),
+    'KERNEL': ('KERNEL', OP_MATCH_NOMATCH),
+    'SUBSYSTEM': ('SUBSYSTEM', OP_MATCH_NOMATCH),
+    'DRIVER': ('DRIVER', OP_MATCH_NOMATCH),
+    'KERNELS': ('KERNELS', OP_MATCH_NOMATCH),
+    'ID': ('KERNELS', OP_MATCH_NOMATCH),
+    'SUBSYSTEMS': ('SUBSYSTEMS', OP_MATCH_NOMATCH),
+    'BUS': ('SUBSYSTEMS', OP_MATCH_NOMATCH),
+    'DRIVERS': ('DRIVERS', OP_MATCH_NOMATCH),
+    'PROGRAM': ('PROGRAM', OP_ALL),
+    'RESULT': ('RESULT', OP_MATCH_NOMATCH),
+    'IMPORT': ('IMPORT', OP_ALL),
+    'RUN': ('RUN', OP_ALL),
+    'WAIT_FOR_SYSFS': ('WAIT_FOR_SYSFS', OP_ALL),
+    'LABEL': ('LABEL', OP_ALL),
+    'GOTO': ('GOTO', OP_ALL),
+    'NAME': ('NAME', OP_ALL),
+    'SYMLINK': ('SYMLINK', OP_ALL),
+    'OWNER': ('OWNER', OP_ALL),
+    'GROUP': ('GROUP', OP_ALL),
+    'MODE': ('MODE', OP_ALL),
+    'OPTIONS': ('OPTIONS', OP_ALL),
 }
 
 
@@ -189,7 +189,7 @@ def base_attr_strip_opt(key):
     """
     Behave as base_attr_key(), except when the @base result is a key in
     @KEY_OPT_ATTR: in this case return base, None
-    
+
     REM: base_attr_key() can raise a ValueError, so base_attr_strip_opt()
     can raise a ValueError too.
     """
@@ -203,11 +203,11 @@ def base_attr_strip_opt(key):
 def parse_rule(mline):
     """
     Parse @mline quite like add_to_rules() does in udev.
-    
+
     If the rule is syntaxically invalid, this function returns None.
     If the rule is not too much syntaxically invalid, this function
     returns (rule, reconstructible_rule).
-    
+
     @rule is a dictionary with the following structure:
     { key_attr_1: { attr_1: [op_1, val_1],
                     attr_2: [op_2, val_2],
@@ -219,7 +219,7 @@ def parse_rule(mline):
     @KEY_ATTR, @attr_{p} can be any string, @op_{q} is an udev rule
     operator in ('==', '!=', '+=', '=', ':='), @val_{r} can be any string,
     and @key_{s} is an element of the "key in dict" column of @KEY.
-    
+
     @reconstructible_rule is a list with the following structure:
     [elem, ...]
     where @elem is a list of the first subgroups as they are in
@@ -228,58 +228,68 @@ def parse_rule(mline):
     @reconstructible_rule store even the unrecognized keys, so when the
     line is reconstructed using it it is possible to avoid unnecessary
     changes.
-    
+
     NOTE: the "key in dict" columns are a subset of the keys of @KEY or
     @KEY_ATTR and the sets are disjoint.
     """
     rule = {}
     reconstructible_rule = []
-    
+
     # rotl: rest of the line
     rotl = mline
-    
+
     while True:
         match_key_subpart = RULE_KEY_REO.match(rotl)
         if not match_key_subpart:
             break
         sep, key, spc_1, op, spc_2, val, rotl = match_key_subpart.groups()
         reconstructible_rule.append([sep, key, spc_1, op, spc_2, val])
-        
+
         try:
             base, attr = base_attr_strip_opt(key)
         except ValueError:
             log.error("parse_rule: unclosed attribute in %r", key)
             return None
-        
+
         # key with attribute?
         if attr is not None:
             if base in KEY_ATTR:
                 rule_key, rule_allowed_ops = KEY_ATTR[base]
                 if op not in rule_allowed_ops:
-                    log.error("parse_rule: invalid rule multiline %r (invalid operation %r for key %r)", mline, op, key)
+                    log.error(
+                        "parse_rule: invalid rule multiline %r (invalid operation %r for key %r)",
+                        mline,
+                        op,
+                        key,
+                    )
                     return None
                 rule.setdefault(rule_key, {})
                 rule[rule_key][attr] = [op, val]
             else:
                 log.warning("parse_rule: unknown key %r", key)
                 continue
-        
-        # Simple key 
+
+        # Simple key
         if base in KEY:
             rule_key, rule_allowed_ops = KEY[base]
             if op not in rule_allowed_ops:
-                log.error("parse_rule: invalid rule multiline %r (invalid operation %r for key %r)", mline, op, key)
+                log.error(
+                    "parse_rule: invalid rule multiline %r (invalid operation %r for key %r)",
+                    mline,
+                    op,
+                    key,
+                )
                 return None
             rule[rule_key] = [op, val]
         else:
             log.warning("parse_rule: unknown key %r", key)
-    
+
     # next line is magic logic taken from udev_rules_parse.c:add_to_rules()
     valid = len(rule) >= 2 or (len(rule) == 1 and "NAME" not in rule)
     if not valid:
         log.error("parse_rule: invalid rule multiline %r", mline)
         return None
-    
+
     return rule, reconstructible_rule
 
 
@@ -299,14 +309,14 @@ def parse_lines(lines):
         if not rule_recons:
             continue
         rules.append(rule_recons[0])
-    return rules    
+    return rules
 
 
 def parse_file_nolock(rules_file):
     """
     Parse the @rules_file with parse_lines()
     """
-    return parse_lines(file(rules_file))
+    return parse_lines(open(rules_file, 'r'))
 
 
 def parse_file(rules_file):
@@ -314,7 +324,7 @@ def parse_file(rules_file):
     Lock @rules_file, parse it with parse_file_nolock(), and unlock it.
     Return the result of parse_file_nolock().
     """
-    lock_rules_file(rules_file) # RW lock, anybody? :)
+    lock_rules_file(rules_file)  # RW lock, anybody? :)
     try:
         return parse_file_nolock(rules_file)
     finally:
@@ -356,14 +366,14 @@ def replace_simple_op_values(recons, repl):
     """
     @recons is a list in the format of @reconstructible_rule described in
     pydoc of parse_rule().
-    
+
     This function returns a reconstructed rule line in which operations and
     values are replaced by using those of @repl for each corresponding key.
-    
+
     WARNING: only works for keys in @KEY
     """
     modified_recons = deepcopy(recons)
-    
+
     for subpart in modified_recons:
         key = subpart[RULE_KEY_POS_KEY]
         base, attr = base_attr_strip_opt(key)
@@ -373,12 +383,18 @@ def replace_simple_op_values(recons, repl):
             repl_op, repl_val = repl[base]
             rule_allowed_ops = KEY[base][1]
             if repl_op not in rule_allowed_ops:
-                raise ValueError("invalid replacement operation %r for key %r in rule %r" % (repl_op, key, reconstruct_rule(recons)))
+                raise ValueError(
+                    "invalid replacement operation %r for key %r in rule %r"
+                    % (repl_op, key, reconstruct_rule(recons))
+                )
             if '"' in repl_val:
-                raise ValueError("illegal character %r in replacement value %r for key %r in rule %r" % ('"', repl_val, key, reconstruct_rule(recons)))
+                raise ValueError(
+                    "illegal character %r in replacement value %r for key %r in rule %r"
+                    % ('"', repl_val, key, reconstruct_rule(recons))
+                )
             subpart[RULE_KEY_POS_OP] = repl_op
             subpart[RULE_KEY_POS_VAL] = repl_val
-    
+
     return reconstruct_rule(modified_recons)
 
 
@@ -386,7 +402,7 @@ def replace_simple(lines, match_repl_lst):
     """
     Transform @lines (generate the output) by doing some replacement in
     rules according to @match_repl_lst.
-    
+
     @match_repl_lst: [(match, repl), ...]
     @match: Dictionary (see format in parse_rule() pydoc)
             There will be a match iff for each key of @match, a
@@ -398,7 +414,7 @@ def replace_simple(lines, match_repl_lst):
            You can only use simple entries in this dictionary (in the form
            @key_{s} described in parse_rule() pydoc; possible keys are
            listed in @KEY).
-    
+
     WARNING: There will be no continued line in output; any line which was
     continued in input will be transformed into its non-continued
     equivalent.  Also lines will be left stripped.
@@ -407,17 +423,19 @@ def replace_simple(lines, match_repl_lst):
         if (not mline) or is_comment(mline):
             yield mline + "\n"
             continue
-        
+
         rule_recons = parse_rule(mline)
         if not rule_recons:
             yield mline + "\n"
             continue
-        
-        match_repl = find(match_repl_lst, (lambda mr: match_rule(rule_recons[0], mr[0])))
-        if match_repl == None:
+
+        match_repl = find(
+            match_repl_lst, (lambda mr: match_rule(rule_recons[0], mr[0]))
+        )
+        if match_repl is None:
             yield mline + "\n"
             continue
-        
+
         repl = match_repl[1]
         yield replace_simple_op_values(rule_recons[1], repl) + "\n"
 
@@ -426,7 +444,9 @@ def replace_simple_in_file_nolock(rules_file, match_repl_lst):
     """
     Change the lines of @rules_file using replace_simple()
     """
-    system.file_writelines_flush_sync(rules_file + ".tmp", replace_simple(file(rules_file), match_repl_lst))
+    system.file_writelines_flush_sync(
+        rules_file + ".tmp", replace_simple(open(rules_file, 'r'), match_repl_lst)
+    )
     os.rename(rules_file + ".tmp", rules_file)
 
 
@@ -498,7 +518,12 @@ def consider_rule_for_rollback(rule, src_set):
     operation.
     """
     name_field = rule.get('NAME')
-    return name_field and (len(rule) > 2) and (name_field[0] == "=") and (name_field[1] in src_set)
+    return (
+        name_field
+        and (len(rule) > 2)
+        and (name_field[0] == "=")
+        and (name_field[1] in src_set)
+    )
 
 
 def rename_persistent_net_rules(src_dst_lst, out_renamer):
@@ -506,19 +531,19 @@ def rename_persistent_net_rules(src_dst_lst, out_renamer):
     @src_dst_lst: [(src, dst), ...]
         where @src is a network interface name that appears in
         "z25_persistent-net.rules" and must be renamed to @dst
-    
+
     @out_renamer:
         class that implements non udev procedures needed to complete the
         renaming operations
-        
+
         Must implement the following interface:
-        
+
         class out_renamer:
             def __init__(self, src_dst_lst, pure_dst_set):
                 Instantiation is tried just after initial checks.
                 __init__() can do its own additional checks (and raise
                 an exception on failure).
-                
+
                 @src_dst_lst:
                     directly passed from the same argument of
                     rename_persistent_net_rules()
@@ -526,23 +551,23 @@ def rename_persistent_net_rules(src_dst_lst, out_renamer):
                 @pure_dst_set:
                     set of target names that are not also source names
                     must not be modified (can be saved)
-            
+
             def edit(self):
                 called after "z25_persistent-net.rules" has been modified
-            
+
             def preup(self):
                 called just before the attempt to re-up the interfaces
-            
+
             def rollback(self):
                 called if an exception is raised resulting in a potential
                 need to undo the work of edit
-    
+
     XXX: On external failure (kill -9, power outage), a small time window
     remains where the configuration could be leaved in an inconsistent
     state.
     """
     # WARNING: code not 100% safe in case asynchronous exceptions can occur
-    
+
     # TODO: detect if a previous renaming operation has been interrupted the
     # hard way (kill -9, power failure) and rollback if possible.
     # This will be better placed in an other function.
@@ -550,69 +575,85 @@ def rename_persistent_net_rules(src_dst_lst, out_renamer):
     src_set = assert_frozenset([src for src, dst in src_dst_lst])
     dst_set = assert_frozenset([dst for src, dst in src_dst_lst])
     pure_dst_set = dst_set.difference(src_set)
-    
+
     for src, dst in src_dst_lst:
         if src == dst:
             raise ValueError("Same source and target name %s" % src)
-    
+
     start_needed = False
     runtime_renamed_possible = False
-    
+
     context = out_renamer(src_dst_lst, pure_dst_set)
-    
+
     lock_rules_file(PERSISTENT_NET_RULES_FILE)
     locked = True
     try:
         net_rules = parse_file_nolock(PERSISTENT_NET_RULES_FILE)
-        rule_iface_set = frozenset([rule['NAME'][1] for rule in net_rules if 'NAME' in rule])
+        rule_iface_set = frozenset(
+            [rule['NAME'][1] for rule in net_rules if 'NAME' in rule]
+        )
         system_iface_set = frozenset(network.get_filtered_phys())
         known_iface_set = rule_iface_set.union(system_iface_set)
-        
+
         for pure_dst in pure_dst_set:
             if pure_dst in known_iface_set:
-                raise ValueError("Target interface name is already taken: %r" % pure_dst)
-        
+                raise ValueError(
+                    "Target interface name is already taken: %r" % pure_dst
+                )
+
         for src in src_set:
             if src not in rule_iface_set:
-                raise ValueError("Source interface name is not in z25_persistent-net.rules: %r" % src)
+                raise ValueError(
+                    "Source interface name is not in z25_persistent-net.rules: %r" % src
+                )
             if src not in system_iface_set:
-                raise ValueError("Source interface name is not known by the system: %r" % src)
-        
-        replacement = [({'NAME': ['=', src]}, {'NAME': ['=', dst]}) for src, dst in src_dst_lst]
-        rollback = [rule_to_restore_name(rule) for rule in net_rules if consider_rule_for_rollback(rule)]
-        
+                raise ValueError(
+                    "Source interface name is not known by the system: %r" % src
+                )
+
+        replacement = [
+            ({'NAME': ['=', src]}, {'NAME': ['=', dst]}) for src, dst in src_dst_lst
+        ]
+        rollback = [
+            rule_to_restore_name(rule)
+            for rule in net_rules
+            if consider_rule_for_rollback(rule)
+        ]
+
         try:
             replace_simple_in_file_nolock(PERSISTENT_NET_RULES_FILE, replacement)
-            
+
             context.edit()
-            
+
             unlock_rules_file(PERSISTENT_NET_RULES_FILE)
             locked = False
-            
+
             start_needed = True
             for dst in dst_set:
                 network.force_shutdown(dst)
-            
+
             runtime_renamed_possible = True
             trigger()
-            
+
             context.preup()
-        except:
-            log.exception("rename_persistent_net_rules: error during ethernet interface renaming, will rollback")
-            
+        except BaseException:
+            log.exception(
+                "rename_persistent_net_rules: error during ethernet interface renaming, will rollback"
+            )
+
             if not locked:
                 lock_rules_file(PERSISTENT_NET_RULES_FILE)
                 locked = True
-            
+
             context.rollback()
-            
+
             replace_simple_in_file_nolock(PERSISTENT_NET_RULES_FILE, rollback)
-            
+
             if runtime_renamed_possible:
                 trigger()
-            
+
             raise
-    
+
     finally:
         if locked:
             unlock_rules_file(PERSISTENT_NET_RULES_FILE)

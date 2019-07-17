@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2007-2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Network related routines for XIVO
@@ -22,8 +22,10 @@ log = logging.getLogger("xivo.network")  # pylint: disable-msg=C0103
 # CONFIG
 
 PROC_NET_VLAN = "/proc/net/vlan"
-VLAN_CONFIG_PARSER = re.compile('^\s*([^\s]+)\s*\|\s*(\d+)\s*\|\s*([^\s]+)\s*$').match
-VLAN_NAME_SPLITTER = re.compile('^(?:vlan(\d+)|(\W+)\.(\d+)|(?!vlan)[^\.]*\.(\d+))$').match
+VLAN_CONFIG_PARSER = re.compile(r'^\s*([^\s]+)\s*\|\s*(\d+)\s*\|\s*([^\s]+)\s*$').match
+VLAN_NAME_SPLITTER = re.compile(
+    r'^(?:vlan(\d+)|(\W+)\.(\d+)|(?!vlan)[^\.]*\.(\d+))$'
+).match
 
 SYS_CLASS_NET = "/sys/class/net"
 # /sys/class/net/<ifname>/carrier tells us if the interface if plugged
@@ -50,6 +52,7 @@ ROUTE = '/bin/ip'
 
 
 DECIMAL_SPLIT = re.compile(r'(\d+)').split
+
 
 def to_int_if_possible(s):
     try:
@@ -113,7 +116,9 @@ def cmp_lexdec(x_str, y_str):
     """
     Compare the splitted versions of x_str and y_str
     """
-    return cmp(split_lexdec(x_str), split_lexdec(y_str))
+    x = split_lexdec(x_str)
+    y = split_lexdec(y_str)
+    return (x > y) - (x < y)
 
 
 def sorted_lst_lexdec(seqof_lexdec_str):
@@ -148,11 +153,10 @@ def get_linux_netdev_list():
     """
     Get an unfiltered view of network interfaces as seen by Linux
     """
-    return [entry for entry in os.listdir(SYS_CLASS_NET)
-            if is_linux_netdev_if(entry)]
+    return [entry for entry in os.listdir(SYS_CLASS_NET) if is_linux_netdev_if(entry)]
 
 
-def get_filtered_ifnames(ifname_match_func=lambda x:True):
+def get_filtered_ifnames(ifname_match_func=lambda x: True):
     """
     Return the filtered list of network interfaces
     """
@@ -162,7 +166,7 @@ def get_filtered_ifnames(ifname_match_func=lambda x:True):
 def is_linux_dummy_if(ifname):
     """
     Return True if ifname seems to be a dummy interface
-    
+
     NOTE: flaky test, as a dummy interface can be renamed:
       $> ip link set name ethX dev dummyY
     """
@@ -173,15 +177,16 @@ def is_linux_vlan_if(ifname):
     """
     Return True if ifname seems to be a vlan interface
     """
-    return os.path.isfile(os.path.join(PROC_NET_VLAN, ifname)) and is_linux_netdev_if(ifname)
+    return os.path.isfile(os.path.join(PROC_NET_VLAN, ifname)) and is_linux_netdev_if(
+        ifname
+    )
 
 
 def get_linux_vlan_list():
     """
     Get a view of vlan interfaces as seen by Linux
     """
-    return [entry for entry in os.listdir(PROC_NET_VLAN)
-            if is_linux_vlan_if(entry)]
+    return [entry for entry in os.listdir(PROC_NET_VLAN) if is_linux_vlan_if(entry)]
 
 
 def get_linux_vlan_config(ifname=None):
@@ -193,20 +198,21 @@ def get_linux_vlan_config(ifname=None):
     if not os.access(configpath, os.R_OK):
         return False
 
-    config = file(configpath)
+    with open(configpath, 'r') as config:
+        r = {}
 
-    r = {}
+        for line in config.readlines():
+            parsed = VLAN_CONFIG_PARSER(line)
+            if parsed:
+                r[parsed.group(1)] = {
+                    'vlan-id': int(parsed.group(2)),
+                    'vlan-raw-device': parsed.group(3),
+                }
 
-    for line in config.readlines():
-        parsed = VLAN_CONFIG_PARSER(line)
-        if parsed:
-            r[parsed.group(1)] = {'vlan-id':            int(parsed.group(2)),
-                                  'vlan-raw-device':    parsed.group(3)}
+        if ifname is not None:
+            return r.get(ifname, False)
 
-    if ifname is not None:
-        return r.get(ifname, False)
-
-    return r
+        return r
 
 
 def get_vlan_info_from_ifname(ifname):
@@ -250,7 +256,7 @@ def is_alias_if(ifname):
     """
     pos = ifname.find(':')
     if pos > 0:
-        return ifname[(pos + 1):].isdigit()
+        return ifname[(pos + 1) :].isdigit()
     return False
 
 
@@ -259,9 +265,11 @@ def phy_name_from_alias_if(ifname):
     Return the physical interface name from an alias interface
     """
     if not is_alias_if(ifname):
-        raise ValueError("Invalid interface, it's not an alias interface (ifname: %r)" % ifname)
+        raise ValueError(
+            "Invalid interface, it's not an alias interface (ifname: %r)" % ifname
+        )
 
-    return ifname[:ifname.find(':')]
+    return ifname[: ifname.find(':')]
 
 
 def is_vlan_if(ifname):
@@ -272,7 +280,7 @@ def is_vlan_if(ifname):
         return ifname[4:].isdigit()
     pos = ifname.find('.')
     if pos > 0:
-        return ifname[(pos + 1):].isdigit()
+        return ifname[(pos + 1) :].isdigit()
     return False
 
 
@@ -288,10 +296,14 @@ def is_eth_phy_if(ifname):
     """
     Return True if ifname is a valid physical ethernet interface name
     """
-    return (ifname.startswith('eth') or ifname.startswith('en')) and not is_alias_if(ifname) and is_phy_if(ifname)
+    return (
+        (ifname.startswith('eth') or ifname.startswith('en'))
+        and not is_alias_if(ifname)
+        and is_phy_if(ifname)
+    )
 
 
-def get_filtered_phys(ifname_match_func=lambda x:True):
+def get_filtered_phys(ifname_match_func=lambda x: True):
     """
     Return the filtered list of network interfaces which are not VLANs
     (the interface name does not contain a '.')
@@ -304,7 +316,8 @@ def is_interface_plugged(ifname):
     WARNING: Only works on physical interfaces
     """
     try:
-        return bool(int(file(os.path.join(SYS_CLASS_NET, ifname, CARRIER)).read().strip()))
+        with open(os.path.join(SYS_CLASS_NET, ifname, CARRIER), 'r') as f:
+            return bool(int(f.read().strip()))
     except IOError:
         return False
 
@@ -313,28 +326,32 @@ def get_interface_flags(ifname):
     """
     Return the interface flags
     """
-    return int(file(os.path.join(SYS_CLASS_NET, ifname, FLAGS)).read().strip(), 16)
+    with open(os.path.join(SYS_CLASS_NET, ifname, FLAGS), 'r') as f:
+        return int(f.read().strip(), 16)
 
 
 def get_interface_hwaddress(ifname):
     """
     Return the hardware address
     """
-    return file(os.path.join(SYS_CLASS_NET, ifname, HWADDRESS)).read().strip()
+    with open(os.path.join(SYS_CLASS_NET, ifname, HWADDRESS), 'r') as f:
+        return f.read().strip()
 
 
 def get_interface_hwtypeid(ifname):
     """
     Return the hardware type id
     """
-    return int(file(os.path.join(SYS_CLASS_NET, ifname, HWTYPE)).read().strip())
+    with open(os.path.join(SYS_CLASS_NET, ifname, HWTYPE), 'r') as f:
+        return int(f.read().strip())
 
 
 def get_interface_mtu(ifname):
     """
     Return the interface mtu
     """
-    return int(file(os.path.join(SYS_CLASS_NET, ifname, MTU)).read().strip())
+    with open(os.path.join(SYS_CLASS_NET, ifname, MTU), 'r') as f:
+        return int(f.read().strip())
 
 
 def normalize_ipv4_address(addr):
@@ -448,7 +465,9 @@ def bitmask_to_mask_ipv4(bits):
     Return an IPv4 netmask address as a 4uple of ints
     @bits: Bit integer
     """
-    return struct.unpack("BBBB", socket.inet_aton(str((0xFFFFFFFF >> (32 - bits)) << (32 - bits))))
+    return struct.unpack(
+        "BBBB", socket.inet_aton(str((0xFFFFFFFF >> (32 - bits)) << (32 - bits)))
+    )
 
 
 def bitmask_to_mask_ipv6(bits):
@@ -467,7 +486,7 @@ def bitmask_to_mask_ipv6(bits):
 
     if nb > 0:
         ret.extend(["\xff\xff"] * nb)
-        bits -= (16 * nb)
+        bits -= 16 * nb
 
     if bits > 0:
         ret.append(struct.pack("!H", (0xFFFF >> (16 - bits)) << (16 - bits)))
@@ -503,11 +522,15 @@ def netmask_invert(mask):
     return tuple([m ^ 0xFF for m in mask])
 
 
-_valid_netmask = frozenset([
-    struct.unpack("BBBB", struct.pack(">L", 0xFFFFFFFF ^ ((1 << _m) - 1)))
-    for _m in xrange(0, 33)
-])
+_m = None
+_valid_netmask = frozenset(
+    [
+        struct.unpack("BBBB", struct.pack(">L", 0xFFFFFFFF ^ ((1 << _m) - 1)))
+        for _m in range(0, 33)
+    ]
+)
 del _m
+
 
 def plausible_netmask(addr):
     """
@@ -536,6 +559,7 @@ def ipv4_in_network(addr, netmask, network):
 # WARNING: the following function does not test the length which must be <= 63
 DomainLabelOk = re.compile(r'[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?$').match
 
+
 def plausible_search_domain(search_domain):
     """
     Return True if the search_domain is suitable for use in the search
@@ -546,9 +570,16 @@ def plausible_search_domain(search_domain):
     # 255 seems to include the final '\0' length byte, so a FQDN is 253
     # char max.  We remove 2 char so that a one letter label requested and
     # prepended to the search domain results in a FQDN that is not too long
-    return search_domain and len(search_domain) <= 251 and \
-           all((((len(label) <= 63) and DomainLabelOk(label))
-                for label in search_domain.split('.')))
+    return (
+        search_domain
+        and len(search_domain) <= 251
+        and all(
+            (
+                ((len(label) <= 63) and DomainLabelOk(label))
+                for label in search_domain.split('.')
+            )
+        )
+    )
 
 
 class NetworkOpError(Exception):
@@ -583,7 +614,9 @@ def force_shutdown(phy):
         if status == 6:
             log.warning("%r ifplugd instance seems to have already been stopped", phy)
         else:
-            raise NetworkOpError("ifplugd miserably failed while trying to kill instance %r" % phy)
+            raise NetworkOpError(
+                "ifplugd miserably failed while trying to kill instance %r" % phy
+            )
 
     vlans_phy = [vlan for vlan in get_linux_netdev_list() if vlan.startswith(phy + ".")]
     vlans_phy.append(phy)
@@ -596,7 +629,9 @@ def force_shutdown(phy):
             log.exception(errmsg)
             raise NetworkOpError(errmsg)
         if status:
-            raise NetworkOpError("ifdown miserably failed to shutdown the %r network interface" % vlan)
+            raise NetworkOpError(
+                "ifdown miserably failed to shutdown the %r network interface" % vlan
+            )
 
 
 def ifplugd_start():
@@ -619,15 +654,33 @@ def _execute_cmd(cmd):
 
 
 def route_set(address, netmask, gateway, iface):
-    cmd = [ROUTE, '-s', '-s', 'route', 'add',
-        '%s/%s' % (address, netmask), 'via', gateway, 'dev', iface]
+    cmd = [
+        ROUTE,
+        '-s',
+        '-s',
+        'route',
+        'add',
+        '%s/%s' % (address, netmask),
+        'via',
+        gateway,
+        'dev',
+        iface,
+    ]
 
     return _execute_cmd(cmd)
 
 
 def route_unset(address, netmask, gateway, iface):
-    cmd = [ROUTE, 'route', 'del',
-        '%s/%s' % (address, netmask), 'via', gateway, 'dev', iface]
+    cmd = [
+        ROUTE,
+        'route',
+        'del',
+        '%s/%s' % (address, netmask),
+        'via',
+        gateway,
+        'dev',
+        iface,
+    ]
 
     return _execute_cmd(cmd)
 
@@ -663,7 +716,10 @@ def route_list():
 
 
 if __name__ == "__main__":
+
     def _test():
         import doctest
+
         doctest.testmod()
+
     _test()

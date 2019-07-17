@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013-2014 Avencall
+# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import unicode_literals
@@ -13,7 +13,6 @@ from xivo.cli.registry import CommandRegistry
 
 
 class TestRawCommandLineParser(unittest.TestCase):
-
     def setUp(self):
         self.command = Mock()
         self.command_registry = Mock(CommandRegistry)
@@ -21,7 +20,9 @@ class TestRawCommandLineParser(unittest.TestCase):
 
     def test_parse_empty_line(self):
         raw_command_line = ''
-        self.command_registry.get_command_and_args.side_effect = NoMatchingCommandError()
+        self.command_registry.get_command_and_args.side_effect = (
+            NoMatchingCommandError()
+        )
 
         command_line = self.parser.parse(raw_command_line)
 
@@ -32,7 +33,9 @@ class TestRawCommandLineParser(unittest.TestCase):
 
     def test_parse_one_letter_line(self):
         raw_command_line = 'h'
-        self.command_registry.get_command_and_args.side_effect = NoMatchingCommandError()
+        self.command_registry.get_command_and_args.side_effect = (
+            NoMatchingCommandError()
+        )
 
         command_line = self.parser.parse(raw_command_line)
 
@@ -43,7 +46,9 @@ class TestRawCommandLineParser(unittest.TestCase):
 
     def test_parse_one_letter_line_with_whitespaces(self):
         raw_command_line = ' h  \n'
-        self.command_registry.get_command_and_args.side_effect = NoMatchingCommandError()
+        self.command_registry.get_command_and_args.side_effect = (
+            NoMatchingCommandError()
+        )
 
         command_line = self.parser.parse(raw_command_line)
 
@@ -76,11 +81,16 @@ class TestRawCommandLineParser(unittest.TestCase):
 
     def test_parse_two_word_valid_line(self):
         raw_command_line = 'help foobar'
-        self.command_registry.get_command_and_args.return_value = (self.command, ['foobar'])
+        self.command_registry.get_command_and_args.return_value = (
+            self.command,
+            ['foobar'],
+        )
 
         command_line = self.parser.parse(raw_command_line)
 
-        self.command_registry.get_command_and_args.assert_called_once_with(['help', 'foobar'])
+        self.command_registry.get_command_and_args.assert_called_once_with(
+            ['help', 'foobar']
+        )
         assert_that(command_line.words, equal_to(['help', 'foobar']))
         assert_that(command_line.command, equal_to(self.command))
         assert_that(command_line.command_args, equal_to(['foobar']))

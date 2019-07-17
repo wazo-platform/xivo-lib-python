@@ -16,16 +16,12 @@ from hamcrest import (
     instance_of,
     not_,
 )
-from marshmallow import (
-    fields,
-    ValidationError,
-)
+from marshmallow import fields, ValidationError
 
 from ..mallow_helpers import ListSchema, Schema
 
 
 class TestSchema(TestCase):
-
     def test_ensure_dict(self):
         schema = Schema()
 
@@ -37,8 +33,7 @@ class TestSchema(TestCase):
         class TestSchema(Schema):
             key = fields.String(required=True)
 
-        assert_that(calling(TestSchema().load).with_args({}),
-                    raises(ValidationError))
+        assert_that(calling(TestSchema().load).with_args({}), raises(ValidationError))
 
     def test_ordered(self):
         class TestSchema(Schema):
@@ -50,7 +45,6 @@ class TestSchema(TestCase):
 
 
 class TestListSchema(TestCase):
-
     def test_arbitrary_field_search(self):
         class Schema(ListSchema):
             searchable_columns = ['name']
@@ -59,13 +53,7 @@ class TestListSchema(TestCase):
 
         result, _ = Schema().load(raw_data)
 
-        assert_that(
-            result,
-            all_of(
-                has_entries(name='foobar'),
-                not_(has_key('other')),
-            )
-        )
+        assert_that(result, all_of(has_entries(name='foobar'), not_(has_key('other'))))
 
     def test_order_sort_columns(self):
         class Schema(ListSchema):
@@ -109,11 +97,5 @@ class TestListSchema(TestCase):
 
         assert_that(
             result,
-            has_entries(
-                direction='asc',
-                order=None,
-                limit=None,
-                offset=0,
-                search=None,
-            )
+            has_entries(direction='asc', order=None, limit=None, offset=0, search=None),
         )

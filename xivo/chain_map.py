@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2014-2016 Avencall
+# Copyright 2014-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from copy import copy
@@ -9,7 +9,6 @@ from six.moves import UserDict
 
 
 class ChainMap(UserDict):
-
     def __init__(self, *dicts):
         self.data = {}
         for d in dicts:

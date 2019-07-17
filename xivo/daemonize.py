@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2007-2016 Avencall
+# Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Transforms a process into a daemon from hell
@@ -22,13 +22,16 @@ PROG_CMDLN = 'cmdline'
 log = logging.getLogger("xivo.daemonize")  # pylint: disable-msg=C0103
 
 
+def c14n_prog_name(arg):
+    return os.path.basename(re.sub(r'\.py$', '', arg))
+
+
 def remove_if_stale_pidfile(pidfile):
     """
     @pidfile: PID file to remove if it is staled.
 
     Exceptions are logged and are not propagated.
     """
-    c14n_prog_name = lambda arg: os.path.basename(re.sub(r'\.py$', '', arg))
     try:
         try:
             pid_maydaemon = int(open(pidfile).readline().strip())
@@ -39,7 +42,11 @@ def remove_if_stale_pidfile(pidfile):
         # Who are we?
         i_am = c14n_prog_name(sys.argv[0])
         try:
-            other_cmdline = open(os.path.join(SLASH_PROC, str(pid_maydaemon), PROG_CMDLN)).read().split('\0')
+            other_cmdline = (
+                open(os.path.join(SLASH_PROC, str(pid_maydaemon), PROG_CMDLN))
+                .read()
+                .split('\0')
+            )
             if len(other_cmdline) and other_cmdline[-1] == "":
                 other_cmdline.pop()
         except IOError as e:
@@ -51,15 +58,21 @@ def remove_if_stale_pidfile(pidfile):
             raise
         # Check the whole command line of the other process
         if i_am in map(c14n_prog_name, other_cmdline):
-            log.warning("A pidfile %r already exists (contains pid %d) and the "
-                        "correponding process command line contains our own name %r",
-                        pidfile, pid_maydaemon, i_am)
+            log.warning(
+                "A pidfile %r already exists (contains pid %d) and the "
+                "correponding process command line contains our own name %r",
+                pidfile,
+                pid_maydaemon,
+                i_am,
+            )
             return
         # It may not be us, but we must be quite sure about that so also try
         # to validate with the name of the executable.
         full_pgm = lock_pgm = None
         try:
-            full_pgm = os.readlink(os.path.join(SLASH_PROC, str(pid_maydaemon), PROG_SLINK))
+            full_pgm = os.readlink(
+                os.path.join(SLASH_PROC, str(pid_maydaemon), PROG_SLINK)
+            )
             lock_pgm = os.path.basename(full_pgm)
         except OSError as e:
             if e.errno == errno.EACCES:
@@ -73,17 +86,28 @@ def remove_if_stale_pidfile(pidfile):
             else:
                 raise
         if i_am == lock_pgm:
-            log.warning("A pidfile %r already exists (contains pid %d) and an "
-                        "executable with our name %r is runnning with that pid.",
-                        pidfile, pid_maydaemon, i_am)
+            log.warning(
+                "A pidfile %r already exists (contains pid %d) and an "
+                "executable with our name %r is runnning with that pid.",
+                pidfile,
+                pid_maydaemon,
+                i_am,
+            )
             return
         # Ok to remove the previously existing pidfile now.
-        log.info("A pidfile %r already exists (contains pid %d) but the "
-                 "corresponding process does not seem to match with our own name %r.  "
-                 "Will remove the pidfile.", pidfile, pid_maydaemon, i_am)
+        log.info(
+            "A pidfile %r already exists (contains pid %d) but the "
+            "corresponding process does not seem to match with our own name %r.  "
+            "Will remove the pidfile.",
+            pidfile,
+            pid_maydaemon,
+            i_am,
+        )
         log.info("Splitted command line of the other process: %s", other_cmdline)
         if lock_pgm:
-            log.info("Name of the executable the other process comes from: %s", full_pgm)
+            log.info(
+                "Name of the executable the other process comes from: %s", full_pgm
+            )
         os.unlink(pidfile)
         return
     except Exception:  # pylint: disable-msg=W0703
@@ -109,17 +133,23 @@ def take_file_lock(own_file, lock_file, own_content):
             os.unlink(own_file)
     except OSError as e:
         if e.errno == errno.EEXIST:
-            log.warning("The lock file %r already exists - won't "
-                        "overwrite it.  An other instance of ourself "
-                        "is probably running.", lock_file)
+            log.warning(
+                "The lock file %r already exists - won't "
+                "overwrite it.  An other instance of ourself "
+                "is probably running.",
+                lock_file,
+            )
             return False
         else:
             raise
     content = open(lock_file).read(len(own_content) + 1)
     if content != own_content:
-        log.warning("I thought I successfully took the lock file %r but "
-                    "it does not contain what was expected.  Somebody is "
-                    "playing with us.", lock_file)
+        log.warning(
+            "I thought I successfully took the lock file %r but "
+            "it does not contain what was expected.  Somebody is "
+            "playing with us.",
+            lock_file,
+        )
         return False
     return True
 

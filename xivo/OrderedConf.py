@@ -2,7 +2,7 @@
 """Ordered Configuration Parser useful when the order of options counts.
 
 Copyright (c) 2001, 2002, 2003, 2004 Python Software Foundation;
-Copyright (C) 2007-2016  Avencall
+Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
 
 This module derives from the ConfigParser module distributed in Python 2.4.4
 
@@ -118,7 +118,7 @@ See the the classes PyDoc for full description.
 __version__ = "$Revision$ $Date$"
 __license__ = """
     Copyright (c) 2001, 2002, 2003, 2004 Python Software Foundation;
-    Copyright (C) 2007-2010  Avencall
+    Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
                                         All Rights Reserved
 
     Under PSF LICENSE AGREEMENT FOR PYTHON
@@ -126,27 +126,28 @@ __license__ = """
         http://www.python.org/download/releases/2.4.4/license/
 """
 
-from ConfigParser import Error, NoSectionError, DuplicateSectionError, \
-        NoOptionError, InterpolationError, InterpolationMissingOptionError, \
-        InterpolationSyntaxError, InterpolationDepthError, ParsingError, \
-        MissingSectionHeaderError
+from ConfigParser import (
+    Error,
+    NoSectionError,
+    DuplicateSectionError,
+    NoOptionError,
+    ParsingError,
+    MissingSectionHeaderError,
+)
 
 import re
+from six.moves import reduce
 
 
-SECTCRE = re.compile(
-    r'\['                                 # [
-    r'(?P<header>[^]]+)'                  # very permissive!
-    r'\]'                                 # ]
-    )
+SECTCRE = re.compile(r'\[' r'(?P<header>[^]]+)' r'\]')  # [  # very permissive!  # ]
 OPTCRE = re.compile(
-    r'(?P<option>[^:=\s][^:=]*)'          # very permissive!
-    r'\s*(?P<vi>[:=])\s*'                 # any number of space/tab,
-                                          # followed by separator
-                                          # (either : or =), followed
-                                          # by any # space/tab
-    r'(?P<value>.*)$'                     # everything up to eol
-    )
+    r'(?P<option>[^:=\s][^:=]*)'  # very permissive!
+    r'\s*(?P<vi>[:=])\s*'  # any number of space/tab,
+    # followed by separator
+    # (either : or =), followed
+    # by any # space/tab
+    r'(?P<value>.*)$'  # everything up to eol
+)
 
 
 def _id1(x):
@@ -177,13 +178,14 @@ class AlreadyLoadedError(Error):
     Raised when trying to load multiple files in an instance that
     doesn't support that.
     """
+
     def __init__(self, done_filename, second_filename):
         Error.__init__(
-	    self,
-	    "Trying to load multiple files in an instance that can't do that.\n"
-	    "\tdone_filename   : %s\n"
-	    "\tsecond_filename : %s\n"
-	    % (done_filename, second_filename))
+            self,
+            "Trying to load multiple files in an instance that can't do that.\n"
+            "\tdone_filename   : %s\n"
+            "\tsecond_filename : %s\n" % (done_filename, second_filename),
+        )
         self.done_filename = done_filename
         self.second_filename = second_filename
 
@@ -197,8 +199,8 @@ class SectionDesc:
     method of an OrderedRawConf instance.  That means that you can
     simply do, for example:
 
-	conf = OrderedRawConf(None, "/etc/somecoolconfig.conf")
-	for section in c:
+        conf = OrderedRawConf(None, "/etc/somecoolconfig.conf")
+        for section in c:
             print section.get_name()
             print section.ordered_items()
             ...
@@ -244,8 +246,8 @@ class SectionDesc:
 
         Return the unordered list of (name, value) option pairs of this
         section.  If multiple options with the same canonical name (as
-	per 'opt_trans' of the corresponding OrderedRawConf object)
-	exist, only the first one of each different set will be
+        per 'opt_trans' of the corresponding OrderedRawConf object)
+        exist, only the first one of each different set will be
         returned.
 
     ordered_items(self)
@@ -308,17 +310,21 @@ class SectionDesc:
         OrderedRawConf with the correct iterable option token abstract
         descriptor.
     """
+
     def __init__(self, conf_instance, sect_id_token):
         self.conf_instance = conf_instance
         self.sect_id_token = sect_id_token
+
     def get_section_token(self):
         return self.sect_id_token
+
     def __getattr__(self, name):
         try:
             func = getattr(self.conf_instance, '_' + name + '_by_section_token')
             return lambda *x: func(self.sect_id_token, *x)
         except AttributeError:
             raise AttributeError(name)
+
     def __iter__(self):
         """
         NEW API
@@ -388,11 +394,14 @@ class OptionDesc:
         Same as get_value() but cast the results.  See OrderedRawConf
         PyDoc for details.
     """
+
     def __init__(self, conf_instance, opt_id_token):
         self.conf_instance = conf_instance
         self.opt_id_token = opt_id_token
+
     def get_option_token(self):
         return self.opt_id_token
+
     def __getattr__(self, name):
         try:
             func = getattr(self.conf_instance, '_' + name + '_by_option_token')
@@ -402,8 +411,16 @@ class OptionDesc:
 
 
 def _str_to_boolean(v):
-    _boolean_states = {'1': True, 'yes': True, 'true': True, 'on': True,
-                       '0': False, 'no': False, 'false': False, 'off': False}
+    _boolean_states = {
+        '1': True,
+        'yes': True,
+        'true': True,
+        'on': True,
+        '0': False,
+        'no': False,
+        'false': False,
+        'off': False,
+    }
     if v.lower() not in _boolean_states:
         raise ValueError('Not a boolean: %s' % v)
     return _boolean_states[v.lower()]
@@ -419,7 +436,15 @@ class OrderedRawConf:
     provides a new API specialy designed to retrieve ordered entities in
     various pythonic ways :)
     """
-    def __init__(self, fp = None, filename = None, sect_trans=_id1, opt_trans=_id1, allow_multiple=True):
+
+    def __init__(
+        self,
+        fp=None,
+        filename=None,
+        sect_trans=_id1,
+        opt_trans=_id1,
+        allow_multiple=True,
+    ):
         """
         The constructor can optionally parse an open file or open and
         parse a file using its filename.  You can also provide it
@@ -727,7 +752,7 @@ class OrderedRawConf:
 
     @staticmethod
     def _has_conflicting_option_names_int(s):
-        return (len(s[0]) != len(s[1]))
+        return len(s[0]) != len(s[1])
 
     def _get_conflicting_option_names_int(self, s):
         cf = []
@@ -757,8 +782,7 @@ class OrderedRawConf:
         The user can decide by itself if such a situation is an error
         and if it is not he can still safely use the new ordered API.
         """
-        return self._has_conflicting_option_names_int(
-                self._sectup_by_name(section))
+        return self._has_conflicting_option_names_int(self._sectup_by_name(section))
 
     def get_conflicting_option_names(self, section):
         """
@@ -772,8 +796,7 @@ class OrderedRawConf:
         first found section with a canonical name of sect_trans(section)
         If such a section is not found, NoOptionError is raised.
         """
-        return self._get_conflicting_option_names_int(
-                self._sectup_by_name(section))
+        return self._get_conflicting_option_names_int(self._sectup_by_name(section))
 
     def has_any_conflicting_option_name(self):
         """
@@ -818,8 +841,10 @@ class OrderedRawConf:
         situations where it does not make sense to have duplicated
         section or option names.
         """
-        return (not self.has_conflicting_section_names()) \
-                and (not self.has_any_conflicting_option_name())
+        return (not self.has_conflicting_section_names()) and (
+            not self.has_any_conflicting_option_name()
+        )
+
     is_probably_safe_with_old_api = has_no_duplication
 
     def iter_sections(self):
@@ -840,8 +865,9 @@ class OrderedRawConf:
         with a name of the form _(.*)_by_section_token() of this class
         with the correct iterable section token abstract descriptor.
         """
-        for i in xrange(len(self._sections[0])):
+        for i in range(len(self._sections[0])):
             yield SectionDesc(self, i)
+
     __iter__ = iter_sections
 
     def _sectup_by_tok(self, token):
@@ -890,7 +916,7 @@ class OrderedRawConf:
         return [k for k, v in self._sectup_by_tok(i)[0]]
 
     def _iter_options_by_sectup(self, sectup):
-        for j in xrange(len(sectup[0])):
+        for j in range(len(sectup[0])):
             yield OptionDesc(self, (sectup, j))
 
     def _iter_options_by_section_token(self, i):
@@ -935,7 +961,7 @@ class OrderedRawConf:
         cur_sect = None
         cur_opt = None
         cur_dict_opt = None
-        e = None                        # None, or an exception
+        e = None  # None, or an exception
         while True:
             line = fp.readline()
             if not line:
@@ -983,7 +1009,7 @@ class OrderedRawConf:
                     # ';' is a comment delimiter only if it follows
                     # a spacing character
                     pos = optval.find(';')
-                    if pos > 0 and optval[pos-1].isspace():
+                    if pos > 0 and optval[pos - 1].isspace():
                         optval = optval[:pos]
                 optname = optname.rstrip()
                 topt = self.opt_trans(optname)
@@ -1013,7 +1039,7 @@ if __name__ == '__main__':
     import sys
 
     def whoami(lvl=0):
-        return sys._getframe(lvl+1).f_code.co_name
+        return sys._getframe(lvl + 1).f_code.co_name
 
     EMPTY_CONF = "\n"
 
@@ -1034,30 +1060,30 @@ key_boolean_1=1
     """
 
     VALID_CONF_SKV = (
-      ('blablabla', 'key1', 'blablabla_val_1'),
-      ('blablabla', 'key2', 'blablabla_val_2'),
-      ('corpremedaille', 'okey1', 'corpremedaille_val_1'),
-      ('corpremedaille', 'okey2', 'corpremedaille_val_2'),
-      ('transtyping', 'key_int', '42'),
-      ('transtyping', 'key_float', '131.31337'),
-      ('transtyping', 'key_boolean_0', 'fALSe'),
-      ('transtyping', 'key_boolean_1', '1')
+        ('blablabla', 'key1', 'blablabla_val_1'),
+        ('blablabla', 'key2', 'blablabla_val_2'),
+        ('corpremedaille', 'okey1', 'corpremedaille_val_1'),
+        ('corpremedaille', 'okey2', 'corpremedaille_val_2'),
+        ('transtyping', 'key_int', '42'),
+        ('transtyping', 'key_float', '131.31337'),
+        ('transtyping', 'key_boolean_0', 'fALSe'),
+        ('transtyping', 'key_boolean_1', '1'),
     )
 
     VALID_CONF_INT = (
-      ('transtyping', 'key_int', 42),
-      ('transtyping', 'key_boolean_1', 1)
+        ('transtyping', 'key_int', 42),
+        ('transtyping', 'key_boolean_1', 1),
     )
 
     VALID_CONF_FLOAT = (
-      ('transtyping', 'key_int', 42.0),
-      ('transtyping', 'key_float', 131.31337),
-      ('transtyping', 'key_boolean_1', 1.0)
+        ('transtyping', 'key_int', 42.0),
+        ('transtyping', 'key_float', 131.31337),
+        ('transtyping', 'key_boolean_1', 1.0),
     )
 
     VALID_CONF_BOOLEAN = (
-      ('transtyping', 'key_boolean_0', False),
-      ('transtyping', 'key_boolean_1', True)
+        ('transtyping', 'key_boolean_0', False),
+        ('transtyping', 'key_boolean_1', True),
     )
 
     VALID_SECTIONS = ('blablabla', 'corpremedaille', 'transtyping')
@@ -1118,154 +1144,284 @@ k=v
                 OrderedRawConf(fo, tst_name)
             except Error:
                 self.fail()
+
         def testEmpty(self):
             self.commonTest(StringIO(EMPTY_CONF), parser_origin())
+
         def testSimple(self):
             self.commonTest(StringIO(VALID_CONF), parser_origin())
+
         def testSectionConflict(self):
             self.commonTest(StringIO(SECTION_CONFLICT_CONF), parser_origin())
+
         def testOptionConflict(self):
             self.commonTest(StringIO(OPTION_CONFLICT_CONF), parser_origin())
+
         def testNoSection(self):
-            self.assertRaises(Error, OrderedRawConf, StringIO(NO_SEC_CONF), parser_origin())
+            self.assertRaises(
+                Error, OrderedRawConf, StringIO(NO_SEC_CONF), parser_origin()
+            )
+
         def testInval(self):
-            self.assertRaises(Error, OrderedRawConf, StringIO(INVAL_CONF), parser_origin())
+            self.assertRaises(
+                Error, OrderedRawConf, StringIO(INVAL_CONF), parser_origin()
+            )
 
     class SimpleOldApi(unittest.TestCase):
-        set_skv, set_int, set_float, set_boolean = VALID_CONF_SKV, VALID_CONF_INT, VALID_CONF_FLOAT, VALID_CONF_BOOLEAN
+        set_skv, set_int, set_float, set_boolean = (
+            VALID_CONF_SKV,
+            VALID_CONF_INT,
+            VALID_CONF_FLOAT,
+            VALID_CONF_BOOLEAN,
+        )
         section_set = frozenset(VALID_SECTIONS)
         other_set = frozenset(OTHER_SECTIONS)
+
         @staticmethod
         def cmpSection(sa, sb):
             return sa == sb
+
         @staticmethod
         def keyToCanon(k):
             return k
+
         def setUp(self):
             self.ord_cnf = OrderedRawConf(StringIO(VALID_CONF), parser_origin())
+
         def commonGetLike(self, method, xset):
-            map(lambda x_y_z: self.assertEqual(method(x_y_z[0], x_y_z[1]), x_y_z[2]), xset)
+            map(
+                lambda x_y_z: self.assertEqual(method(x_y_z[0], x_y_z[1]), x_y_z[2]),
+                xset,
+            )
+
         def testGet(self):
             self.commonGetLike(self.ord_cnf.get, self.set_skv)
+
         def testGetInt(self):
             self.commonGetLike(self.ord_cnf.getint, self.set_int)
+
         def testGetFloat(self):
             self.commonGetLike(self.ord_cnf.getfloat, self.set_float)
+
         def testGetBoolean(self):
             self.commonGetLike(self.ord_cnf.getboolean, self.set_boolean)
+
         def testGetRaisesSections(self):
             for wrong_s in OTHER_SECTIONS:
                 self.assertRaises(NoSectionError, self.ord_cnf.get, wrong_s, 'x')
                 self.assertRaises(NoSectionError, self.ord_cnf.getint, wrong_s, 'x')
                 self.assertRaises(NoSectionError, self.ord_cnf.getfloat, wrong_s, 'x')
                 self.assertRaises(NoSectionError, self.ord_cnf.getboolean, wrong_s, 'x')
+
         def testGetRaisesOption(self):
             for wrong_s in OTHER_SECTIONS:
-                self.assertRaises(NoOptionError, self.ord_cnf.get, VALID_SECTIONS[0], wrong_s)
-                self.assertRaises(NoOptionError, self.ord_cnf.getint, VALID_SECTIONS[0], wrong_s)
-                self.assertRaises(NoOptionError, self.ord_cnf.getfloat, VALID_SECTIONS[0], wrong_s)
-                self.assertRaises(NoOptionError, self.ord_cnf.getboolean, VALID_SECTIONS[0], wrong_s)
+                self.assertRaises(
+                    NoOptionError, self.ord_cnf.get, VALID_SECTIONS[0], wrong_s
+                )
+                self.assertRaises(
+                    NoOptionError, self.ord_cnf.getint, VALID_SECTIONS[0], wrong_s
+                )
+                self.assertRaises(
+                    NoOptionError, self.ord_cnf.getfloat, VALID_SECTIONS[0], wrong_s
+                )
+                self.assertRaises(
+                    NoOptionError, self.ord_cnf.getboolean, VALID_SECTIONS[0], wrong_s
+                )
+
         def testSections(self):
             self.assertEqual(frozenset(self.ord_cnf.sections()), self.section_set)
+
         def testHasSection(self):
-            map(lambda x: self.assertEqual(self.ord_cnf.has_section(x), True), self.section_set)
-            map(lambda x: self.assertEqual(self.ord_cnf.has_section(x), False), self.other_set)
+            map(
+                lambda x: self.assertEqual(self.ord_cnf.has_section(x), True),
+                self.section_set,
+            )
+            map(
+                lambda x: self.assertEqual(self.ord_cnf.has_section(x), False),
+                self.other_set,
+            )
+
         def testItems(self):
             for sec in self.section_set:
-                self.assertEqual(frozenset(self.ord_cnf.items(sec)),
-                                 frozenset([(self.keyToCanon(k), v) for s, k, v in self.set_skv if self.cmpSection(s, sec)]))
+                self.assertEqual(
+                    frozenset(self.ord_cnf.items(sec)),
+                    frozenset(
+                        [
+                            (self.keyToCanon(k), v)
+                            for s, k, v in self.set_skv
+                            if self.cmpSection(s, sec)
+                        ]
+                    ),
+                )
+
         def testItemsRaises(self):
             for wrong_s in OTHER_SECTIONS:
                 self.assertRaises(NoSectionError, self.ord_cnf.items, wrong_s)
+
         def testOptions(self):
             for sec in self.section_set:
-                self.assertEqual(frozenset(self.ord_cnf.options(sec)),
-                                 frozenset([self.keyToCanon(k) for s, k, v in self.set_skv if self.cmpSection(s, sec)]))
+                self.assertEqual(
+                    frozenset(self.ord_cnf.options(sec)),
+                    frozenset(
+                        [
+                            self.keyToCanon(k)
+                            for s, k, v in self.set_skv
+                            if self.cmpSection(s, sec)
+                        ]
+                    ),
+                )
+
         def testOptionsRaises(self):
             for wrong_s in OTHER_SECTIONS:
                 self.assertRaises(NoSectionError, self.ord_cnf.options, wrong_s)
+
         def testHasOption(self):
-            map(lambda s_k_v: self.assertEqual(self.ord_cnf.has_option(s_k_v[0], s_k_v[1]), True), self.set_skv)
+            map(
+                lambda s_k_v: self.assertEqual(
+                    self.ord_cnf.has_option(s_k_v[0], s_k_v[1]), True
+                ),
+                self.set_skv,
+            )
             for sec in self.other_set:
-                map(lambda s_k_v: self.assertEqual(self.ord_cnf.has_option(sec, s_k_v[1]), False), self.set_skv)
-                map(lambda s_k_v: self.assertEqual(self.ord_cnf.has_option(s_k_v[0], sec), False), self.set_skv)
+                map(
+                    lambda s_k_v: self.assertEqual(
+                        self.ord_cnf.has_option(sec, s_k_v[1]), False
+                    ),
+                    self.set_skv,
+                )
+                map(
+                    lambda s_k_v: self.assertEqual(
+                        self.ord_cnf.has_option(s_k_v[0], sec), False
+                    ),
+                    self.set_skv,
+                )
 
     class NonIterConfictApi(unittest.TestCase):
         @staticmethod
         def sectionSynonym(s):
             return s
+
         @staticmethod
         def factory(conftxt):
             return OrderedRawConf(StringIO(conftxt), parser_origin())
+
         def testConflictingSectionNames(self):
             ConfSecName = (
-              (EMPTY_CONF, []),
-              (VALID_CONF, []),
-              (SECTION_CONFLICT_CONF, [("blabla", "blabla")]),
-              (DOUBLE_SECTION_CONFLICT_CONF, [("blabla", "blabla"), ("kikoo", "kikoo")]),
-              (OPTION_CONFLICT_CONF, [])
+                (EMPTY_CONF, []),
+                (VALID_CONF, []),
+                (SECTION_CONFLICT_CONF, [("blabla", "blabla")]),
+                (
+                    DOUBLE_SECTION_CONFLICT_CONF,
+                    [("blabla", "blabla"), ("kikoo", "kikoo")],
+                ),
+                (OPTION_CONFLICT_CONF, []),
             )
             for conftxt, result in ConfSecName:
                 ord_cnf = self.factory(conftxt)
                 self.assertEqual(ord_cnf.has_conflicting_section_names(), result != [])
                 self.assertEqual(ord_cnf.get_conflicting_section_names(), result)
+
         def testConflictingOptionNames(self):
             ConfOptName = (
-              (VALID_CONF, self.sectionSynonym("blablabla"), []),
-              (VALID_CONF, self.sectionSynonym("corpremedaille"), []),
-              (VALID_CONF, self.sectionSynonym("transtyping"), []),
-              (SECTION_CONFLICT_CONF, self.sectionSynonym("blabla"), []),
-              (SECTION_CONFLICT_CONF, self.sectionSynonym("evil"), []),
-              (DOUBLE_SECTION_CONFLICT_CONF, self.sectionSynonym("blabla"), []),
-              (DOUBLE_SECTION_CONFLICT_CONF, self.sectionSynonym("evil"), []),
-              (DOUBLE_SECTION_CONFLICT_CONF, self.sectionSynonym("kikoo"), []),
-              (OPTION_CONFLICT_CONF, self.sectionSynonym("a"), []),
-              (OPTION_CONFLICT_CONF, self.sectionSynonym("blabla"), [('k', 'k'), ('y', 'y')]),
-              (OPTION_CONFLICT_CONF, self.sectionSynonym("other"), [('c', 'c')]),
-              (OPTION_CONFLICT_CONF, self.sectionSynonym("b"), [])
+                (VALID_CONF, self.sectionSynonym("blablabla"), []),
+                (VALID_CONF, self.sectionSynonym("corpremedaille"), []),
+                (VALID_CONF, self.sectionSynonym("transtyping"), []),
+                (SECTION_CONFLICT_CONF, self.sectionSynonym("blabla"), []),
+                (SECTION_CONFLICT_CONF, self.sectionSynonym("evil"), []),
+                (DOUBLE_SECTION_CONFLICT_CONF, self.sectionSynonym("blabla"), []),
+                (DOUBLE_SECTION_CONFLICT_CONF, self.sectionSynonym("evil"), []),
+                (DOUBLE_SECTION_CONFLICT_CONF, self.sectionSynonym("kikoo"), []),
+                (OPTION_CONFLICT_CONF, self.sectionSynonym("a"), []),
+                (
+                    OPTION_CONFLICT_CONF,
+                    self.sectionSynonym("blabla"),
+                    [('k', 'k'), ('y', 'y')],
+                ),
+                (OPTION_CONFLICT_CONF, self.sectionSynonym("other"), [('c', 'c')]),
+                (OPTION_CONFLICT_CONF, self.sectionSynonym("b"), []),
             )
             for conftxt, section, result in ConfOptName:
                 ord_cnf = self.factory(conftxt)
-                self.assertEqual(ord_cnf.has_conflicting_option_names(section), result != [])
+                self.assertEqual(
+                    ord_cnf.has_conflicting_option_names(section), result != []
+                )
                 self.assertEqual(ord_cnf.get_conflicting_option_names(section), result)
-                self.assertRaises(NoSectionError, ord_cnf.has_conflicting_option_names, "nothing")
-                self.assertRaises(NoSectionError, ord_cnf.get_conflicting_option_names, "nothing")
+                self.assertRaises(
+                    NoSectionError, ord_cnf.has_conflicting_option_names, "nothing"
+                )
+                self.assertRaises(
+                    NoSectionError, ord_cnf.get_conflicting_option_names, "nothing"
+                )
+
         def testAllConflictingOptionNames(self):
             AllConfOptName = (
-              (EMPTY_CONF, []),
-              (VALID_CONF, [("blablabla", []), ("corpremedaille", []), ("transtyping", []),]),
-              (SECTION_CONFLICT_CONF, [('blabla', []), ('evil', []), ('blabla', [])]),
-              (DOUBLE_SECTION_CONFLICT_CONF, [('blabla', []), ('evil', []), ('kikoo', []), ('blabla', []), ('kikoo', [])]),
-              (OPTION_CONFLICT_CONF, [('a', []), ('blabla', [('k', 'k'), ('y', 'y')]), ('b', []), ('other', [('c', 'c')])])
+                (EMPTY_CONF, []),
+                (
+                    VALID_CONF,
+                    [("blablabla", []), ("corpremedaille", []), ("transtyping", [])],
+                ),
+                (SECTION_CONFLICT_CONF, [('blabla', []), ('evil', []), ('blabla', [])]),
+                (
+                    DOUBLE_SECTION_CONFLICT_CONF,
+                    [
+                        ('blabla', []),
+                        ('evil', []),
+                        ('kikoo', []),
+                        ('blabla', []),
+                        ('kikoo', []),
+                    ],
+                ),
+                (
+                    OPTION_CONFLICT_CONF,
+                    [
+                        ('a', []),
+                        ('blabla', [('k', 'k'), ('y', 'y')]),
+                        ('b', []),
+                        ('other', [('c', 'c')]),
+                    ],
+                ),
             )
             for conftxt, result in AllConfOptName:
                 ord_cnf = self.factory(conftxt)
-                self.assertEqual(ord_cnf.has_any_conflicting_option_name(), reduce(operator.concat, map(lambda x:x[1], result), []) != [])
+                self.assertEqual(
+                    ord_cnf.has_any_conflicting_option_name(),
+                    reduce(operator.concat, map(lambda x: x[1], result), []) != [],
+                )
                 self.assertEqual(ord_cnf.get_all_conflicting_option_names(), result)
+
         def testIsProbablySafeWithOldApi(self):
             IsProbablySafeWithOldApi = (
-              (EMPTY_CONF, True),
-              (VALID_CONF, True),
-              (SECTION_CONFLICT_CONF, False),
-              (DOUBLE_SECTION_CONFLICT_CONF, False),
-              (OPTION_CONFLICT_CONF, False)
+                (EMPTY_CONF, True),
+                (VALID_CONF, True),
+                (SECTION_CONFLICT_CONF, False),
+                (DOUBLE_SECTION_CONFLICT_CONF, False),
+                (OPTION_CONFLICT_CONF, False),
             )
             for conftxt, result in IsProbablySafeWithOldApi:
                 ord_cnf = self.factory(conftxt)
                 self.assertEqual(ord_cnf.is_probably_safe_with_old_api(), result)
+
         def commonFullApiForOneConf(self, ord_cnf, resdesc):
             self.assertEqual(ord_cnf.has_conflicting_section_names(), resdesc['hcsn'])
             self.assertEqual(ord_cnf.get_conflicting_section_names(), resdesc['gcsn'])
             for sec, result in resdesc['acon_gcon']:
-                self.assertEqual(ord_cnf.has_conflicting_option_names(sec), result != [])
+                self.assertEqual(
+                    ord_cnf.has_conflicting_option_names(sec), result != []
+                )
                 self.assertEqual(ord_cnf.get_conflicting_option_names(sec), result)
-            self.assertEqual(ord_cnf.has_any_conflicting_option_name(), resdesc['hacon'])
-            self.assertEqual(ord_cnf.get_all_conflicting_option_names(), resdesc['gacon'])
+            self.assertEqual(
+                ord_cnf.has_any_conflicting_option_name(), resdesc['hacon']
+            )
+            self.assertEqual(
+                ord_cnf.get_all_conflicting_option_names(), resdesc['gacon']
+            )
             self.assertEqual(ord_cnf.is_probably_safe_with_old_api(), resdesc['ipswoa'])
 
     class C14nSectionsSimpleOldApiNoChange(SimpleOldApi):
         def setUp(self):
-            self.ord_cnf = OrderedRawConf(StringIO(VALID_CONF), parser_origin(), string.lower)
+            self.ord_cnf = OrderedRawConf(
+                StringIO(VALID_CONF), parser_origin(), string.lower
+            )
 
     class C14nSectionsNonIterConfictApiNoChange(NonIterConfictApi):
         @staticmethod
@@ -1274,127 +1430,158 @@ k=v
 
     class C14nOptionsSimpleOldApiNoChange(SimpleOldApi):
         def setUp(self):
-            self.ord_cnf = OrderedRawConf(StringIO(VALID_CONF), parser_origin(), _id1, string.lower)
+            self.ord_cnf = OrderedRawConf(
+                StringIO(VALID_CONF), parser_origin(), _id1, string.lower
+            )
 
     class C14nOptionsNonIterConfictApiNoChange(NonIterConfictApi):
         @staticmethod
         def factory(conftxt):
-            return OrderedRawConf(StringIO(conftxt), parser_origin(), _id1, string.lower)
+            return OrderedRawConf(
+                StringIO(conftxt), parser_origin(), _id1, string.lower
+            )
 
     def map_skv_sec_upper(skv):
         return map(lambda s_k_v: (s_k_v[0].upper(), s_k_v[1], s_k_v[2]), skv)
 
     class C14nSectionsSimpleOldApiRequestUpper(SimpleOldApi):
-        set_skv, set_int, set_float, set_boolean = \
-                map(map_skv_sec_upper, (VALID_CONF_SKV, VALID_CONF_INT, VALID_CONF_FLOAT, VALID_CONF_BOOLEAN))
+        set_skv, set_int, set_float, set_boolean = map(
+            map_skv_sec_upper,
+            (VALID_CONF_SKV, VALID_CONF_INT, VALID_CONF_FLOAT, VALID_CONF_BOOLEAN),
+        )
+
         @staticmethod
         def cmpSection(sa, sb):
             return sa.lower() == sb.lower()
+
         def setUp(self):
-            self.ord_cnf = OrderedRawConf(StringIO(VALID_CONF), parser_origin(), string.lower)
+            self.ord_cnf = OrderedRawConf(
+                StringIO(VALID_CONF), parser_origin(), string.lower
+            )
 
     def map_skv_opt_upper(skv):
         return map(lambda s_k_v: (s_k_v[0], s_k_v[1].upper(), s_k_v[2]), skv)
 
     class C14nOptionssSimpleOldApiRequestUpper(SimpleOldApi):
-        set_skv, set_int, set_float, set_boolean = \
-                map(map_skv_opt_upper, (VALID_CONF_SKV, VALID_CONF_INT, VALID_CONF_FLOAT, VALID_CONF_BOOLEAN))
+        set_skv, set_int, set_float, set_boolean = map(
+            map_skv_opt_upper,
+            (VALID_CONF_SKV, VALID_CONF_INT, VALID_CONF_FLOAT, VALID_CONF_BOOLEAN),
+        )
+
         @staticmethod
         def keyToCanon(k):
             return k.lower()
+
         def setUp(self):
-            self.ord_cnf = OrderedRawConf(StringIO(VALID_CONF), parser_origin(), _id1, string.lower)
+            self.ord_cnf = OrderedRawConf(
+                StringIO(VALID_CONF), parser_origin(), _id1, string.lower
+            )
 
     class C14nSectionsNonIterConfictRequestUpper(NonIterConfictApi):
         @staticmethod
         def sectionSynonym(s):
             return s.upper()
+
         @staticmethod
         def factory(conftxt):
             return OrderedRawConf(StringIO(conftxt), parser_origin(), string.lower)
+
         def testC14nMoreSectionConflict(self):
             ord_cnf = self.factory(MORE_CANONICAL_SECTION_CONFLICT_CONF)
             result_descriptor = {
-              'hcsn': True,
-              'gcsn': [("blabla", "blabla", "BLABLA"), ("kikoo", "kikoo")],
-              'acon_gcon': [("BLABLA", []), ("EVIL", []), ("KIKOO", [])],
-              'hacon': False,
-              'gacon': [('blabla', []), ('evil', []), ('kikoo', []),
-                        ('blabla', []), ('kikoo', []), ('BLABLA', [])],
-              'ipswoa': False
+                'hcsn': True,
+                'gcsn': [("blabla", "blabla", "BLABLA"), ("kikoo", "kikoo")],
+                'acon_gcon': [("BLABLA", []), ("EVIL", []), ("KIKOO", [])],
+                'hacon': False,
+                'gacon': [
+                    ('blabla', []),
+                    ('evil', []),
+                    ('kikoo', []),
+                    ('blabla', []),
+                    ('kikoo', []),
+                    ('BLABLA', []),
+                ],
+                'ipswoa': False,
             }
             self.commonFullApiForOneConf(ord_cnf, result_descriptor)
+
         def testC14nInsensitiveBehavior(self):
             ord_cnf = self.factory(C14N_CHANGE_SECTION_BEHAVIOR)
             result_descriptor = {
-              'hcsn': True,
-              'gcsn': [("blabla", "BLABLA")],
-              'acon_gcon': [("BLABLA", [])],
-              'hacon': False,
-              'gacon': [('blabla', []), ('BLABLA', [])],
-              'ipswoa': False
+                'hcsn': True,
+                'gcsn': [("blabla", "BLABLA")],
+                'acon_gcon': [("BLABLA", [])],
+                'hacon': False,
+                'gacon': [('blabla', []), ('BLABLA', [])],
+                'ipswoa': False,
             }
             self.commonFullApiForOneConf(ord_cnf, result_descriptor)
+
         def testC14nBaseBehavior(self):
-            ord_cnf = OrderedRawConf(StringIO(C14N_CHANGE_SECTION_BEHAVIOR), parser_origin())
+            ord_cnf = OrderedRawConf(
+                StringIO(C14N_CHANGE_SECTION_BEHAVIOR), parser_origin()
+            )
             co = [("blabla", []), ("BLABLA", [])]
             result_descriptor = {
-              'hcsn': False,
-              'gcsn': [],
-              'acon_gcon': co,
-              'hacon': False,
-              'gacon': co,
-              'ipswoa': True
+                'hcsn': False,
+                'gcsn': [],
+                'acon_gcon': co,
+                'hacon': False,
+                'gacon': co,
+                'ipswoa': True,
             }
             self.commonFullApiForOneConf(ord_cnf, result_descriptor)
 
     class C14nOptionsNonIterConfictApiRequestUpper(NonIterConfictApi):
         @staticmethod
         def factory(conftxt):
-            return OrderedRawConf(StringIO(conftxt), parser_origin(), _id1, string.lower)
+            return OrderedRawConf(
+                StringIO(conftxt), parser_origin(), _id1, string.lower
+            )
+
         def testC14nMoreOptionConflict(self):
             ord_cnf = self.factory(MORE_CANONICAL_OPTION_CONFLICT_CONF)
             ConfOptName = [
-              ('a', []),
-              ('blabla', [('k', 'k'), ('y', 'y')]),
-              ('b', []),
-              ('other', [('c', 'c', 'C')])
+                ('a', []),
+                ('blabla', [('k', 'k'), ('y', 'y')]),
+                ('b', []),
+                ('other', [('c', 'c', 'C')]),
             ]
             result_descriptor = {
-              'hcsn': False,
-              'gcsn': [],
-              'acon_gcon': ConfOptName,
-              'hacon': True,
-              'gacon': ConfOptName,
-              'ipswoa': False
+                'hcsn': False,
+                'gcsn': [],
+                'acon_gcon': ConfOptName,
+                'hacon': True,
+                'gacon': ConfOptName,
+                'ipswoa': False,
             }
             self.commonFullApiForOneConf(ord_cnf, result_descriptor)
+
         def testC14nInsensitiveBehavior(self):
             ord_cnf = self.factory(C14N_CHANGE_OPTION_BEHAVIOR)
-            ConfOptName = [
-              ('blabla', [('key', 'KEY')])
-            ]
+            ConfOptName = [('blabla', [('key', 'KEY')])]
             result_descriptor = {
-              'hcsn': False,
-              'gcsn': [],
-              'acon_gcon': ConfOptName,
-              'hacon': True,
-              'gacon': ConfOptName,
-              'ipswoa': False
+                'hcsn': False,
+                'gcsn': [],
+                'acon_gcon': ConfOptName,
+                'hacon': True,
+                'gacon': ConfOptName,
+                'ipswoa': False,
             }
             self.commonFullApiForOneConf(ord_cnf, result_descriptor)
+
         def testC14nBaseBehavior(self):
-            ord_cnf = OrderedRawConf(StringIO(C14N_CHANGE_OPTION_BEHAVIOR), parser_origin())
-            ConfOptName = [
-              ('blabla', [])
-            ]
+            ord_cnf = OrderedRawConf(
+                StringIO(C14N_CHANGE_OPTION_BEHAVIOR), parser_origin()
+            )
+            ConfOptName = [('blabla', [])]
             result_descriptor = {
-              'hcsn': False,
-              'gcsn': [],
-              'acon_gcon': ConfOptName,
-              'hacon': False,
-              'gacon': ConfOptName,
-              'ipswoa': True
+                'hcsn': False,
+                'gcsn': [],
+                'acon_gcon': ConfOptName,
+                'hacon': False,
+                'gacon': ConfOptName,
+                'ipswoa': True,
             }
             self.commonFullApiForOneConf(ord_cnf, result_descriptor)
 
@@ -1427,51 +1614,76 @@ key=this_one
 key=second_one
             """
 
-    ITER_CONF_SECTIONS = ["sec_empty", "sec_1", "sec_2", "sec_opt_conflict",
-                          "sec_c14n_opt_conflict", "name_conflict", "name_conflict",
-                          "name_c14n_conflict", "NAME_C14N_CONFLICT"]
+    ITER_CONF_SECTIONS = [
+        "sec_empty",
+        "sec_1",
+        "sec_2",
+        "sec_opt_conflict",
+        "sec_c14n_opt_conflict",
+        "name_conflict",
+        "name_conflict",
+        "name_c14n_conflict",
+        "NAME_C14N_CONFLICT",
+    ]
 
     class NewApi(unittest.TestCase):
         ordItems = (
-          [],
-          [('key', 'value_sec_1')],
-          [('key1', 'value_sec_2_key_1'), ('key2', 'value_sec_2_key_2')],
-          [('key', 'val1'), ('key', 'val2')],
-          [('key', 'this_one'), ('KEY', 'second_one')],
-          [('key', 'this_one')],
-          [('key', 'not_this_one')],
-          [('key', 'this_one')],
-          [('key', 'second_one')]
+            [],
+            [('key', 'value_sec_1')],
+            [('key1', 'value_sec_2_key_1'), ('key2', 'value_sec_2_key_2')],
+            [('key', 'val1'), ('key', 'val2')],
+            [('key', 'this_one'), ('KEY', 'second_one')],
+            [('key', 'this_one')],
+            [('key', 'not_this_one')],
+            [('key', 'this_one')],
+            [('key', 'second_one')],
         )
+
         @staticmethod
         def secMapper(secname):
             return secname
+
         @staticmethod
         def factory(conftxt):
             return OrderedRawConf(StringIO(conftxt), parser_origin())
+
         def secFilter(self, lst_tuple_sec_data):
             for p, (secname, data) in enumerate(lst_tuple_sec_data):
-                if self.secMapper(secname) not in map(lambda x_y: x_y[0], lst_tuple_sec_data[:p]):
+                if self.secMapper(secname) not in map(
+                    lambda x_y: x_y[0], lst_tuple_sec_data[:p]
+                ):
                     yield (secname, data)
+
         def injectAndFilter(self, datas):
             return self.secFilter(zip(ITER_CONF_SECTIONS, datas))
+
         def testOrderedSections(self):
             ord_cnf = self.factory(ITER_CONF)
             self.assertEqual(ord_cnf.ordered_sections(), ITER_CONF_SECTIONS)
+
         def testSections(self):
             ord_cnf = self.factory(ITER_CONF)
-            self.assertEqual(frozenset(ord_cnf.sections()), frozenset(map(self.secMapper, ITER_CONF_SECTIONS)))
+            self.assertEqual(
+                frozenset(ord_cnf.sections()),
+                frozenset(map(self.secMapper, ITER_CONF_SECTIONS)),
+            )
+
         def testOrderedItems(self):
             ord_cnf = self.factory(ITER_CONF)
             for s, loi in self.injectAndFilter(self.ordItems):
                 self.assertEqual(ord_cnf.ordered_items(s), loi)
+
         def testOrderedItemsRaises(self):
             ord_cnf = self.factory(ITER_CONF)
             self.assertRaises(NoSectionError, ord_cnf.ordered_items, "nothing")
+
         def testOrderedOptions(self):
             ord_cnf = self.factory(ITER_CONF)
             for s, loi in self.injectAndFilter(self.ordItems):
-                self.assertEqual(ord_cnf.ordered_options(s), map(lambda k_v: k_v[0], loi))
+                self.assertEqual(
+                    ord_cnf.ordered_options(s), map(lambda k_v: k_v[0], loi)
+                )
+
         def testOrderedOptionsRaises(self):
             ord_cnf = self.factory(ITER_CONF)
             self.assertRaises(NoSectionError, ord_cnf.ordered_options, "nothing")
@@ -1480,6 +1692,7 @@ key=second_one
         @staticmethod
         def secMapper(secname):
             return secname.lower()
+
         @staticmethod
         def factory(conftxt):
             return OrderedRawConf(StringIO(conftxt), parser_origin(), string.lower)
@@ -1487,21 +1700,27 @@ key=second_one
     class C14nOptionsNewApi(NewApi):
         @staticmethod
         def factory(conftxt):
-            return OrderedRawConf(StringIO(conftxt), parser_origin(), _id1, string.lower)
+            return OrderedRawConf(
+                StringIO(conftxt), parser_origin(), _id1, string.lower
+            )
 
     class IterSections(unittest.TestCase):
         hcon = (False, False, False, True, False, False, False, False, False)
         gcon = ([], [], [], [('key', 'key')], [], [], [], [], [])
         c14n_skv = ('sec_c14n_opt_conflict', 'KEY', 'second_one')
+
         @staticmethod
         def secMapper(secname):
             return secname
+
         @staticmethod
         def optMapper(optname):
             return optname
+
         @staticmethod
         def factory(conftxt):
             return OrderedRawConf(StringIO(conftxt), parser_origin())
+
         def testIterSectionEmpty(self):
             ord_cnf = self.factory("")
             for sec in ord_cnf:
@@ -1510,6 +1729,7 @@ key=second_one
                 self.fail()
             isec = ord_cnf.iter_sections()
             self.assertRaises(StopIteration, isec.next)
+
         def commonSecIterOne(self, si1):
             self.assertEqual(si1.get_name(), 'section')
             self.assertEqual(si1.get('k'), 'v1')
@@ -1520,16 +1740,34 @@ key=second_one
             self.assertRaises(NoOptionError, si1.getint, "nothing")
             self.assertRaises(NoOptionError, si1.getfloat, "nothing")
             self.assertRaises(NoOptionError, si1.getboolean, "nothing")
-            options_pst = [('k', True), ('int', True), ('float', True),
-                           ('boolean', True), ('nothere', False)]
-            items = [('k', 'v1'), ('int', '42'), ('float', '131.31337'),
-                     ('boolean', 'on')]
-            map(lambda k_v: self.assertEqual(si1.has_option(k_v[0]), k_v[1]), options_pst)
+            options_pst = [
+                ('k', True),
+                ('int', True),
+                ('float', True),
+                ('boolean', True),
+                ('nothere', False),
+            ]
+            items = [
+                ('k', 'v1'),
+                ('int', '42'),
+                ('float', '131.31337'),
+                ('boolean', 'on'),
+            ]
+            map(
+                lambda k_v: self.assertEqual(si1.has_option(k_v[0]), k_v[1]),
+                options_pst,
+            )
             self.assertEqual(si1.ordered_items(), items)
-            self.assertEqual(frozenset(si1.items()), frozenset(map(lambda k_v: (self.optMapper(k_v[0]), k_v[1]), items)))
+            self.assertEqual(
+                frozenset(si1.items()),
+                frozenset(map(lambda k_v: (self.optMapper(k_v[0]), k_v[1]), items)),
+            )
             self.assertEqual(si1.ordered_options(), map(lambda k_v: k_v[0], items))
-            self.assertEqual(frozenset(si1.options()),
-                             frozenset(map(lambda k_v: self.optMapper(k_v[0]), items)))
+            self.assertEqual(
+                frozenset(si1.options()),
+                frozenset(map(lambda k_v: self.optMapper(k_v[0]), items)),
+            )
+
         def testIterSectionOne(self):
             ord_cnf = self.factory(ITERSECTION_ONE)
             more = False
@@ -1545,22 +1783,27 @@ key=second_one
             isec = ord_cnf.iter_sections()
             self.assert_(bool(isec.next()))
             self.assertRaises(StopIteration, isec.next)
+
         def commonTwoSections(self, conftxt):
             ord_cnf = self.factory(conftxt)
             isec = ord_cnf.iter_sections()
             self.assertEqual(isec.next().get('k'), 'v1')
             self.assertEqual(isec.next().get('k'), 'v2')
             self.assertRaises(StopIteration, isec.next)
+
         def testIterSectionTwo(self):
             self.commonTwoSections(ITERSECTION_TWO)
+
         def testIterSectionConflict(self):
             self.commonTwoSections(ITERSECTION_CONFLICT)
+
         def testIterConf(self):
             ord_cnf = self.factory(ITER_CONF)
             self.assertEqual([sec.get_name() for sec in ord_cnf], ITER_CONF_SECTIONS)
             for sec, hc, gc in zip(ord_cnf, self.hcon, self.gcon):
                 self.assertEqual(sec.has_conflicting_option_names(), hc)
                 self.assertEqual(sec.get_conflicting_option_names(), gc)
+
         def testC14n(self):
             ord_cnf = self.factory(ITER_CONF)
             for sec in ord_cnf:
@@ -1570,12 +1813,15 @@ key=second_one
 
     class IterOptions(unittest.TestCase):
         c14n_skv = ('NAME_C14N_CONFLICT', 'key', 'second_one')
+
         @staticmethod
         def secMapper(secname):
             return secname
+
         @staticmethod
         def factory(conftxt):
             return OrderedRawConf(StringIO(conftxt), parser_origin())
+
         def commonOptIterOne(self, iopt):
             opt = iopt.next()
             self.assertEqual(opt.get_name(), "k")
@@ -1593,9 +1839,11 @@ key=second_one
             self.assertEqual(opt.get_value(), "on")
             self.assertEqual(opt.getboolean(), True)
             self.assertRaises(StopIteration, iopt.next)
+
         def testIterRaises(self):
             ord_cnf = self.factory(ITERSECTION_ONE)
             self.assertRaises(NoSectionError, ord_cnf.iter_options, "nothing")
+
         def testIterSectionOne(self):
             ord_cnf = self.factory(ITERSECTION_ONE)
             self.commonOptIterOne(ord_cnf.iter_options("section"))
@@ -1609,6 +1857,7 @@ key=second_one
                 self.failIf(more)
                 self.commonOptIterOne(sec.iter_options())
                 more = True
+
         def testIterOptionsPrio(self):
             ord_cnf = self.factory(ITER_CONF)
             more = False
@@ -1617,18 +1866,22 @@ key=second_one
                 self.assertEqual(opt.get_name(), self.c14n_skv[1])
                 self.assertEqual(opt.get_value(), self.c14n_skv[2])
                 more = True
+
         def testIterConf(self):
             ord_cnf = self.factory(ITER_CONF)
             all_skv = (
-              ('sec_empty', ()),
-              ('sec_1', (('key', 'value_sec_1'),)),
-              ('sec_2', (('key1', 'value_sec_2_key_1'), ('key2', 'value_sec_2_key_2'))),
-              ('sec_opt_conflict', (('key', 'val1'), ('key', 'val2'))),
-              ('sec_c14n_opt_conflict', (('key', 'this_one'), ('KEY', 'second_one'))),
-              ('name_conflict', (('key', 'this_one'),)),
-              ('name_conflict', (('key', 'not_this_one'),)),
-              ('name_c14n_conflict', (('key', 'this_one'),)),
-              ('NAME_C14N_CONFLICT', (('key', 'second_one'),))
+                ('sec_empty', ()),
+                ('sec_1', (('key', 'value_sec_1'),)),
+                (
+                    'sec_2',
+                    (('key1', 'value_sec_2_key_1'), ('key2', 'value_sec_2_key_2')),
+                ),
+                ('sec_opt_conflict', (('key', 'val1'), ('key', 'val2'))),
+                ('sec_c14n_opt_conflict', (('key', 'this_one'), ('KEY', 'second_one'))),
+                ('name_conflict', (('key', 'this_one'),)),
+                ('name_conflict', (('key', 'not_this_one'),)),
+                ('name_c14n_conflict', (('key', 'this_one'),)),
+                ('NAME_C14N_CONFLICT', (('key', 'second_one'),)),
             )
             for sec, sec_tup in zip(ord_cnf, all_skv):
                 self.assertEqual(sec.get_name(), sec_tup[0])
@@ -1640,6 +1893,7 @@ key=second_one
         @staticmethod
         def secMapper(secname):
             return secname.lower()
+
         @staticmethod
         def factory(conftxt):
             return OrderedRawConf(StringIO(conftxt), parser_origin(), string.lower)
@@ -1648,18 +1902,24 @@ key=second_one
         hcon = (False, False, False, True, True, False, False, False, False)
         gcon = ([], [], [], [('key', 'key')], [('key', 'KEY')], [], [], [], [])
         c14n_skv = ('sec_c14n_opt_conflict', 'KEY', 'this_one')
+
         @staticmethod
         def optMapper(optname):
             return optname.lower()
+
         @staticmethod
         def factory(conftxt):
-            return OrderedRawConf(StringIO(conftxt), parser_origin(), _id1, string.lower)
+            return OrderedRawConf(
+                StringIO(conftxt), parser_origin(), _id1, string.lower
+            )
 
     class C14nIterOptions_c14nSections(IterOptions):
         c14n_skv = ('NAME_C14N_CONFLICT', 'key', 'this_one')
+
         @staticmethod
         def secMapper(secname):
             return secname.lower()
+
         @staticmethod
         def factory(conftxt):
             return OrderedRawConf(StringIO(conftxt), parser_origin(), string.lower)
@@ -1667,6 +1927,8 @@ key=second_one
     class C14nIterOptions(IterOptions):
         @staticmethod
         def factory(conftxt):
-            return OrderedRawConf(StringIO(conftxt), parser_origin(), _id1, string.lower)
+            return OrderedRawConf(
+                StringIO(conftxt), parser_origin(), _id1, string.lower
+            )
 
     unittest.main()

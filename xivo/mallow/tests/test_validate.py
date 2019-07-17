@@ -3,13 +3,7 @@
 
 import unittest
 
-from hamcrest import (
-    assert_that,
-    empty,
-    has_entries,
-    has_entry,
-    is_not,
-)
+from hamcrest import assert_that, empty, has_entries, has_entry, is_not
 from marshmallow import Schema
 
 from .. import fields, validate
@@ -20,13 +14,12 @@ class ValidateSchema(Schema):
 
 
 class TestValidation(unittest.TestCase):
-
     def test_given_valid_string_dict_then_validation_works(self):
         data, _ = ValidateSchema().load({'string_dict': {'some': 'str'}})
         assert_that(data, has_entry('string_dict', {'some': 'str'}))
 
     def test_given_invalid_string_length_then_return_errors(self):
-        _, error = ValidateSchema().load({'x'*129: 'x'*2049})
+        _, error = ValidateSchema().load({'x' * 129: 'x' * 2049})
         assert_that(error, is_not(empty))
 
     def test_given_non_string_values_then_return_errors(self):
@@ -40,7 +33,6 @@ class LengthSchema(Schema):
 
 
 class TestLengthValidation(unittest.TestCase):
-
     def test_length_equal(self):
         _, errors = LengthSchema().load({'equal': 'a'})
         assert_that(errors, {'equal': [has_entries(constraint={'equal': 2})]})

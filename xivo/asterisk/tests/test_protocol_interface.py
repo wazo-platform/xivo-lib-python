@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013-2016 Avencall
+# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -14,7 +14,6 @@ from ..protocol_interface import agent_id_from_channel
 
 
 class TestProtocolInterface(unittest.TestCase):
-
     def test_protocol_interfaces_from_hint(self):
         hint = 'SIP/askdjhf'
         expected_result = ProtocolInterface('SIP', 'askdjhf')
@@ -25,8 +24,10 @@ class TestProtocolInterface(unittest.TestCase):
 
     def test_protocol_interfaces_from_multidevice_hint(self):
         hint = 'SIP/line1&SIP/line2'
-        expected_result = [ProtocolInterface('SIP', 'line1'),
-                           ProtocolInterface('SIP', 'line2')]
+        expected_result = [
+            ProtocolInterface('SIP', 'line1'),
+            ProtocolInterface('SIP', 'line2'),
+        ]
 
         result = protocol_interfaces_from_hint(hint)
 
@@ -83,7 +84,9 @@ class TestProtocolInterface(unittest.TestCase):
     def test_protocol_interface_from_channel_invalid(self):
         invalid_channel = 'slkdfjaslkdjfaslkdjflskdjf'
 
-        self.assertRaises(InvalidChannelError, protocol_interface_from_channel, invalid_channel)
+        self.assertRaises(
+            InvalidChannelError, protocol_interface_from_channel, invalid_channel
+        )
 
     def test_with_a_local_channel(self):
         local_channel = 'Local/id-5@agentcallback-00000001;2'

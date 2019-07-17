@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013-2016 Avencall
+# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -15,7 +15,6 @@ SOME_MESSAGE = 'defg'
 
 
 class TestPubsub(unittest.TestCase):
-
     def setUp(self):
         self.pubsub = Pubsub()
 

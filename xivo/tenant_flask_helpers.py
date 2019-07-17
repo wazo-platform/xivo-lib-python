@@ -4,10 +4,7 @@
 
 import logging
 
-from flask import (
-    current_app,
-    g,
-)
+from flask import current_app, g
 from wazo_auth_client import Client as AuthClient
 from werkzeug.local import LocalProxy
 from xivo.tenant_helpers import Tokens, Users

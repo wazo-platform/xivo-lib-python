@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2014-2015 Avencall
+# Copyright 2014-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
@@ -22,4 +22,6 @@ def change_user(user):
         os.initgroups(user.pw_name, gid)
         os.setuid(uid)
     except OSError as e:
-        abort('Could not change owner to user {user}: {error}'.format(user=user, error=e))
+        abort(
+            'Could not change owner to user {user}: {error}'.format(user=user, error=e)
+        )
