@@ -97,7 +97,7 @@ class HttpReqError(Exception):
 def _encode_if(value, encoding='iso-8859-1'):
     # transform value returned by json.loads to something similar to what
     # cjson.decode would have returned
-    if isinstance(value, six.text_types):
+    if isinstance(value, six.text_type):
         return value.encode(encoding)
     elif isinstance(value, list):
         return [_encode_if(v, encoding) for v in value]
