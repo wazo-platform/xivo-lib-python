@@ -1,6 +1,6 @@
 docker-compose
 https://github.com/wazo-pbx/xivo-test-helpers/archive/master.zip
 nose
-kombu==3.0.34
+kombu==4.2.1
 pyhamcrest
-python-consul==0.7.0
+python-consul==0.7.1
