@@ -19,12 +19,12 @@ class TestValidation(unittest.TestCase):
         assert_that(data, has_entry('string_dict', {'some': 'str'}))
 
     def test_given_invalid_string_length_then_return_errors(self):
-        _, error = ValidateSchema().load({'x' * 129: 'x' * 2049})
-        assert_that(error, is_not(empty))
+        _, error = ValidateSchema().load({'string_dict': {'x' * 129: 'x' * 2049}})
+        assert_that(error, is_not(empty()))
 
     def test_given_non_string_values_then_return_errors(self):
-        _, error = ValidateSchema().load({1: None})
-        assert_that(error, is_not(empty))
+        _, error = ValidateSchema().load({'string_dict': {1: None}})
+        assert_that(error, is_not(empty()))
 
 
 class LengthSchema(Schema):
