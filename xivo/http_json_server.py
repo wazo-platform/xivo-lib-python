@@ -19,7 +19,7 @@
 
 # TODO: split backtraces in syslog when they are too long
 
-from BaseHTTPServer import BaseHTTPRequestHandler
+from six.moves.BaseHTTPServer import BaseHTTPRequestHandler
 from xivo.ThreadingHTTPServer import ThreadingHTTPServer
 from six.moves.urllib import parse
 import signal
@@ -184,62 +184,11 @@ class HttpReqHandler(BaseHTTPRequestHandler):
         self.send_error_msgtxt(code, x)
 
     @staticmethod
-    def querylist_to_dict(query):
-        if not isinstance(query, (list, tuple)):
-            return
-
-        ret = {}
-
-        for x in query:
-            if len(x) < 1:
-                continue
-            elif len(x) > 1:
-                value = x[1]
-            else:
-                value = None
-
-            if not x[0] or x[0].find(']') == -1:
-                ret[x[0]] = value
-                continue
-
-            lbracket = x[0].find('[')
-
-            if lbracket == -1:
-                ret[x[0]] = value
-                continue
-
-            key = x[0][:lbracket]
-
-            if key not in ret:
-                ret[key] = {}
-
-            matched = re.findall(r'\[([^\]]*)\]', x[0][lbracket:])
-            nb = len(matched)
-
-            if nb == 0:
-                ret[key] = value
-                continue
-
-            if not isinstance(ret[key], dict):
-                ret[key] = {}
-
-            ref = ret[key]
-
-            j = 0
-
-            for i, k in enumerate(matched):
-                if k == '':
-                    while j in ref:
-                        j += 1
-                    k = j
-
-                if i == (nb - 1):
-                    ref[k] = value
-                elif k not in ref or (nb > i and not isinstance(ref[k], dict)):
-                    ref[k] = {}
-
-                ref = ref[k]
-        return ret
+    def _flatten_query_values(value):
+        if isinstance(value, list):
+            return value[-1]
+        else:
+            return value
 
     def pathify(self):
         """
@@ -264,7 +213,15 @@ class HttpReqHandler(BaseHTTPRequestHandler):
             path = re.sub("^/+", "/", path, 1)
 
             if query:
-                query = self.querylist_to_dict(query)
+                query = parse.parse_qs(query)
+                # Before this code was using urlparse, it was using a module
+                # called urisup and a custom method to parse query string both
+                # was not RFC compliant, to ensure we do not break sysconfd,
+                # this reintroduce one of the non compliant stuffs...
+                query = dict(
+                    (key, self._flatten_query_values(value))
+                    for key, value in query.items()
+                )
 
             return path, query, fragment
 

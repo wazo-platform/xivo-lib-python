@@ -16,11 +16,10 @@ __license__ = """
         http://www.python.org/download/releases/2.4.4/license/
 """
 
-import SocketServer
-from SocketServer import socket
+from six.moves import socketserver
 
 
-class ThreadingHTTPServer(SocketServer.ThreadingTCPServer):
+class ThreadingHTTPServer(socketserver.ThreadingTCPServer):
     """
     Same as HTTPServer, but derives from ThreadingTCPServer instead of
     TCPServer so that each http handler instance runs in its own thread.
@@ -30,9 +29,9 @@ class ThreadingHTTPServer(SocketServer.ThreadingTCPServer):
 
     def server_bind(self):
         """Override server_bind to store the server name."""
-        SocketServer.TCPServer.server_bind(self)
+        socketserver.TCPServer.server_bind(self)
         host, port = self.socket.getsockname()[:2]
-        self.server_name = socket.getfqdn(host)
+        self.server_name = socketserver.socket.getfqdn(host)
         self.server_port = port
 
 
