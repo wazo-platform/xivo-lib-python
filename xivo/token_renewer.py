@@ -77,19 +77,19 @@ class TokenRenewer(object):
             )
         else:
             self._renew_time = self._RENEW_TIME_COEFFICIENT * self._expiration
-            self._notify_all(token['token'])
+            self._notify_all(token)
 
-    def _notify_all(self, token_id):
+    def _notify_all(self, token):
         with self._callback_lock:
             callbacks = list(self._callbacks + self._callbacks_tmp)
             self._callbacks_tmp = []
 
         for callback in callbacks:
-            self._notify(callback, token_id)
+            self._notify(callback, token)
 
-    def _notify(self, callback, token_id):
+    def _notify(self, callback, token):
         try:
-            callback(token_id)
+            callback(token)
         except Exception:
             logger.warning(
                 'unexpected exception from token change callback', exc_info=True
