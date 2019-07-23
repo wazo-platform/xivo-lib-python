@@ -13,13 +13,8 @@ from ..token_renewer import TokenRenewer
 
 class TestTokenRenewer(unittest.TestCase):
     def setUp(self):
-        self.token = {
-            'token': 'some-token-id',
-            'metadata': {
-                'uuid': 'some-user',
-                'tenant_uuid': 'some-tenant'
-            }
-        }
+        self.token_id = 'some-token-id'
+        self.token = {'token': self.token_id}
         self.auth_client = Mock()
         self.expiration = 30
         self.token_renewer = TokenRenewer(self.auth_client, self.expiration)
@@ -33,7 +28,7 @@ class TestTokenRenewer(unittest.TestCase):
         self.token_renewer._renew_token()
 
         self.auth_client.token.new.assert_called_once_with(expiration=self.expiration)
-        callback.assert_called_once_with(self.token)
+        callback.assert_called_once_with(self.token_id)
 
     def test_renew_token_failure(self):
         callback = Mock()
@@ -53,7 +48,7 @@ class TestTokenRenewer(unittest.TestCase):
 
         self.token_renewer._renew_token()
 
-        callback.assert_called_once_with(self.token)
+        callback.assert_called_once_with(self.token_id)
 
         callback.reset_mock()
 
