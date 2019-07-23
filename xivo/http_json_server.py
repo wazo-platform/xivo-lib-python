@@ -19,7 +19,7 @@
 
 # TODO: split backtraces in syslog when they are too long
 
-from BaseHTTPServer import BaseHTTPRequestHandler
+from six.moves.BaseHTTPServer import BaseHTTPRequestHandler
 from xivo.ThreadingHTTPServer import ThreadingHTTPServer
 from six.moves.urllib import parse
 import signal
