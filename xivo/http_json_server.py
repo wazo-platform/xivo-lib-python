@@ -218,8 +218,10 @@ class HttpReqHandler(BaseHTTPRequestHandler):
                 # called urisup and a custom method to parse query string both
                 # was not RFC compliant, to ensure we do not break sysconfd,
                 # this reintroduce one of the non compliant stuffs...
-                query = dict((key, self._flatten_query_values(value))
-                             for key, value in query.items())
+                query = dict(
+                    (key, self._flatten_query_values(value))
+                    for key, value in query.items()
+                )
 
             return path, query, fragment
 
