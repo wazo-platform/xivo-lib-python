@@ -29,11 +29,15 @@ class TokenRenewer(object):
 
     def subscribe_to_token_change(self, callback):
         with self._callback_lock:
-            self._callbacks.append(callback)
+            self._callbacks.append({'method': callback, 'details': False})
 
     def subscribe_to_next_token_change(self, callback):
         with self._callback_lock:
-            self._callbacks_tmp.append(callback)
+            self._callbacks_tmp.append({'method': callback, 'details': False})
+
+    def subscribe_to_next_token_details_change(self, callback):
+        with self._callback_lock:
+            self._callbacks_tmp.append({'method': callback, 'details': True})
 
     def start(self):
         if self._started:
@@ -77,23 +81,21 @@ class TokenRenewer(object):
             )
         else:
             self._renew_time = self._RENEW_TIME_COEFFICIENT * self._expiration
-            self._notify_all(token['token'])
+            self._notify_all(token)
 
-    def _notify_all(self, token_id):
+    def _notify_all(self, token):
         with self._callback_lock:
             callbacks = list(self._callbacks + self._callbacks_tmp)
             self._callbacks_tmp = []
 
         for callback in callbacks:
-            self._notify(callback, token_id)
-
-    def _notify(self, callback, token_id):
-        try:
-            callback(token_id)
-        except Exception:
-            logger.warning(
-                'unexpected exception from token change callback', exc_info=True
-            )
+            payload = token if callback['details'] else token['token']
+            try:
+                callback['method'](payload)
+            except Exception:
+                logger.warning(
+                    'unexpected exception from token change callback', exc_info=True
+                )
 
     def __enter__(self):
         self.start()
