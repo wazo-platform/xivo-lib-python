@@ -44,7 +44,7 @@ class ListSchema(marshmallow.Schema):
     search = fields.String(missing=None)
 
     class Meta:
-        strict = True
+        unknown = marshmallow.EXCLUDE
 
     def on_bind_field(self, field_name, field_obj):
         if field_name == 'order':
@@ -75,9 +75,7 @@ class ListSchema(marshmallow.Schema):
 class Schema(marshmallow.Schema):
     class Meta:
         ordered = True
-        strict = True  # Always strict in marshmallow 3
 
-    # This behavior is fixed in marshmallow 3
     @marshmallow.pre_load
     def ensure_dict(self, data):
         return data or {}

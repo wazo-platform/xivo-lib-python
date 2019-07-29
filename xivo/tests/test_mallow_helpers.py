@@ -46,10 +46,6 @@ class TestSchema(unittest.TestCase):
 
 
 class TestListSchema(unittest.TestCase):
-    @unittest.skip(
-        "marshmallow 3.x: this test looks invalid even in 2.x, "
-        "name and other are not part of the schema"
-    )
     def test_arbitrary_field_search(self):
         class Schema(ListSchema):
             searchable_columns = ['name']
