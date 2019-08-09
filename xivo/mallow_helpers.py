@@ -75,6 +75,7 @@ class ListSchema(marshmallow.Schema):
 class Schema(marshmallow.Schema):
     class Meta:
         ordered = True
+        unknown = marshmallow.EXCLUDE
 
     @marshmallow.pre_load
     def ensure_dict(self, data):
