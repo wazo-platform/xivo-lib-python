@@ -16,7 +16,6 @@ from marshmallow.fields import (
     String as _String,
     URL as _URL,
     UUID as _UUID,
-    ValidatedField,
 )
 
 ipaddress_available = True
@@ -43,11 +42,6 @@ class Field(_Field):
             message=_Field.default_error_messages['required'],
             constraint_id='required',
             constraint='required',
-        ),
-        'type': _StringifiedDict(
-            message=_Field.default_error_messages['type'],
-            constraint_id='type',
-            constraint='type',
         ),
     }
 
@@ -134,8 +128,8 @@ class Float(_Float):
     default_error_messages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
-            'invalid': _StringifiedDict(
-                message=_Float.default_error_messages['invalid'],
+            'special': _StringifiedDict(
+                message=_Float.default_error_messages['special'],
                 constraint_id='type',
                 constraint='float',
             )
@@ -212,7 +206,7 @@ class Constant(_Constant):
     default_error_messages = dict(Field.default_error_messages)
 
 
-class IP(ValidatedField, String):
+class IP(_String):
 
     default_error_messages = dict(Field.default_error_messages)
     default_error_messages.update(
