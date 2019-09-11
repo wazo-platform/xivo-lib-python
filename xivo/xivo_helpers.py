@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2008-2015 Avencall
+# Copyright 2008-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import re
@@ -9,7 +9,7 @@ import logging
 log = logging.getLogger("xivo.xivo_helpers")
 
 
-find_asterisk_pattern_char = re.compile('[[NXZ!.]').search
+find_asterisk_pattern_char = re.compile(r'[\[NXZ!.]').search
 
 
 def position_of_asterisk_pattern_char(ast_pattern):
