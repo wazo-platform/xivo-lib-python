@@ -10,7 +10,7 @@ test-setup: myservice thread-exception egg-info
 	docker pull progrium/consul
 	docker pull rabbitmq
 	docker pull wazopbx/wait
-	docker pull python:3.5-slim-stretch
+	docker pull python:3.7-slim-buster
 
 test:
 	nosetests suite

@@ -1,4 +1,4 @@
-FROM python:2.7.13-stretch
+FROM python:2.7.16-buster
 
 COPY integration_tests/assets/bin /usr/local/bin
 COPY . /tmp/xivo
@@ -7,7 +7,7 @@ RUN pip install \
     kombu \
     flask \
     https://github.com/wazo-pbx/xivo-bus/archive/master.zip \
-    python-consul==0.7.0 \
+    python-consul==0.7.1 \
     netifaces
 
 RUN cd /tmp/xivo && python setup.py install
