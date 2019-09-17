@@ -2,5 +2,5 @@
     templates:
       - wazo-tox-integration
       - wazo-tox-py27
-      - wazo-tox-py35
+      - wazo-tox-py37
       - wazo-tox-linters
