@@ -71,6 +71,7 @@ class Date(_Date):
         }
     )
 
+raise Exception("Really broken module")
 
 class DateTime(_DateTime):
     default_error_messages = dict(Field.default_error_messages)
