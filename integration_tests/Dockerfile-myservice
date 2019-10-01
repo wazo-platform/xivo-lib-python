@@ -6,7 +6,7 @@ COPY . /tmp/xivo
 RUN pip install \
     kombu \
     flask \
-    https://github.com/wazo-pbx/xivo-bus/archive/master.zip \
+    https://github.com/wazo-platform/xivo-bus/archive/master.zip \
     python-consul==0.7.1 \
     netifaces
 
