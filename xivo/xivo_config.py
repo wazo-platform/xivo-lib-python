@@ -18,7 +18,6 @@ from xivo import network
 from xivo import interfaces
 from xivo import system
 from xivo import xys
-from xivo import udev
 from xivo import shvar
 
 
@@ -1629,79 +1628,3 @@ def netif_target_name(ifname):
     if str(int(parts[1])) != parts[1]:
         return False
     return True
-
-
-def phy_free_in_conf(conf, ifname):
-    """
-    Test if @ifname is either absent from @conf, or in the "void".
-    """
-    return conf['netIfaces'].get(ifname, 'void') == 'void'
-
-
-class EthernetRenamer(object):
-    """
-    Class of operations passed to udev.rename_persistent_net_rules()
-    Implements non udev procedures needed to complete an udev based
-    renaming of Ethernet interfaces.
-    """
-
-    def __init__(self, src_dst_lst, pure_dst_set):
-        self.config = load_current_configuration()
-        for pure_dst in pure_dst_set:
-            if not phy_free_in_conf(self.config, pure_dst):
-                raise ValueError(
-                    "Target interface name busy in XIVO configuration: %r" % pure_dst
-                )
-        for src, dst in src_dst_lst:
-            if src not in self.config['netIfaces']:
-                raise ValueError(
-                    "Source interface name does not exist in XIVO configuration: %r"
-                    % src
-                )
-            if not netif_source_name(src):
-                raise ValueError("Invalid source interface name %r" % src)
-            if not netif_target_name(dst):
-                raise ValueError("Invalid target interface name %r" % dst)
-        self.src_dst_lst = src_dst_lst
-        self.pure_dst_set = pure_dst_set
-
-    def edit(self):
-        """
-        Do the change, initiate a transaction but do not complete it.
-        """
-        orig_netIfaces = dict(self.config['netIfaces'])
-        for src, dst in self.src_dst_lst:
-            self.config['netIfaces'][dst] = orig_netIfaces[src]
-            del self.config['netIfaces'][src]
-        save_configuration_initiate_transaction(self.config)
-
-    @staticmethod
-    def preup():
-        """
-        Run the transaction to completion.
-        """
-        transaction_system_configuration()
-
-    @staticmethod
-    def rollback():
-        """
-        Rollback the transaction (but do nothing if no transaction has
-        been just initiated).
-        """
-        if transaction_just_initiatiated():
-            undo_transaction_initiation()
-
-
-def rename_ethernet_interface(old_name, new_name):
-    """
-    Rename the @old_name physical interface to @new_name.
-    On internal failure, the operation is undone.
-
-    XXX: On external failure (kill -9, power outage), a small time window
-    remains where the configuration could be leaved in an inconsistent state.
-    """
-    # TODO: detect if a previous renaming operation has been interrupted the
-    # hard way (kill -9, power failure) and rollback if possible.
-    # This will be better placed in an other function.
-
-    udev.rename_persistent_net_rules([(old_name, new_name)], EthernetRenamer)

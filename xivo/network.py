@@ -42,7 +42,6 @@ HWTYPE = "type"
 MTU = "mtu"
 
 IFPLUGD = "/usr/sbin/ifplugd"
-IFPLUGD_START = ["/usr/sbin/invoke-rc.d", "ifplugd", "start"]
 
 IFDOWN = "/sbin/ifdown"
 
@@ -630,17 +629,6 @@ def force_shutdown(phy):
             raise NetworkOpError(
                 "ifdown miserably failed to shutdown the %r network interface" % vlan
             )
-
-
-def ifplugd_start():
-    try:
-        status = subprocess.call(IFPLUGD_START, close_fds=True)
-    except OSError:
-        errmsg = "could not invoke " + ' '.join(IFPLUGD_START)
-        log.exception(errmsg)
-        raise NetworkOpError(errmsg)
-    if status:
-        raise NetworkOpError("failure of: " + ' '.join(IFPLUGD_START))
 
 
 def _execute_cmd(cmd):
