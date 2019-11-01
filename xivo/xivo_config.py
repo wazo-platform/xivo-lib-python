@@ -1705,12 +1705,3 @@ def rename_ethernet_interface(old_name, new_name):
     # This will be better placed in an other function.
 
     udev.rename_persistent_net_rules([(old_name, new_name)], EthernetRenamer)
-
-
-def swap_ethernet_interfaces(name1, name2):
-    """
-    Swap ethernet interfaces @name1 and @name2.
-    """
-    # NOTE: see also rename_ethernet_interface() for various generic comments
-
-    udev.rename_persistent_net_rules([(name1, name2), (name2, name1)], EthernetRenamer)
