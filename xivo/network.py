@@ -46,8 +46,6 @@ IFPLUGD_START = ["/usr/sbin/invoke-rc.d", "ifplugd", "start"]
 
 IFDOWN = "/sbin/ifdown"
 
-ROUTE = '/bin/ip'
-
 # CODE
 
 
@@ -651,68 +649,6 @@ def _execute_cmd(cmd):
     stdout = p.communicate()[0]
 
     return (p.returncode, stdout)
-
-
-def route_set(address, netmask, gateway, iface):
-    cmd = [
-        ROUTE,
-        '-s',
-        '-s',
-        'route',
-        'add',
-        '%s/%s' % (address, netmask),
-        'via',
-        gateway,
-        'dev',
-        iface,
-    ]
-
-    return _execute_cmd(cmd)
-
-
-def route_unset(address, netmask, gateway, iface):
-    cmd = [
-        ROUTE,
-        'route',
-        'del',
-        '%s/%s' % (address, netmask),
-        'via',
-        gateway,
-        'dev',
-        iface,
-    ]
-
-    return _execute_cmd(cmd)
-
-
-def route_flush():
-    cmd = [ROUTE, 'route', 'flush']
-
-    return _execute_cmd(cmd)
-
-
-def route_flush_cache():
-    cmd = [ROUTE, 'route', 'flush', 'cache']
-
-    return _execute_cmd(cmd)
-
-
-def route_list():
-    cmd = [ROUTE, 'route', 'list']
-
-    (returncode, output) = _execute_cmd(cmd)
-
-    res = []
-    for line in output.split('\n'):
-        m = re.match(r"^([\d.:]+)(?:/(\d+))? via ([\d.:]+).*", line)
-        if m is not None:
-            route = list(m.groups())
-            if route[1] is None:
-                route[1] = 32
-
-            res.append(route)
-
-    return res
 
 
 if __name__ == "__main__":
