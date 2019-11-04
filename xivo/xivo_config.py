@@ -294,32 +294,6 @@ def specific_prefixDec(fname, prefix):
     return validator
 
 
-def plausible_static(static, schema):
-    """
-    !~plausible_static (from !!map)
-        Check that the netmask is plausible, that every address is in the
-        same network, and that there are no duplicated addresses.
-    """
-    address = network.parse_ipv4(static['address'])
-    netmask = network.parse_ipv4(static['netmask'])
-    if not network.plausible_netmask(netmask):
-        return False
-    addr_list = [address]
-    net = network.mask_ipv4(netmask, address)
-    for other in ('broadcast', 'gateway'):
-        other_ip = static.get(other)
-        if other_ip:
-            parsed_ip = network.parse_ipv4(other_ip)
-            addr_list.append(parsed_ip)
-            if network.mask_ipv4(netmask, parsed_ip) != net:
-                return False
-    if 'broadcast' not in static:
-        addr_list.append(broadcast_from_static(static))
-    if len(addr_list) != len(set(addr_list)):
-        return False
-    return True
-
-
 def get_referenced_ipConfTags(conf):
     """
     Get tags of the static IP configurations that are owned by vlans (in
