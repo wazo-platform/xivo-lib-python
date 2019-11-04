@@ -4,14 +4,10 @@
 
 """JSON tree operators
 
-Copyright (C) 2008-2010  Avencall
-
 TODO:
 - describe the relational operators
 - describe the format of a JSON change tree
 """
-
-__version__ = "$Revision$ $Date$"
 
 import six
 
@@ -180,19 +176,6 @@ def compile_one(op):
     """
     pop = _parse_one(op)
     return lambda t1, t2: _compare_one(pop, t1, t2)
-
-
-def compile_conj(ops):
-    """
-    @ops: list of strings
-    Returns a relational operator between two JSON trees, implemented as a
-    function:
-        compile_conj(ops)(tree1, tree2) -> boolean
-    Note that this relation is the conjunction of compile_one(op) for each
-    op of ops.
-    """
-    pops = map(_parse_one, ops)
-    return lambda t1, t2: _compare_conj(pops, t1, t2)
 
 
 def relate_one(op, tree1, tree2):
