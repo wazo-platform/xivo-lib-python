@@ -269,18 +269,6 @@ def phy_name_from_alias_if(ifname):
     return ifname[: ifname.find(':')]
 
 
-def is_vlan_if(ifname):
-    """
-    Return True if ifname is a valid vlan interface name
-    """
-    if ifname.startswith('vlan'):
-        return ifname[4:].isdigit()
-    pos = ifname.find('.')
-    if pos > 0:
-        return ifname[(pos + 1) :].isdigit()
-    return False
-
-
 def is_phy_if(ifname):
     """
     Return True iff ifname seems to be the name of a physical interface
