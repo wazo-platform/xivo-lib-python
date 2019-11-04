@@ -8,17 +8,14 @@
 # Dependencies/highly recommended? : arping curl
 
 import os
-import re
 import copy
 import yaml
 import logging
 
 from itertools import chain, count
 from xivo import network
-from xivo import interfaces
 from xivo import system
 from xivo import xys
-from xivo import shvar
 
 
 log = logging.getLogger("xivo.xivo_config")  # pylint: disable-msg=C0103
@@ -567,50 +564,6 @@ services:
 # TODO interface de lookup inverse: envoyer la liste des static_xxxx => mac addr + VLan ID
 
 
-def reserved_netIfaces(conf):
-    """
-    Return the set of reserved physical network interfaces
-    """
-    return frozenset(
-        [
-            ifname
-            for ifname, ifacevlan in conf['netIfaces'].iteritems()
-            if ifacevlan == 'reserved'
-        ]
-    )
-
-
-def removed_netIfaces(conf):
-    """
-    Return the set of removed interfaces
-    """
-    return frozenset(
-        [
-            ifname
-            for ifname, ifacevlan in conf['netIfaces'].iteritems()
-            if ifacevlan == 'removed'
-        ]
-    )
-
-
-def reserved_vlans(conf):
-    """
-    Return the set of reserved vlan interfaces
-    """
-    reserved_vlan_list = []
-    for phy, vsTag in conf['netIfaces'].iteritems():
-        if not specific(vsTag):
-            continue
-        reserved_vlan_list.extend(
-            [
-                "%s.%d" % (phy, vlanId)
-                for vlanId, ipConfs_tag in conf['vlans'][vsTag].iteritems()
-                if ipConfs_tag == 'reserved'
-            ]
-        )
-    return frozenset(reserved_vlan_list)
-
-
 def normalize_static(static):
     """
     Normalize IPv4 addresses in static
@@ -619,31 +572,6 @@ def normalize_static(static):
     for key in ('address', 'netmask', 'broadcast', 'gateway'):
         if key in static:
             static[key] = network.normalize_ipv4_address(static[key])
-
-
-def unreserved_interfaces_options(options):
-    """
-    Return the set of unreserved interfaces options
-    """
-    reserved = interfaces.EniBlockAllow.ALLOWUP_CLASSES + (
-        'name',
-        'iface',
-        'mapping',
-        'ifname',
-        'family',
-        'method',
-        'address',
-        'netmask',
-        'broadcast',
-        'gateway',
-        'vlan-id',
-        'vlan-raw-device',
-        'mtu',
-    )
-
-    return [
-        (optname, optvalue) for optname, optvalue in options if optname not in reserved
-    ]
 
 
 class InvalidConfigurationError(Exception):
@@ -731,334 +659,6 @@ def save_configuration_for_transaction(conf):
             os.path.join(STORE_BASE, STORE_TMP, NETWORK_CONFIG_FILE)
         ),
     )
-
-
-def natural_vlan_name(phy, vlanId):
-    """
-    @phy: string
-    @vlanId: integer
-    """
-    if not vlanId:
-        return phy
-    else:
-        return "%s.%d" % (phy, vlanId)
-
-
-def generate_interfaces(old_lines, conf):
-    """
-    Yield the new lines of interfaces(5) according to the old ones and the
-    current configuration
-    """
-    log.info("ENTERING generate_interfaces()")
-
-    eni = interfaces.parse(old_lines)
-    rsvd_base = reserved_netIfaces(conf)
-    rmvd_full = removed_netIfaces(conf)
-    rsvd_full = reserved_vlans(conf)
-    rsvd_mapping_dest = interfaces.get_mapping_dests(eni, rsvd_base, rsvd_full)
-
-    def unhandled_or_reserved(ifname):
-        """
-        Is ifname not handled either because it does not start with a
-        known prefix, or because it is explicitely reserved
-        """
-        if ifname in rmvd_full:
-            return False
-        return (not netif_managed(ifname)) or interfaces.ifname_in_base_full_mapsymbs(
-            ifname, rsvd_base, rsvd_full, rsvd_mapping_dest
-        )
-
-    KEPT = object()
-    REMOVED = object()
-    SPACE = object()
-
-    new_eni = []
-    space_blocks = []
-    up = REMOVED
-    down = REMOVED
-
-    def flush_space_blocks():
-        """
-        Some space blocks are only preserved if they are not
-        surrounded by other non preserved blocks.
-        This function flush or dismiss the space blocks according to
-        this rule, and must be called as soon as the KEPT / REMOVED of
-        the lower non space block is known.
-        """
-        if down is KEPT:
-            new_eni.extend(space_blocks)
-        elif up is KEPT:
-            if space_blocks:
-                new_eni.append(space_blocks[0])
-        else:  # dismiss space blocks for which adjacent non space blocks are both removed
-            pass
-        del space_blocks[:]
-
-    # The following transformation is performed on 'eni' and the actions are traced
-    #
-    # EniBlockSpace         keep according to wizard rules of attraction of other kept blocks
-    # EniBlockWithIfName    keep iff unhandled/reserved
-    #   EniBlockMapping
-    #   EniBlockIface
-    # EniBlockAllow         suppress handled and non reserved inside, keep only if result is non empty
-    # EniBlockUnknown       suppress
-    #
-    for block in eni:
-        if isinstance(block, interfaces.EniBlockSpace):
-            space_blocks.append(block)
-            down = SPACE
-        elif isinstance(block, interfaces.EniBlockWithIfName):
-            if unhandled_or_reserved(block.ifname):
-                log.debug(
-                    "keeping unhandled or reserved %s block %r",
-                    block.__class__.__name__,
-                    block.ifname,
-                )
-                down = KEPT
-            else:
-                log.info(
-                    "removing handled and not reserved %s block %r",
-                    block.__class__.__name__,
-                    block.ifname,
-                )
-                down = REMOVED
-        elif isinstance(block, interfaces.EniBlockAllow):
-            assert (
-                len(block.cooked_lines) == 1
-            ), "a EniBlockAllow contains more than one cooked line"
-            line_recipe = interfaces.EniCookLineRecipe(block.raw_lines)
-            for ifname in block.allow_list[:]:
-                if unhandled_or_reserved(ifname):
-                    log.debug(
-                        "keeping unhandled or reserved %r in %r stanza",
-                        ifname,
-                        block.allow_kw,
-                    )
-                else:
-                    log.info(
-                        "removing handled and not reserved %r in %r stanza",
-                        ifname,
-                        block.allow_kw,
-                    )
-                    mo = re.search(
-                        re.escape(ifname) + r'(\s)*', line_recipe.cooked_line
-                    )
-                    if mo:
-                        line_recipe.remove_part(mo.start(), mo.end())
-                    else:
-                        log.warning(
-                            "%r has not been found in %r",
-                            ifname,
-                            line_recipe.cooked_line,
-                        )
-                    block.allow_list.remove(ifname)
-            line_recipe.update_block(block)
-            if block.allow_list:
-                down = KEPT
-            else:
-                log.info("removing empty %r stanza", block.allow_kw)
-                down = REMOVED
-        else:  # interfaces.EniBlockUnknown
-            log.info("removing invalid block")
-            down = REMOVED
-
-        if down is not SPACE:
-            flush_space_blocks()
-            if down is KEPT:
-                new_eni.append(block)
-            up = down
-
-    if down is SPACE:
-        down = REMOVED
-        flush_space_blocks()
-
-    eni = new_eni
-
-    # yield initial comments
-    #
-    yield "# XIVO: FILE AUTOMATICALLY GENERATED BY THE XIVO CONFIGURATION SUBSYSTEM\n"
-    yield "# XIVO: ONLY RESERVED STANZAS WILL BE PRESERVED WHEN IT IS REGENERATED\n"
-    yield "# XIVO: \n"
-
-    # yield remaining lines
-    #
-    for block in eni:
-        for raw_line in block.raw_lines:
-            if not raw_line.startswith("# XIVO: "):
-                yield raw_line
-
-    # generate new config for handled interfaces
-    #
-    for phy, vsTag in conf['netIfaces'].iteritems():
-        if not specific(vsTag):
-            continue
-
-        for vlanId, ipConfs_tag in conf['vlans'][vsTag].iteritems():
-            if not specific(ipConfs_tag):
-                continue
-            elif 'ipConfs' in conf and ipConfs_tag in conf['ipConfs']:
-                family = 'inet'
-                method = 'static'
-                currentconf = conf['ipConfs'][ipConfs_tag]
-            else:
-                currentconf = conf['customipConfs'][ipConfs_tag]
-                family = currentconf.get('family', 'inet')
-                method = currentconf.get('method', 'static')
-
-            if currentconf.has_key('ifname'):
-                ifname = currentconf['ifname']
-            else:
-                ifname = natural_vlan_name(phy, vlanId)
-
-            log.info("generating configuration for %r", ifname)
-
-            for allow in interfaces.EniBlockAllow.ALLOWUP_CLASSES:
-                if currentconf.get(allow):
-                    yield "%s %s\n" % (allow, ifname)
-
-            yield "iface %s %s %s\n" % (ifname, family, method)
-
-            if vlanId:
-                yield "\tvlan-id %d\n" % vlanId
-                yield "\tvlan-raw-device %s\n" % currentconf.get('vlan-raw-device', phy)
-
-            if method == 'static' and family in ('inet', 'inet6'):
-                yield "\taddress %s\n" % currentconf['address']
-                yield "\tnetmask %s\n" % currentconf['netmask']
-
-                if family == 'inet' and 'broadcast' in currentconf:
-                    yield "\tbroadcast %s\n" % currentconf['broadcast']
-
-                if 'gateway' in currentconf:
-                    yield "\tgateway %s\n" % currentconf['gateway']
-
-                if 'mtu' in currentconf:
-                    yield "\tmtu %d\n" % currentconf['mtu']
-
-            if 'options' in currentconf:
-                for optname, optvalue in unreserved_interfaces_options(
-                    currentconf['options']
-                ):
-                    yield "\t%s %s\n" % (optname, optvalue)
-
-    yield "\n"
-
-    log.info("LEAVING generate_interfaces.")
-
-
-# XXX traces
-def generate_dhcpd_conf(conf):
-    """
-    Yield each line of the generated dhcpd.conf
-    """
-    log.info("ENTERING generate_dhcpd_conf()")
-
-    addresses = conf['services']['voip']['addresses']
-    ipConfVoip_key = conf['services']['voip']['ipConf']
-    ipConfVoip = conf['ipConfs'][ipConfVoip_key]
-
-    yield '# XIVO: FILE AUTOMATICALLY GENERATED BY THE XIVO CONFIGURATION SUBSYSTEM\n'
-    yield '# XIVO: DO NOT EDIT\n'
-    yield '\n'
-    yield 'class "phone-mac-address-prefix" {\n'
-    yield '    match substring(hardware, 0, 4);\n'
-    yield '}\n'
-    yield '\n'
-    for phone_class in PhoneClasses.itervalues():
-        yield '# %s\n' % phone_class.__name__
-        for line in phone_class.get_dhcp_classes_and_sub(addresses):
-            yield line
-    yield '\n'
-    yield 'subnet %s netmask %s {\n' % (
-        network.format_ipv4(network_from_static(ipConfVoip)),
-        ipConfVoip['netmask'],
-    )
-    yield '\n'
-    yield '    one-lease-per-client on;\n'
-    yield '\n'
-    yield '    option subnet-mask %s;\n' % ipConfVoip['netmask']
-    yield '    option broadcast-address %s;\n' % network.format_ipv4(
-        broadcast_from_static(ipConfVoip)
-    )
-    yield '    option ip-forwarding off;\n'
-    if 'router' in addresses:
-        yield '    option routers %s;\n' % addresses['router']
-    yield '\n'
-    yield '    log(binary-to-ascii(16,8,":",hardware));\n'
-    yield '    log(option user-class);\n'
-    yield '    log(option vendor-class-identifier);\n'
-    yield '\n'
-    yield '    pool {\n'
-    yield '        range dynamic-bootp %s %s;\n' % tuple(addresses['voipRange'])
-    yield '        default-lease-time 14400;\n'
-    yield '        max-lease-time 28800;\n'
-    yield '\n'
-    yield '        log("VoIP pool");\n'
-    yield '\n'
-    yield '        allow members of "phone-mac-address-prefix";\n'
-    for phone_class in PhoneClasses.itervalues():
-        first_line = True
-        for line in phone_class.get_dhcp_pool_lines():
-            if first_line:
-                yield '        # %s\n' % phone_class.__name__
-                first_line = False
-            yield line
-    yield '    }\n'
-    if 'alienRange' in addresses:
-        yield '\n'
-        yield '    pool {\n'
-        yield '        range dynamic-bootp %s %s;\n' % tuple(addresses['alienRange'])
-        yield '        default-lease-time 7200;\n'
-        yield '        max-lease-time 14400;\n'
-        yield '\n'
-        yield '        log("non VoIP pool");\n'
-        yield '    }\n'
-    yield '}\n'
-
-    log.info("LEAVING generate_dhcpd_conf.")
-
-
-# note: we use the header below because it is the header also used by the
-# ifplugd package
-DEFAULT_IFPLUGD = """# This file may be changed either manually or by running dpkg-reconfigure.
-#
-# N.B.: dpkg-reconfigure deletes everything from this file except for
-# the assignments to variables INTERFACES, HOTPLUG_INTERFACES, ARGS and
-# SUSPEND_ACTION.  When run it uses the current values of those variables
-# as their default values, thus preserving the administrator's changes.
-#
-# This file is sourced by both the init script /etc/init.d/ifplugd and
-# the hotplug script /etc/hotplug.d/net/ifplugd.hotplug to give default
-# values. The init script starts ifplugd for all interfaces listed in
-# INTERFACES, and the hotplug script starts ifplugd for all interfaces
-# listed in HOTPLUG_INTERFACES. The special value all starts one
-# ifplugd for all interfaces being present.
-INTERFACES=""
-HOTPLUG_INTERFACES=""
-ARGS="-q -f -u0 -d10 -w -I"
-SUSPEND_ACTION="stop"
-"""
-
-
-def generate_default_ifplugd(old_lines, conf):
-    """
-    Yield the new lines of /etc/default/ifplugd according to the old ones and
-    the current configuration
-    """
-    log.info("ENTERING generate_default_ifplugd()")
-
-    if not old_lines:
-        old_lines = DEFAULT_IFPLUGD.split("\n")
-
-    reslst, resdct = shvar.load(old_lines)
-    shvar.strip_overridden_assignments(reslst)
-    iflist = [phy for phy, vsTag in conf['netIfaces'] if specific_or_reserved(vsTag)]
-    shvar.slow_set_assign(reslst, "INTERFACES", " ".join(iflist))
-
-    for line in shvar.format(reslst):
-        yield line
-
-    log.info("LEAVING generate_default_ifplugd.")
 
 
 class TransactionError(Exception):
@@ -1266,36 +866,6 @@ def transactional_generation(
         return True
 
     log.info("LEAVING transactional_generation - no transaction to complete")
-
-
-def generate_system_configuration(to_gen, prev_gen, current_xivo_conf):
-    """
-    Generate system configuration from our own configuration model.
-    """
-    os.mkdir(to_gen)
-
-    config = load_configuration(
-        file(os.path.join(current_xivo_conf, NETWORK_CONFIG_FILE))
-    )
-
-    def gen_from_old(filename, genfunc):
-        if prev_gen:
-            old_lines = file(os.path.join(prev_gen, filename))
-        else:
-            old_lines = ()
-        system.file_writelines_flush_sync(
-            os.path.join(to_gen, filename), genfunc(old_lines, config)
-        )
-        if old_lines:
-            old_lines.close()
-
-    gen_from_old(INTERFACES_FILE, generate_interfaces)
-
-    gen_from_old(IFPLUGD_FILE, generate_default_ifplugd)
-
-    system.file_writelines_flush_sync(
-        os.path.join(to_gen, DHCPD_CONF_FILE), generate_dhcpd_conf(config)
-    )
 
 
 def transaction_system_configuration():
@@ -1506,24 +1076,6 @@ def autoattrib_conf(conf):
     return conf
 
 
-class AlreadyExist(Exception):
-    """
-    Raised if one tries to create something that already exists.
-    """
-
-    pass
-
-
-def add_vlan(conf, vsTag, vlanId):
-    """
-    Add a VLan in conf, in-place.
-    """
-    vs = conf['vlans'][vsTag]
-    if vlanId in vs:
-        raise AlreadyExist("VLan %d already exists in %s" % (vlanId, vsTag))
-    vs[vlanId] = "void"
-
-
 def save_configuration_initiate_transaction(conf):
     """
     Save XIVO configuration in a place suitable for the system
@@ -1537,27 +1089,6 @@ def save_configuration_initiate_transaction(conf):
     save_configuration_for_transaction(conf)
     system.sync_no_oserror()
     os.rename(os.path.join(STORE_BASE, STORE_TMP), os.path.join(STORE_BASE, STORE_NEW))
-
-
-def transaction_just_initiatiated():
-    """
-    Return True if the new store directory exists, or False.
-    """
-    return os.path.exists(os.path.join(STORE_BASE, STORE_NEW))
-
-
-def undo_transaction_initiation():
-    """
-    Cancel a transaction that has just been initiated but for which
-    absolutely no work of transactional_generation() has been performed
-    yet.
-
-    WARNING: the temporary store directory must not exists - and when this
-    function completes it still won't exist.
-    """
-    # make the new store directory disappear atomically
-    os.rename(os.path.join(STORE_BASE, STORE_NEW), os.path.join(STORE_BASE, STORE_TMP))
-    system.rm_rf(os.path.join(STORE_BASE, STORE_TMP))
 
 
 def save_configuration_perform_generation_transaction(conf):
@@ -1581,24 +1112,3 @@ def autoattrib():
     if aaconf == config:
         return
     save_configuration_perform_generation_transaction(aaconf)
-
-
-def netif_source_name(ifname):
-    """
-    Return True iff ifname can be a source name for a network interface.
-    """
-    return netif_managed(ifname) and network.is_phy_if(ifname)
-
-
-def netif_target_name(ifname):
-    """
-    Return True iff ifname can be a target name for a network interface.
-    """
-    if not netif_source_name(ifname):
-        return False
-    parts = network.split_alpha_num(ifname)
-    if len(parts) != 2:
-        return False
-    if str(int(parts[1])) != parts[1]:
-        return False
-    return True
