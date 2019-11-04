@@ -13,40 +13,14 @@ import subprocess
 import logging
 import socket
 import struct
-import math
 
 
 log = logging.getLogger("xivo.network")  # pylint: disable-msg=C0103
 
 
-# CONFIG
-
-PROC_NET_VLAN = "/proc/net/vlan"
-VLAN_CONFIG_PARSER = re.compile(r'^\s*([^\s]+)\s*\|\s*(\d+)\s*\|\s*([^\s]+)\s*$').match
-VLAN_NAME_SPLITTER = re.compile(
-    r'^(?:vlan(\d+)|(\W+)\.(\d+)|(?!vlan)[^\.]*\.(\d+))$'
-).match
-
 SYS_CLASS_NET = "/sys/class/net"
 # /sys/class/net/<ifname>/carrier tells us if the interface if plugged
 CARRIER = "carrier"
-# /sys/class/net/<ifname>/device tells us if the interface is physical
-DEVICE = "device"
-# /sys/class/net/<ifname>/flags tells us the interface flags
-FLAGS = "flags"
-# /sys/class/net/<ifname>/address tells us the interface hardware address
-HWADDRESS = "address"
-# /sys/class/net/<ifname>/type tells us the interface hardware type ID
-HWTYPE = "type"
-# /sys/class/net/<ifname>/mtu tells us the interface MTU
-MTU = "mtu"
-
-IFPLUGD = "/usr/sbin/ifplugd"
-
-IFDOWN = "/sbin/ifdown"
-
-# CODE
-
 
 DECIMAL_SPLIT = re.compile(r'(\d+)').split
 
@@ -137,15 +111,6 @@ def is_linux_netdev_if(ifname):
     return os.path.isdir(os.path.join(SYS_CLASS_NET, ifname))
 
 
-def is_linux_phy_if(ifname):
-    """
-    Return True if ifname seems to be the name of a physical interface
-    """
-    if not is_phy_if(ifname):
-        return False
-    return os.path.isdir(os.path.join(SYS_CLASS_NET, ifname, DEVICE))
-
-
 def get_linux_netdev_list():
     """
     Get an unfiltered view of network interfaces as seen by Linux
@@ -160,132 +125,12 @@ def get_filtered_ifnames(ifname_match_func=lambda x: True):
     return filter(ifname_match_func, get_linux_netdev_list())
 
 
-def is_linux_dummy_if(ifname):
-    """
-    Return True if ifname seems to be a dummy interface
-
-    NOTE: flaky test, as a dummy interface can be renamed:
-      $> ip link set name ethX dev dummyY
-    """
-    return is_linux_netdev_if(ifname) and ifname.startswith('dummy')
-
-
-def is_linux_vlan_if(ifname):
-    """
-    Return True if ifname seems to be a vlan interface
-    """
-    return os.path.isfile(os.path.join(PROC_NET_VLAN, ifname)) and is_linux_netdev_if(
-        ifname
-    )
-
-
-def get_linux_vlan_list():
-    """
-    Get a view of vlan interfaces as seen by Linux
-    """
-    return [entry for entry in os.listdir(PROC_NET_VLAN) if is_linux_vlan_if(entry)]
-
-
-def get_linux_vlan_config(ifname=None):
-    """
-    Return a dict of vlan configuration as seen by Linux
-    """
-    configpath = os.path.join(PROC_NET_VLAN, 'config')
-
-    if not os.access(configpath, os.R_OK):
-        return False
-
-    with open(configpath, 'r') as config:
-        r = {}
-
-        for line in config.readlines():
-            parsed = VLAN_CONFIG_PARSER(line)
-            if parsed:
-                r[parsed.group(1)] = {
-                    'vlan-id': int(parsed.group(2)),
-                    'vlan-raw-device': parsed.group(3),
-                }
-
-        if ifname is not None:
-            return r.get(ifname, False)
-
-        return r
-
-
-def get_vlan_info_from_ifname(ifname):
-    """
-    Try to return a dict of vlan configuration from the vlan interface name
-    """
-    r = {}
-
-    splitted = VLAN_NAME_SPLITTER(ifname)
-
-    if not splitted:
-        return r
-    elif splitted.group(1) is not None:
-        r['vlan-id'] = int(splitted.group(1))
-    elif splitted.group(2) is not None:
-        r['vlan-id'] = int(splitted.group(3))
-        r['vlan-raw-device'] = splitted.group(2)
-    else:
-        r['vlan-id'] = int(splitted.group(4))
-
-    return r
-
-
-def get_vlan_info(ifname):
-    """
-    Try to return vlan information like VLANID and VLAN_RAW_DEVICE from vlan interface
-    """
-    if not is_linux_vlan_if(ifname):
-        return False
-
-    config = get_linux_vlan_config(ifname)
-    if config:
-        return config
-
-    return get_vlan_info_from_ifname(ifname)
-
-
-def is_alias_if(ifname):
-    """
-    Return True if ifname seems to be the name of an alias interface
-    """
-    pos = ifname.find(':')
-    if pos > 0:
-        return ifname[(pos + 1) :].isdigit()
-    return False
-
-
-def phy_name_from_alias_if(ifname):
-    """
-    Return the physical interface name from an alias interface
-    """
-    if not is_alias_if(ifname):
-        raise ValueError(
-            "Invalid interface, it's not an alias interface (ifname: %r)" % ifname
-        )
-
-    return ifname[: ifname.find(':')]
-
-
 def is_phy_if(ifname):
     """
     Return True iff ifname seems to be the name of a physical interface
     (not a tagged VLAN).
     """
     return '.' not in ifname
-
-
-def is_eth_phy_if(ifname):
-    """
-    Return True if ifname is a valid physical ethernet interface name
-    """
-    return (
-        (ifname.startswith('eth') or ifname.startswith('en'))
-        and not is_alias_if(ifname)
-        and is_phy_if(ifname)
-    )
 
 
 def get_filtered_phys(ifname_match_func=lambda x: True):
@@ -305,38 +150,6 @@ def is_interface_plugged(ifname):
             return bool(int(f.read().strip()))
     except IOError:
         return False
-
-
-def get_interface_flags(ifname):
-    """
-    Return the interface flags
-    """
-    with open(os.path.join(SYS_CLASS_NET, ifname, FLAGS), 'r') as f:
-        return int(f.read().strip(), 16)
-
-
-def get_interface_hwaddress(ifname):
-    """
-    Return the hardware address
-    """
-    with open(os.path.join(SYS_CLASS_NET, ifname, HWADDRESS), 'r') as f:
-        return f.read().strip()
-
-
-def get_interface_hwtypeid(ifname):
-    """
-    Return the hardware type id
-    """
-    with open(os.path.join(SYS_CLASS_NET, ifname, HWTYPE), 'r') as f:
-        return int(f.read().strip())
-
-
-def get_interface_mtu(ifname):
-    """
-    Return the interface mtu
-    """
-    with open(os.path.join(SYS_CLASS_NET, ifname, MTU), 'r') as f:
-        return int(f.read().strip())
 
 
 def normalize_ipv4_address(addr):
@@ -385,22 +198,6 @@ def is_mac_address_valid(addr):
     return True
 
 
-def normalize_mac_address(macaddr):
-    """
-    input: mac address, with bytes in hexa, ':' separated
-    ouput: mac address in format %02X:%02X:%02X:%02X:%02X:%02X
-
-    >>> normalize_mac_address("1a:b:c:d:e:f")
-    '1A:0B:0C:0D:0E:0F'
-    >>> normalize_mac_address("1A:0B:0C:0D:0E:0F")
-    '1A:0B:0C:0D:0E:0F'
-    """
-    macaddr_split = macaddr.upper().split(':', 6)
-    if len(macaddr_split) != 6:
-        raise ValueError("Bad format for mac address " + macaddr)
-    return ':'.join([('%02X' % int(s, 16)) for s in macaddr_split])
-
-
 def parse_ipv4(straddr):
     """
     Return an IPv4 address as a 4uple of ints
@@ -443,44 +240,6 @@ def format_ipv4(tupaddr):
     '1.0.0.13'
     """
     return '.'.join(map(str, tupaddr))
-
-
-def bitmask_to_mask_ipv4(bits):
-    """
-    Return an IPv4 netmask address as a 4uple of ints
-    @bits: Bit integer
-    """
-    return struct.unpack(
-        "BBBB", socket.inet_aton(str((0xFFFFFFFF >> (32 - bits)) << (32 - bits)))
-    )
-
-
-def bitmask_to_mask_ipv6(bits):
-    """
-    Return an IPv6 netmask address as a 8uple of binary strings
-    @bits: Bit integer
-    """
-    bits = int(bits)
-
-    if not 0 <= bits <= 128:
-        raise ValueError("Invalid bitmask: %r" % bits)
-
-    ret = []
-
-    nb = int(math.floor(float(bits) / 16))
-
-    if nb > 0:
-        ret.extend(["\xff\xff"] * nb)
-        bits -= 16 * nb
-
-    if bits > 0:
-        ret.append(struct.pack("!H", (0xFFFF >> (16 - bits)) << (16 - bits)))
-
-    xlen = len(ret)
-    if xlen < 8:
-        ret.extend(["\x00\x00"] * (8 - xlen))
-
-    return tuple(ret)
 
 
 def mask_ipv4(mask, addr):
@@ -534,13 +293,6 @@ def plausible_netmask(addr):
     return addr in _valid_netmask
 
 
-def ipv4_in_network(addr, netmask, network):
-    """
-    Check that addr (4uple of ints) is in the network
-    """
-    return mask_ipv4(netmask, addr) == network
-
-
 # WARNING: the following function does not test the length which must be <= 63
 DomainLabelOk = re.compile(r'[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?$').match
 
@@ -565,58 +317,6 @@ def plausible_search_domain(search_domain):
             )
         )
     )
-
-
-class NetworkOpError(Exception):
-    "Error raised on network related operation failures."
-    pass
-
-
-def force_shutdown(phy):
-    """
-    Remove all VLAN on the network interface @phy, then shutdown it.
-    First "ifplugd" is stopped for this interface, then both VLAN removal and
-    interface shutdown are done by calling "ifdown".
-
-    Unlike /etc/init.d/networking stop, it won't test for mounted network
-    filesystems or other resources.  It just shutdown the given interface,
-    right when called.
-
-    WARNING: This function won't work properly if "ifplugd" or "ifdown" (and
-    "ifup") are not used on the system.
-    """
-    # NOTE: The order in which ifplugd and ifdown are called is very important.
-    # If you invert the order, the interface will probably not be completely
-    # down (from the p.o.v. of Linux) when the function returns.
-
-    try:
-        status = subprocess.call([IFPLUGD, "-i", phy, "-k"], close_fds=True)
-    except OSError:
-        errmsg = "could not invoke ifplugd to kill its %r instance" % phy
-        log.exception(errmsg)
-        raise NetworkOpError(errmsg)
-    if status:
-        if status == 6:
-            log.warning("%r ifplugd instance seems to have already been stopped", phy)
-        else:
-            raise NetworkOpError(
-                "ifplugd miserably failed while trying to kill instance %r" % phy
-            )
-
-    vlans_phy = [vlan for vlan in get_linux_netdev_list() if vlan.startswith(phy + ".")]
-    vlans_phy.append(phy)
-
-    for vlan in vlans_phy:
-        try:
-            status = subprocess.call([IFDOWN, vlan], close_fds=True)
-        except OSError:
-            errmsg = "could not invoke ifdown to shutdown interface %r" % vlan
-            log.exception(errmsg)
-            raise NetworkOpError(errmsg)
-        if status:
-            raise NetworkOpError(
-                "ifdown miserably failed to shutdown the %r network interface" % vlan
-            )
 
 
 def _execute_cmd(cmd):
