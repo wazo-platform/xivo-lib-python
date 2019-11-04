@@ -365,13 +365,3 @@ def trigger():
         raise TriggerError("could not invoke udevtrigger")
     if status != 0:
         raise TriggerError("udevtrigger failed")
-
-
-def list_duplicates(seq):
-    """
-    List items that are present more than once in seq.
-    """
-    dct = {}
-    for elt in seq:
-        dct[elt] = dct.get(elt, 0) + 1
-    return [elt for elt, nb in dct.iteritems() if nb > 1]

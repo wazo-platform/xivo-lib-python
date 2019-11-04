@@ -4,8 +4,6 @@
 
 """Supplementary synchronization primitives not provided by 'threading'
 
-Copyright (C) 2007-2010  Avencall
-
 - RWLock                simple implementation with timeouts, without promotion
 
     Highly inspired from
@@ -21,24 +19,6 @@ Copyright (C) 2007-2010  Avencall
 
 import time
 import threading
-
-
-class Once(object):
-    def __init__(self):
-        self._lock = threading.Lock()
-        self._initialized = False
-
-    def once(self, init_routine):
-        # common case optimization
-        if self._initialized:
-            return
-
-        with self._lock:
-            if self._initialized:
-                return
-
-            init_routine()
-            self._initialized = 1
 
 
 class RWLock:
