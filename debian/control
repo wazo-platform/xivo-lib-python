@@ -14,7 +14,6 @@ Replaces:  pf-xivo-lib-python
 Conflicts: pf-xivo-lib-python
 Depends: ${python:Depends},
          ${misc:Depends},
-         ifplugd (>= 0.28),
          python-consul,
          python-psycopg2,
          python-six,
@@ -30,7 +29,6 @@ Package: xivo-lib-python-python3
 Architecture: all
 Depends: ${python3:Depends},
          ${misc:Depends},
-         ifplugd (>= 0.28),
          python3-consul,
          python3-psycopg2,
          python3-six,
