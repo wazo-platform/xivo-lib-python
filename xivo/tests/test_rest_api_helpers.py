@@ -42,7 +42,7 @@ class TestRestApiHelpers(TestCase):
         assert_that(decorated, raises(TypeError))
 
     def test_given_api_exception_when_handle_api_exception_then_return_formatted_response(
-        self
+        self,
     ):
         @handle_api_exception
         def decorated():
