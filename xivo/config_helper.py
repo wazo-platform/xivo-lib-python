@@ -12,6 +12,7 @@ import subprocess
 import yaml
 
 from .chain_map import ChainMap
+from .xivo_logging import get_log_level_by_name
 
 
 class _YAMLExecTag(yaml.YAMLObject):
@@ -128,3 +129,36 @@ def get_xivo_uuid(logger):
 
 def set_xivo_uuid(config, logger):
     config['uuid'] = get_xivo_uuid(logger)
+
+
+def _load_key_file(config):
+    filename = config.get('auth', {}).get('key_file')
+    if not filename:
+        return {}
+
+    key_file = parse_config_file(filename)
+    if not key_file:
+        return {}
+
+    return {
+        'auth': {
+            'username': key_file['service_id'],
+            'password': key_file['service_key'],
+        }
+    }
+
+
+def load_config(cli_config, default):
+    file_config = read_config_file_hierarchy(ChainMap(cli_config, default))
+    reinterpreted_config = _get_reinterpreted_raw_values(cli_config, file_config, default)
+    key_file = _load_key_file(ChainMap(cli_config, file_config, default))
+    return ChainMap(reinterpreted_config, key_file, cli_config, file_config, default)
+
+
+def _get_reinterpreted_raw_values(*configs):
+    config = ChainMap(*configs)
+    return dict(
+        log_level=get_log_level_by_name(
+            'debug' if config['debug'] else config['log_level']
+        )
+    )
