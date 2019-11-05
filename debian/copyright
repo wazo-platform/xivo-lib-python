@@ -1,10 +1,8 @@
 ﻿This package was first debianized by Corentin Le Gall
 <clegall@proformatique.com> on Tue, 15 May 2007 16:13:37 +0200.
 
-License (OrderedConf.py, ThreadingHTTPServer.py):
+License (ThreadingHTTPServer.py):
 
-	OrderedConf.py derives from the ConfigParser module distributed in
-	Python 2.4.4.
 	ThreadingHTTPServer.py derives from parts of the BaseHTTPServer
 	module distributed in Python 2.4.4.
 	They are distributed under the PSF LICENSE AGREEMENT FOR PYTHON 2.4
