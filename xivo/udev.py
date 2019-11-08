@@ -4,32 +4,18 @@
 
 """Interworking with udev
 
-Copyright (C) 2008-2010  Avencall
-
 NOTE: based on udev-105 internals (Debian Etch)
 WARNING: Linux specific module - and maybe even Debian specific module
 """
 
-__version__ = "$Revision$ $Date$"
-
-import os
 import re
-import time
 import subprocess
 from copy import deepcopy
-from itertools import count
 import logging
-
-from xivo import system
-from xivo import network
 
 
 log = logging.getLogger("xivo.udev")  # pylint: disable-msg=C0103
 
-
-PERSISTENT_NET_RULES_FILE = "/etc/udev/rules.d/z25_persistent-net.rules"
-
-LOCKPATH_PREFIX = "/dev/.udev/.lock-"
 
 UDEVTRIGGER = "/sbin/udevtrigger"
 
@@ -42,44 +28,6 @@ def find(seq, f):
     for el in seq:
         if f(el):
             return el
-
-
-def lockpath(rules_file):
-    """
-    Return the path of the directory to create in order to take a lock on
-    @rules_file so that udev won't bother us while we are modifying it.
-    """
-    return LOCKPATH_PREFIX + os.path.basename(rules_file)
-
-
-def lock_rules_file(rules_file):
-    """
-    Take a lock on @rules_file as udev does.
-    On errors, this function retries to grab the lock for as much as 30
-    times, with pauses of 1 second between successive attempts.
-    If the lock could not be grabbed at all, the last exception is
-    re-raised.
-    """
-    lpath = lockpath(rules_file)
-    for x in count():
-        try:
-            os.mkdir(lpath)
-        except OSError:
-            if x == 29:
-                raise
-            time.sleep(1)
-        else:
-            return
-
-
-def unlock_rules_file(rules_file):
-    """
-    Unlock a lock previously taken with lock_rules_file()
-    The user should _not_ try to unlock a lock that has not been
-    successfully taken with lock_rules_file(), or unlock it twice, etc.
-    """
-    lpath = lockpath(rules_file)
-    os.rmdir(lpath)
 
 
 def is_comment(mline):
@@ -293,44 +241,6 @@ def parse_rule(mline):
     return rule, reconstructible_rule
 
 
-def parse_lines(lines):
-    """
-    @lines is a sequence of lines that comes from a udev rules file.
-    This function parses the rules, taking into account continued lines,
-    blank lines and comment lines.  It returns a list a rules, in which
-    each rule is a dictionary formatted as described in the documentation
-    of parse_rule().
-    """
-    rules = []
-    for mline in iter_multilines(lines):
-        if (not mline) or is_comment(mline):
-            continue
-        rule_recons = parse_rule(mline)
-        if not rule_recons:
-            continue
-        rules.append(rule_recons[0])
-    return rules
-
-
-def parse_file_nolock(rules_file):
-    """
-    Parse the @rules_file with parse_lines()
-    """
-    return parse_lines(open(rules_file, 'r'))
-
-
-def parse_file(rules_file):
-    """
-    Lock @rules_file, parse it with parse_file_nolock(), and unlock it.
-    Return the result of parse_file_nolock().
-    """
-    lock_rules_file(rules_file)  # RW lock, anybody? :)
-    try:
-        return parse_file_nolock(rules_file)
-    finally:
-        unlock_rules_file(rules_file)
-
-
 def match_rule(rule, match):
     """
     @rule: Parsed udev rule.  See format in parse_rule() pydoc.
@@ -440,28 +350,6 @@ def replace_simple(lines, match_repl_lst):
         yield replace_simple_op_values(rule_recons[1], repl) + "\n"
 
 
-def replace_simple_in_file_nolock(rules_file, match_repl_lst):
-    """
-    Change the lines of @rules_file using replace_simple()
-    """
-    system.file_writelines_flush_sync(
-        rules_file + ".tmp", replace_simple(open(rules_file, 'r'), match_repl_lst)
-    )
-    os.rename(rules_file + ".tmp", rules_file)
-
-
-def replace_simple_in_file(rules_file, match_repl_lst):
-    """
-    Lock @rules_file, modify it using replace_simple_in_file_nolock(),
-    and unlock it.
-    """
-    lock_rules_file(rules_file)
-    try:
-        replace_simple_in_file_nolock(rules_file, match_repl_lst)
-    finally:
-        unlock_rules_file(rules_file)
-
-
 class TriggerError(Exception):
     "udevtrigger invocation/failure error"
 
@@ -477,185 +365,3 @@ def trigger():
         raise TriggerError("could not invoke udevtrigger")
     if status != 0:
         raise TriggerError("udevtrigger failed")
-
-
-def list_duplicates(seq):
-    """
-    List items that are present more than once in seq.
-    """
-    dct = {}
-    for elt in seq:
-        dct[elt] = dct.get(elt, 0) + 1
-    return [elt for elt, nb in dct.iteritems() if nb > 1]
-
-
-def assert_frozenset(lst):
-    """
-    Return frozenset(lst) if there are no duplicates in lst,
-    else raise ValueError.
-    """
-    fset = frozenset(lst)
-    if len(fset) != len(lst):
-        raise ValueError("Duplicates found: " + repr(tuple(list_duplicates(lst))))
-    return fset
-
-
-def rule_to_restore_name(rule):
-    """
-    Return a match and replace tuple suitable as an element of the list
-    match_repl_lst of replace_simple().
-    @rule is a dictionary which contains at least a 'NAME' key.
-    """
-    match = dict(rule)
-    name = {'NAME': match.pop('NAME')}
-    return (match, name)
-
-
-def consider_rule_for_rollback(rule, src_set):
-    """
-    Test if rule is suitable for transformation to a match and replace
-    tuple (by rule_to_restore_name() that can itself be used in a rollback
-    operation.
-    """
-    name_field = rule.get('NAME')
-    return (
-        name_field
-        and (len(rule) > 2)
-        and (name_field[0] == "=")
-        and (name_field[1] in src_set)
-    )
-
-
-def rename_persistent_net_rules(src_dst_lst, out_renamer):
-    """
-    @src_dst_lst: [(src, dst), ...]
-        where @src is a network interface name that appears in
-        "z25_persistent-net.rules" and must be renamed to @dst
-
-    @out_renamer:
-        class that implements non udev procedures needed to complete the
-        renaming operations
-
-        Must implement the following interface:
-
-        class out_renamer:
-            def __init__(self, src_dst_lst, pure_dst_set):
-                Instantiation is tried just after initial checks.
-                __init__() can do its own additional checks (and raise
-                an exception on failure).
-
-                @src_dst_lst:
-                    directly passed from the same argument of
-                    rename_persistent_net_rules()
-                    must not be modified (but can be saved)
-                @pure_dst_set:
-                    set of target names that are not also source names
-                    must not be modified (can be saved)
-
-            def edit(self):
-                called after "z25_persistent-net.rules" has been modified
-
-            def preup(self):
-                called just before the attempt to re-up the interfaces
-
-            def rollback(self):
-                called if an exception is raised resulting in a potential
-                need to undo the work of edit
-
-    XXX: On external failure (kill -9, power outage), a small time window
-    remains where the configuration could be leaved in an inconsistent
-    state.
-    """
-    # WARNING: code not 100% safe in case asynchronous exceptions can occur
-
-    # TODO: detect if a previous renaming operation has been interrupted the
-    # hard way (kill -9, power failure) and rollback if possible.
-    # This will be better placed in an other function.
-
-    src_set = assert_frozenset([src for src, dst in src_dst_lst])
-    dst_set = assert_frozenset([dst for src, dst in src_dst_lst])
-    pure_dst_set = dst_set.difference(src_set)
-
-    for src, dst in src_dst_lst:
-        if src == dst:
-            raise ValueError("Same source and target name %s" % src)
-
-    start_needed = False
-    runtime_renamed_possible = False
-
-    context = out_renamer(src_dst_lst, pure_dst_set)
-
-    lock_rules_file(PERSISTENT_NET_RULES_FILE)
-    locked = True
-    try:
-        net_rules = parse_file_nolock(PERSISTENT_NET_RULES_FILE)
-        rule_iface_set = frozenset(
-            [rule['NAME'][1] for rule in net_rules if 'NAME' in rule]
-        )
-        system_iface_set = frozenset(network.get_filtered_phys())
-        known_iface_set = rule_iface_set.union(system_iface_set)
-
-        for pure_dst in pure_dst_set:
-            if pure_dst in known_iface_set:
-                raise ValueError(
-                    "Target interface name is already taken: %r" % pure_dst
-                )
-
-        for src in src_set:
-            if src not in rule_iface_set:
-                raise ValueError(
-                    "Source interface name is not in z25_persistent-net.rules: %r" % src
-                )
-            if src not in system_iface_set:
-                raise ValueError(
-                    "Source interface name is not known by the system: %r" % src
-                )
-
-        replacement = [
-            ({'NAME': ['=', src]}, {'NAME': ['=', dst]}) for src, dst in src_dst_lst
-        ]
-        rollback = [
-            rule_to_restore_name(rule)
-            for rule in net_rules
-            if consider_rule_for_rollback(rule)
-        ]
-
-        try:
-            replace_simple_in_file_nolock(PERSISTENT_NET_RULES_FILE, replacement)
-
-            context.edit()
-
-            unlock_rules_file(PERSISTENT_NET_RULES_FILE)
-            locked = False
-
-            start_needed = True
-            for dst in dst_set:
-                network.force_shutdown(dst)
-
-            runtime_renamed_possible = True
-            trigger()
-
-            context.preup()
-        except BaseException:
-            log.exception(
-                "rename_persistent_net_rules: error during ethernet interface renaming, will rollback"
-            )
-
-            if not locked:
-                lock_rules_file(PERSISTENT_NET_RULES_FILE)
-                locked = True
-
-            context.rollback()
-
-            replace_simple_in_file_nolock(PERSISTENT_NET_RULES_FILE, rollback)
-
-            if runtime_renamed_possible:
-                trigger()
-
-            raise
-
-    finally:
-        if locked:
-            unlock_rules_file(PERSISTENT_NET_RULES_FILE)
-        if start_needed:
-            network.ifplugd_start()
