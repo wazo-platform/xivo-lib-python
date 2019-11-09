@@ -4,7 +4,7 @@
 
 import logging
 
-from xivo import network
+from xivo import network, xys
 
 
 log = logging.getLogger("xivo.xivo_config")  # pylint: disable-msg=C0103
@@ -161,3 +161,11 @@ def netmask(nstr, schema):
     return network.is_ipv4_address_valid(nstr) and network.plausible_netmask(
         network.parse_ipv4(nstr)
     )
+
+
+xys.add_validator(domain_label, u'!!str')
+xys.add_validator(search_domain, u'!!str')
+xys.add_validator(ipv4_address, u'!!str')
+xys.add_validator(ipv4_address_or_domain, u'!!str')
+xys.add_validator(netmask, u'!!str')
+xys.add_validator(macaddr, u'!!str')
