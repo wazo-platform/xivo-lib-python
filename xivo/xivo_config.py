@@ -4,10 +4,7 @@
 
 import logging
 
-from xivo import network, xys
-
-
-log = logging.getLogger("xivo.xivo_config")  # pylint: disable-msg=C0103
+log = logging.getLogger(__name__)
 
 
 # States for linesubst()
@@ -106,66 +103,3 @@ def txtsubst(lines, variables, target_file=None, charset=None):
         else:
             ret.append(linesub)
     return ret
-
-
-# ## GENERAL CONF
-
-
-def domain_label(nstr, schema):
-    """
-    !~domain_label
-        Return True if the document string is a domain label, else False
-    """
-    return network.DomainLabelOk(nstr) and len(nstr) <= 63
-
-
-def search_domain(nstr, schema):
-    """
-    !~search_domain
-        Return True if the document string is suitable for use in the
-        search line of /etc/resolv.conf, else False
-    """
-    return network.plausible_search_domain(nstr)
-
-
-def macaddr(nstr, schema):
-    """
-    !~macaddr
-        Check that the document string is an ethernet mac addresses
-    """
-    return network.is_mac_address_valid(nstr)
-
-
-def ipv4_address(nstr, schema):
-    """
-    !~ipv4_address
-        Check that the document string is an IPv4 addresses
-    """
-    return network.is_ipv4_address_valid(nstr)
-
-
-def ipv4_address_or_domain(nstr, schema):
-    """
-    !~ipv4_address_or_domain
-        Return True if the document string is an IPv4 address
-        or a domain, else False
-    """
-    return network.is_ipv4_address_valid(nstr) or network.plausible_search_domain(nstr)
-
-
-def netmask(nstr, schema):
-    """
-    !~netmask
-        Check that the document string is an IPv4 netmasks
-    """
-    return network.is_ipv4_address_valid(nstr) and network.plausible_netmask(
-        network.parse_ipv4(nstr)
-    )
-
-
-xys.add_validator(domain_label, u'!!str')
-xys.add_validator(search_domain, u'!!str')
-xys.add_validator(ipv4_address, u'!!str')
-xys.add_validator(ipv4_address_or_domain, u'!!str')
-xys.add_validator(netmask, u'!!str')
-xys.add_validator(macaddr, u'!!str')
