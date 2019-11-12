@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import print_function
+import logging
 
 from functools import partial
 import os
@@ -13,6 +14,8 @@ import yaml
 
 from .chain_map import ChainMap
 
+logger = logging.getLogger(__name__)
+
 
 class _YAMLExecTag(yaml.YAMLObject):
 
@@ -20,12 +23,15 @@ class _YAMLExecTag(yaml.YAMLObject):
 
     @classmethod
     def from_yaml(cls, loader, node):
-        with open(os.devnull) as devnull:
-            for key, value in node.value:
-                if key.value == 'command':
+        for key, value in node.value:
+            if key.value == 'command':
+                command = value.value.split(' ')
+                try:
                     return yaml.load(
-                        subprocess.check_output(value.value.split(' '), stderr=devnull)
+                        subprocess.check_output(command, stderr=subprocess.PIPE)
                     )
+                except subprocess.CalledProcessError as e:
+                    logger.warn("%s: %s", str(e), e.output.decode())
 
 
 class ErrorHandler(object):

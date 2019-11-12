@@ -5,6 +5,16 @@ services:
     environment:
       TIMEOUT: ${INTEGRATION_TEST_TIMEOUT}
 
+  config-from-consul:
+    image: config-from-consul
+    ports:
+      - "6363"
+    environment:
+      WAZO_CONSUL_HOST: consul
+      WAZO_CONSUL_PORT: 8500
+      WAZO_CONSUL_SCHEME: http
+      WAZO_CONSUL_SERVICE: config-from-consul
+
   myservice:
     image: myservice
 
@@ -14,10 +24,9 @@ services:
       - "5672"
 
   consul:
-    image: progrium/consul
+    image: consul
     ports:
       - "8500"
-    command: "-client 0.0.0.0 -config-dir /tmp"
 
   thread-exception:
     image: thread-exception

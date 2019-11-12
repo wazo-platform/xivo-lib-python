@@ -12,4 +12,9 @@ setup(
     author_email='dev@wazo.community',
     url='http://wazo.community',
     packages=find_packages(),
+    entry_points={
+        'console_scripts': [
+            'wazo-config-from-consul = xivo.config_from_consul:get_configuration_from_consul'
+        ]
+    },
 )

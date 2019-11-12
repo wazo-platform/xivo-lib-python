@@ -1,0 +1,8 @@
+version: '3'
+services:
+  sync:
+    depends_on:
+      - consul
+      - config-from-consul
+    environment:
+        TARGETS: "consul:8500 config-from-consul:6363"

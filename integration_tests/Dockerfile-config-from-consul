@@ -1,0 +1,10 @@
+FROM python:3.7-buster
+
+COPY integration_tests/assets/bin /usr/local/bin
+COPY integration_tests/assets/etc /etc
+COPY . /tmp/xivo
+
+RUN cd /tmp/xivo && pip install -r requirements.txt
+RUN cd /tmp/xivo && python setup.py install
+
+CMD ["config-from-consul.py"]
