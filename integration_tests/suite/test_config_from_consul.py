@@ -5,6 +5,8 @@
 
 import os
 import requests
+from requests.adapters import HTTPAdapter
+
 
 from consul import Consul
 from hamcrest import assert_that, equal_to
@@ -21,8 +23,14 @@ class TestConfigFromConsul(AssetLaunchingTestCase):
     service = 'xivo'
 
     def test_config_is_propagated(self):
+        # NOTE(sileht): We restart the http server the requests pool will have some
+        # broken connection, just enable retry to avoid sporadic ConnectionError on second
+        # get
+        client = requests.Session()
+        client.mount('http://', HTTPAdapter(max_retries=1))
+
         app_port = self.service_port(6363, service_name='config-from-consul')
-        config = requests.get("http://localhost:{}/0.1/config".format(app_port)).json()
+        config = client.get("http://localhost:{}/0.1/config".format(app_port)).json()
         expected_config = {
             'config_file': '/etc/config-from-consul/config.yml',
             'extra_config_files': '/etc/config-from-consul/conf.d',
@@ -30,19 +38,15 @@ class TestConfigFromConsul(AssetLaunchingTestCase):
         assert_that(config, equal_to(expected_config))
 
         consul_port = self.service_port(8500, service_name='consul')
-        client = Consul(host="localhost", port=consul_port, scheme="http")
-        client.kv.put("config-from-consul/rest_api/listen", "0.0.0.0")
-        client.kv.put("config-from-consul/rest_api/port", "6363")
-        client.kv.put("other_service/rest_api/port", "1234")
+        consul = Consul(host="localhost", port=consul_port, scheme="http")
+        consul.kv.put("config-from-consul/rest_api/listen", "0.0.0.0")
+        consul.kv.put("config-from-consul/rest_api/port", "6363")
+        consul.kv.put("other_service/rest_api/port", "1234")
 
         self.restart_service('config-from-consul')
 
         app_port = self.service_port(6363, service_name='config-from-consul')
-        config = requests.get("http://localhost:{}/0.1/config".format(app_port)).json()
-
+        config = client.get("http://localhost:{}/0.1/config".format(app_port)).json()
         expected_config['rest_api'] = {'listen': '0.0.0.0', 'port': '6363'}
 
         assert_that(config, equal_to(expected_config))
-
-    def test_service_dont_exist(self):
-        pass
