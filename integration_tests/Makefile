@@ -7,7 +7,7 @@ myservice:
 	docker build -t myservice -f Dockerfile-myservice ..
 
 test-setup: myservice thread-exception egg-info
-	docker pull consul
+	docker pull consul:1.0.7
 	docker pull rabbitmq
 	docker pull wazopbx/wait
 	docker pull python:3.7-slim-buster

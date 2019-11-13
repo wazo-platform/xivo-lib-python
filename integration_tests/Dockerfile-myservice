@@ -3,12 +3,7 @@ FROM python:2.7.16-buster
 COPY integration_tests/assets/bin /usr/local/bin
 COPY . /tmp/xivo
 
-RUN pip install \
-    kombu \
-    flask \
-    https://github.com/wazo-platform/xivo-bus/archive/master.zip \
-    python-consul==0.7.1 \
-    netifaces
+RUN cd /tmp/xivo && pip install -r requirements.txt kombu
 
 RUN cd /tmp/xivo && python setup.py install
 
