@@ -6,7 +6,7 @@ egg-info:
 myservice:
 	docker build -t myservice -f Dockerfile-myservice ..
 
-test-setup: myservice thread-exception egg-info
+test-setup: myservice thread-exception config-from-consul egg-info
 	docker pull consul:1.0.7
 	docker pull rabbitmq
 	docker pull wazopbx/wait
