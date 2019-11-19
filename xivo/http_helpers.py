@@ -3,10 +3,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import re
+import json
 
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 from flask import current_app, request
 from six.moves.urllib.parse import unquote
+
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
 
 
 class ReverseProxied(object):
@@ -28,6 +34,38 @@ class ReverseProxied(object):
 def add_logger(app, logger):
     app.config['LOGGER_HANDLER_POLICY'] = 'never'
     app.logger.propagate = True
+
+
+class BodyFormatter(object):
+
+    _HIDDEN_VALUE = '<hidden>'
+
+    def __init__(self, raw_body, hidden_fields):
+        self._hidden_fields = hidden_fields
+        self._raw_body = raw_body
+
+    def __str__(self):
+        try:
+            printable_body = self._raw_body.decode('utf-8')
+        except UnicodeDecodeError:
+            printable_body = repr(self._raw_body)
+
+        if not self._hidden_fields:
+            return printable_body
+
+        try:
+            serialized_body = json.loads(printable_body)
+        except JSONDecodeError:
+            for field in self._hidden_fields:
+                if field in printable_body:
+                    return self._HIDDEN_VALUE
+            return printable_body
+
+        for field in self._hidden_fields:
+            if field in serialized_body:
+                serialized_body[field] = self._HIDDEN_VALUE
+
+        return json.dumps(serialized_body)
 
 
 class LazyHeaderFormatter(object):
@@ -78,7 +116,7 @@ def _log_request(url, response):
     )
 
 
-def log_before_request():
+def log_before_request(hidden_fields=None):
     not_printable_content_types = ['application/octet-stream', 'application/pdf']
 
     params = {
@@ -91,10 +129,7 @@ def log_before_request():
         request.data
         and request.headers.get('Content-Type') not in not_printable_content_types
     ):
-        try:
-            params['data'] = request.data.decode('utf-8')
-        except UnicodeDecodeError:
-            params['data'] = repr(request.data)
+        params['data'] = BodyFormatter(request.data, hidden_fields)
         fmt = "request: %(method)s %(url)s %(headers)s with data %(data)s"
     else:
         fmt = "request: %(method)s %(url)s %(headers)s"
