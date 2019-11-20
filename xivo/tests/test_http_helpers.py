@@ -3,11 +3,22 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
+import json
 
 from hamcrest import assert_that, equal_to
 from mock import patch, sentinel, ANY
 
-from xivo.http_helpers import log_request, log_request_hide_token, LazyHeaderFormatter
+from xivo.http_helpers import (
+    BodyFormatter,
+    log_request,
+    log_request_hide_token,
+    LazyHeaderFormatter,
+)
+
+
+def _assert_json_equals(result, expected):
+    serialized_result = json.loads(result)
+    assert_that(serialized_result, equal_to(expected))
 
 
 class TestLogRequest(unittest.TestCase):
@@ -33,6 +44,40 @@ class TestLogRequest(unittest.TestCase):
         current_app.logger.info.assert_called_once_with(
             ANY, request.remote_addr, request.method, expected_url, sentinel.status_code
         )
+
+
+class TestBodyFormatter(unittest.TestCase):
+    def test_valid_json_body_no_hidden_field(self):
+        body = b'{"one": 1, "two": 2, "three": 3}'
+
+        formatter = BodyFormatter(body, hidden_fields=None)
+        result = '{}'.format(formatter)
+
+        _assert_json_equals(result, {'one': 1, 'two': 2, 'three': 3})
+
+    def test_valid_json_body_with_hidden_field(self):
+        body = b'{"one": 1, "two": 2, "three": 3}'
+
+        formatter = BodyFormatter(body, hidden_fields=['two'])
+        result = '{}'.format(formatter)
+
+        _assert_json_equals(result, {'one': 1, 'two': '<hidden>', 'three': 3})
+
+    def test_invalid_json_body_with_hidden_field(self):
+        body = b'{"one": 1, "two": 2, "three": 3,}'  # See that trialing coma
+
+        formatter = BodyFormatter(body, hidden_fields=['two'])
+        result = '{}'.format(formatter)
+
+        assert_that(result, equal_to('<hidden>'))
+
+    def test_invalid_json_body_with_hidden_field_no_match(self):
+        body = b'{"one": 1, "two": 2, "three": 3,}'  # See that trialing coma
+
+        formatter = BodyFormatter(body, hidden_fields=['four'])
+        result = '{}'.format(formatter)
+
+        assert_that(result, equal_to('{"one": 1, "two": 2, "three": 3,}'))
 
 
 class TestHeaderFormatter(unittest.TestCase):
