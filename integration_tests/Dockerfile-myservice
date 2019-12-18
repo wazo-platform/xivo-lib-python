@@ -1,4 +1,4 @@
-FROM python:2.7.16-buster
+FROM python:3.7-buster
 
 COPY integration_tests/assets/bin /usr/local/bin
 COPY . /tmp/xivo
