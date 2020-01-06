@@ -4,3 +4,6 @@
       - wazo-tox-py27
       - wazo-tox-py37
       - wazo-tox-linters
+    vars:
+      docker_compose_services_override:
+        - thread-exception
