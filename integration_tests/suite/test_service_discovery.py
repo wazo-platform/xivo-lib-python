@@ -1,4 +1,4 @@
-# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
@@ -114,7 +114,6 @@ class TestServiceDiscoveryDisabled(_BaseTest):
 
 class TestServiceDiscovery(_BaseTest):
 
-    assets_root = ASSET_ROOT
     asset = 'service_discovery'
 
     def setUp(self):
