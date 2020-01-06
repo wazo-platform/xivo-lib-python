@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-# Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2007-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
+import threading
+import uuid
 
 from collections import defaultdict
+from functools import partial
 
 logger = logging.getLogger(__name__)
 
@@ -50,3 +53,37 @@ class Pubsub(object):
 
         if not self._subscribers[topic]:
             self._subscribers.pop(topic, None)
+
+
+class CallbackCollector(object):
+
+    _TOPIC = 'callback-collector'
+
+    def __init__(self):
+        self._pubsub = Pubsub()
+        self._sources = set()
+        self._lock = threading.Lock()
+
+    def _collect(self, source_id, *args, **kwargs):
+        logger.debug('Collecting callback source "%s"', source_id)
+        if not self._sources:
+            logger.debug('Aborting collect')
+            return
+
+        with self._lock:
+            self._sources.discard(source_id)
+            if not self._sources:
+                logger.debug('Collecting callbacks finished, publishing')
+                self._publish()
+
+    def _publish(self):
+        self._pubsub.publish(self._TOPIC, message=None)
+
+    def new_source(self):
+        source_id = uuid.uuid4()
+        logger.debug('Creating new callback source "%s"', source_id)
+        self._sources.add(source_id)
+        return partial(self._collect, source_id)
+
+    def subscribe(self, callback):
+        self._pubsub.subscribe(self._TOPIC, lambda arg: callback())
