@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -183,3 +183,14 @@ class TestCallbackCollector(unittest.TestCase):
         source_callback_1()
         callback_1.assert_called_once_with()
         callback_2.assert_called_once_with()
+
+    def test_when_subscribe_raise_exception_then_exception_is_handled(self):
+        callback = Mock()
+        callback.side_effect = Exception()
+        handler = Mock()
+        self.callback_collector._pubsub.set_exception_handler(handler)
+        source_callback = self.callback_collector.new_source()
+        self.callback_collector.subscribe(callback)
+
+        source_callback()
+        handler.assert_called_once()
