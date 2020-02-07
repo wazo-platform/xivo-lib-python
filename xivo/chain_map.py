@@ -22,5 +22,7 @@ class ChainMap(UserDict):
                 updated[key] = copy(value)
             elif isinstance(updated[key], dict) and isinstance(value, dict):
                 updated[key] = self._deep_update(updated[key], value)
+            elif isinstance(updated[key], list) and isinstance(value, list):
+                updated[key].extend(copy(value))
 
         return updated
