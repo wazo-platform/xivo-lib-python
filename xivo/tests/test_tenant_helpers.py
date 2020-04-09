@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
@@ -116,13 +116,6 @@ class TestTenantFromHeaders(TestCase):
         result = Tenant.from_headers()
 
         assert_that(result.uuid, equal_to(tenant))
-
-    @patch('xivo.tenant_helpers.request')
-    def test_given_multiple_tenant_when_from_headers_then_raise(self, request):
-        tenant = 'tenant1,tenant2'
-        request.headers = {'Wazo-Tenant': tenant}
-
-        assert_that(calling(Tenant.from_headers), raises(InvalidTenant))
 
 
 class TestTenantFromToken(TestCase):

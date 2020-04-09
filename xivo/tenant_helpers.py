@@ -72,8 +72,6 @@ class Tenant(object):
             tenant_uuid = request.headers['Wazo-Tenant']
         except KeyError:
             raise InvalidTenant()
-        if ',' in tenant_uuid:
-            raise InvalidTenant()
         return cls(uuid=tenant_uuid)
 
     @classmethod
