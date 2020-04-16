@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import re
@@ -13,6 +13,8 @@ try:
     from json.decoder import JSONDecodeError
 except ImportError:
     JSONDecodeError = ValueError
+
+NOT_PRINTABLE_CONTENT_TYPES = ['application/octet-stream', 'application/pdf']
 
 
 class ReverseProxied(object):
@@ -106,7 +108,7 @@ class LazyHeaderFormatter(object):
         return dict(headers)
 
 
-def _log_request(url, response):
+def _log_request(url, response, hidden_fields=None):
     current_app.logger.info(
         'response: (%s) %s %s %s',
         request.remote_addr,
@@ -114,11 +116,20 @@ def _log_request(url, response):
         url,
         response.status_code,
     )
+    params = {}
+    if not response.data:
+        fmt = "response body empty"
+    elif response.headers.get('Content-Type') not in NOT_PRINTABLE_CONTENT_TYPES:
+        params['content_type'] = response.headers.get('Content-Type')
+        fmt = "response body: not printable: '%(content_type)'"
+    else:
+        params['body'] = BodyFormatter(response.data, hidden_fields)
+        fmt = "response body: %(body)s"
+
+    current_app.logger.debug(fmt, params)
 
 
 def log_before_request(hidden_fields=None):
-    not_printable_content_types = ['application/octet-stream', 'application/pdf']
-
     params = {
         'method': request.method,
         'url': unquote(request.url),
@@ -127,7 +138,7 @@ def log_before_request(hidden_fields=None):
 
     if (
         request.data
-        and request.headers.get('Content-Type') not in not_printable_content_types
+        and request.headers.get('Content-Type') not in NOT_PRINTABLE_CONTENT_TYPES
     ):
         params['data'] = BodyFormatter(request.data, hidden_fields)
         fmt = "request: %(method)s %(url)s %(headers)s with data %(data)s"
