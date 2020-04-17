@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
 import json
 
 from hamcrest import assert_that, equal_to
-from mock import patch, sentinel, ANY
+from mock import patch, ANY, Mock
 
 from xivo.http_helpers import (
     BodyFormatter,
@@ -26,23 +26,25 @@ class TestLogRequest(unittest.TestCase):
     @patch('xivo.http_helpers.request')
     def test_log_request(self, request, current_app):
         request.url = '/foo/bar?token=1734768e-caf6'
+        response = Mock(data=None, status_code=200)
 
-        log_request(sentinel)
+        log_request(response)
 
         current_app.logger.info.assert_called_once_with(
-            ANY, request.remote_addr, request.method, request.url, sentinel.status_code
+            ANY, request.remote_addr, request.method, request.url, 200
         )
 
     @patch('xivo.http_helpers.current_app')
     @patch('xivo.http_helpers.request')
     def test_log_request_hide_token(self, request, current_app):
         request.url = '/foo/bar?token=1734768e-caf6'
+        response = Mock(data=None, status_code=200)
 
-        log_request_hide_token(sentinel)
+        log_request_hide_token(response)
 
         expected_url = '/foo/bar?token=<hidden>'
         current_app.logger.info.assert_called_once_with(
-            ANY, request.remote_addr, request.method, expected_url, sentinel.status_code
+            ANY, request.remote_addr, request.method, expected_url, 200
         )
 
 
