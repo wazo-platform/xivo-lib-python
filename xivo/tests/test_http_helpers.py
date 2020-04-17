@@ -26,14 +26,13 @@ class TestLogRequest(unittest.TestCase):
     @patch('xivo.http_helpers.request')
     def test_log_request(self, request, current_app):
         request.url = '/foo/bar?token=1734768e-caf6'
-        response = Mock(data='body', status_code=200)
+        response = Mock(data=None, status_code=200)
 
         log_request(response)
 
         current_app.logger.info.assert_called_once_with(
             ANY, request.remote_addr, request.method, request.url, 200
         )
-        current_app.logger.debug.assert_called_once_with(ANY, {'body': 'body'})
 
     @patch('xivo.http_helpers.current_app')
     @patch('xivo.http_helpers.request')
