@@ -117,11 +117,11 @@ def _log_request(url, response, hidden_fields=None):
         response.status_code,
     )
     params = {}
-    if not response.data:
-        fmt = "response body empty"
-    elif response.headers.get('Content-Type') in NOT_PRINTABLE_CONTENT_TYPES:
+    if response.headers.get('Content-Type') in NOT_PRINTABLE_CONTENT_TYPES:
         params['content_type'] = response.headers.get('Content-Type')
         fmt = """response body: not printable: "%(content_type)" """
+    elif not response.data:
+        fmt = "response body empty"
     else:
         params['body'] = BodyFormatter(response.data, hidden_fields)
         fmt = "response body: %(body)s"
