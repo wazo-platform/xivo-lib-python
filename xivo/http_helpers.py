@@ -116,17 +116,16 @@ def _log_request(url, response, hidden_fields=None):
         url,
         response.status_code,
     )
-    params = {}
     if response.headers.get('Content-Type') in NOT_PRINTABLE_CONTENT_TYPES:
-        params['content_type'] = response.headers.get('Content-Type')
-        fmt = """response body: not printable: "%(content_type)" """
+        content_type = response.headers.get('Content-Type')
+        current_app.logger.debug(
+            """response body: not printable: "%s" """, content_type
+        )
     elif not response.data:
-        fmt = "response body empty"
+        current_app.logger.debug("response body empty")
     else:
-        params['body'] = BodyFormatter(response.data, hidden_fields)
-        fmt = "response body: %(body)s"
-
-    current_app.logger.debug(fmt, params)
+        body = BodyFormatter(response.data, hidden_fields)
+        current_app.logger.debug("response body: %s", body)
 
 
 def log_before_request(hidden_fields=None):
