@@ -14,7 +14,9 @@ try:
 except ImportError:
     JSONDecodeError = ValueError
 
-NOT_PRINTABLE_CONTENT_TYPES = ['application/octet-stream', 'application/pdf']
+PRINTABLE_CONTENT_TYPES = [
+    'application/json',
+]
 
 
 class ReverseProxied(object):
@@ -116,7 +118,7 @@ def _log_request(url, response, hidden_fields=None):
         url,
         response.status_code,
     )
-    if response.headers.get('Content-Type') in NOT_PRINTABLE_CONTENT_TYPES:
+    if response.headers.get('Content-Type') not in PRINTABLE_CONTENT_TYPES:
         content_type = response.headers.get('Content-Type')
         current_app.logger.debug(
             """response body: not printable: "%s" """, content_type
@@ -135,10 +137,7 @@ def log_before_request(hidden_fields=None):
         'headers': LazyHeaderFormatter(request.headers),
     }
 
-    if (
-        request.data
-        and request.headers.get('Content-Type') not in NOT_PRINTABLE_CONTENT_TYPES
-    ):
+    if request.data and request.headers.get('Content-Type') in PRINTABLE_CONTENT_TYPES:
         params['data'] = BodyFormatter(request.data, hidden_fields)
         fmt = "request: %(method)s %(url)s %(headers)s with data %(data)s"
     else:
