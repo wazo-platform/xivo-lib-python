@@ -35,6 +35,14 @@ class ReverseProxied(object):
         return self.app(environ, start_response)
 
 
+def reverse_proxy_fix_api_spec(api_spec):
+    prefix = request.headers.get('X-Script-Name')
+    if prefix:
+        api_spec['schemes'] = ['https']
+        base_path = api_spec.get('basePath', '')
+        api_spec['basePath'] = '{}{}'.format(prefix, base_path)
+
+
 def add_logger(app, logger):
     app.config['LOGGER_HANDLER_POLICY'] = 'never'
     app.logger.propagate = True
