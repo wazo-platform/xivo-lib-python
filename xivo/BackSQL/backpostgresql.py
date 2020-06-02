@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2007-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import print_function
@@ -15,12 +15,12 @@ __version__ = "$Revision$ $Date$"
 import psycopg2
 import psycopg2.extensions
 
-psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)  # noqa: E402
-psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)  # noqa: E402
-
 from six.moves.urllib import parse
 
 from xivo import anysql
+
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)  # noqa: E402
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)  # noqa: E402
 
 __typemap = {
     "host": str,
