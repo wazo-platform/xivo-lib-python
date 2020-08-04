@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
-# Copyright 2014-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
 
 from mock import patch
-from mock import Mock
 from mock import sentinel
 from xivo import daemonize
 
 
-@patch('xivo.daemonize.daemonize', Mock())
 @patch('xivo.daemonize.unlock_pidfile')
 @patch('xivo.daemonize.lock_pidfile_or_die')
 class TestPidfileContext(unittest.TestCase):

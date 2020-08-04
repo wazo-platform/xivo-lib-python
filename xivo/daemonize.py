@@ -198,65 +198,8 @@ def unlock_pidfile(pidfile):
         log.error("%s: %s", type(e).__name__, e)
 
 
-def daemonize():
-    """
-    Daemonize the program, ie. make it run in the "background", detach
-    it from its controlling terminal and from its controlling process
-    group session.
-
-    NOTES:
-        - This function also umask(0) and chdir("/")
-        - stdin, stdout, and stderr are redirected from/to /dev/null
-
-    SEE ALSO:
-        http://www.unixguide.net/unix/programming/1.7.shtml
-    """
-    try:
-        pid = os.fork()
-        if pid > 0:
-            os.waitpid(pid, 0)
-            os._exit(0)  # pylint: disable-msg=W0212
-    except OSError as e:
-        log.exception("first fork() failed: %d (%s)", e.errno, e.strerror)
-        sys.exit(1)
-
-    os.setsid()
-    os.umask(0)
-    os.chdir("/")
-
-    try:
-        pid = os.fork()
-        if pid > 0:
-            os._exit(0)  # pylint: disable-msg=W0212
-    except OSError as e:
-        log.exception("second fork() failed: %d (%s)", e.errno, e.strerror)
-        sys.exit(1)
-
-    try:
-        devnull_fd = os.open(os.devnull, os.O_RDWR)
-
-        for stdf in (sys.__stdout__, sys.__stderr__):
-            try:
-                stdf.flush()
-            except Exception:  # pylint: disable-msg=W0703,W0704
-                pass
-
-        for stdf in (sys.__stdin__, sys.__stdout__, sys.__stderr__):
-            try:
-                os.dup2(devnull_fd, stdf.fileno())
-            except OSError:  # pylint: disable-msg=W0704
-                pass
-    except Exception:  # pylint: disable-msg=W0703
-        log.exception("error during file descriptor redirection")
-
-
 @contextmanager
-def pidfile_context(pid_file_name, foreground=True):
-    if not foreground:
-        log.debug("Daemonizing...")
-        daemonize()
-        log.debug("Daemonized.")
-
+def pidfile_context(pid_file_name):
     log.debug("Locking PID file...")
     lock_pidfile_or_die(pid_file_name)
     log.debug("PID file locked.")
