@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2007-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Transforms a process into a daemon from hell
@@ -251,7 +251,7 @@ def daemonize():
 
 
 @contextmanager
-def pidfile_context(pid_file_name, foreground=False):
+def pidfile_context(pid_file_name, foreground=True):
     if not foreground:
         log.debug("Daemonizing...")
         daemonize()
