@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2014-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -45,11 +45,7 @@ class _LogLevelFilter(logging.Filter):
 
 
 def setup_logging(
-    log_file,
-    foreground=False,
-    debug=False,
-    log_level=DEFAULT_LOG_LEVEL,
-    log_format=DEFAULT_LOG_FORMAT,
+    log_file, debug=False, log_level=DEFAULT_LOG_LEVEL, log_format=DEFAULT_LOG_FORMAT,
 ):
     '''
     logger.*  ------------------------ v
