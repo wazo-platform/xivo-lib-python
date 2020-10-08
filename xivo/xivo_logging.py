@@ -45,14 +45,17 @@ class _LogLevelFilter(logging.Filter):
 
 
 def setup_logging(
-    log_file, debug=False, log_level=DEFAULT_LOG_LEVEL, log_format=DEFAULT_LOG_FORMAT,
+    log_file,
+    debug=False,
+    log_level=DEFAULT_LOG_LEVEL,
+    log_format=DEFAULT_LOG_FORMAT,
 ):
-    '''
+    """
     logger.*  ------------------------ v
     sys.stdout > streamtologger(INFO)  > logger > streamhandler(level<ERROR) > sys.stdout
     sys.stderr > streamtologger(ERROR) ^        > streamhandler(level>=ERROR) > sys.stderr
                                                 > filehandler(all levels) > file
-    '''
+    """
     root_logger = logging.getLogger()
 
     formatter = logging.Formatter(log_format)
