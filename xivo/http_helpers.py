@@ -20,9 +20,9 @@ PRINTABLE_CONTENT_TYPES = [
 
 
 class ReverseProxied(object):
-    '''
+    """
     From http://flask.pocoo.org/snippets/35/
-    '''
+    """
 
     def __init__(self, application):
         self.app = application

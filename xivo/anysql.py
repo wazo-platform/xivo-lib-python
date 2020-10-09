@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2007-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """DBAPI Helper using URI to create talk to various DB
@@ -380,7 +380,7 @@ class connection:
 
     def _get_raw_cursor(self):
         """
-            Return a new DBAPI2.0 cursor object.
+        Return a new DBAPI2.0 cursor object.
         """
         return self.__dbapi2_conn.cursor()
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2014-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import print_function
@@ -70,12 +70,12 @@ class ConfigParser(object):
             return {}
 
     def parse_config_dir(self, directory_name):
-        '''
+        """
         Reads all files in directory_name and returns a list of dictionaries containing
         the parsed yaml content from these files.
 
         Invalid files are ignored and a message is sent to stderr
-        '''
+        """
         full_path = partial(os.path.join, directory_name)
         try:
             extra_config_filenames = os.listdir(directory_name)
@@ -103,7 +103,7 @@ class ConfigParser(object):
         config_file_key='config_file',
         extra_config_dir_key='extra_config_files',
     ):
-        '''
+        """
         Read a config file and an extra config directory, then return a dictionary
         containing the config read, aggregated by the following priority:
 
@@ -113,7 +113,7 @@ class ConfigParser(object):
         The config file name is taken from original_config[config_file_key].
         The extra config directory name is taken from
         config_file[extra_config_dir_key] else original_config[extra_config_dir_key].
-        '''
+        """
 
         main_config_filename = original_config[config_file_key]
         main_config = self.parse_config_file(main_config_filename)
