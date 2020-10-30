@@ -1,6 +1,6 @@
 docker-compose
 https://github.com/wazo-platform/xivo-test-helpers/archive/master.zip
 nose
-kombu==4.2.1
+kombu==4.6.11
 pyhamcrest
 python-consul==0.7.1
