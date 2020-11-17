@@ -122,6 +122,7 @@ class Token(object):
     def __init__(self, token_dict, auth):
         self._auth = auth
         self._token_dict = token_dict
+        self._cache_tenants = {}
 
     @property
     def uuid(self):
@@ -146,6 +147,9 @@ class Token(object):
         if not tenant_uuid:
             return []
 
+        if self._cache_tenants.get(tenant_uuid):
+            return self._cache_tenants[tenant_uuid]
+
         try:
             tenants_list = self._auth.tenants.list(tenant_uuid)['items']
         except requests.HTTPError as e:
@@ -158,7 +162,9 @@ class Token(object):
         except requests.RequestException as e:
             raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
 
-        return [Tenant(tenant['uuid'], tenant['name']) for tenant in tenants_list]
+        tenants = [Tenant(t['uuid'], t['name']) for t in tenants_list]
+        self._cache_tenants = {tenant_uuid: tenants}
+        return tenants
 
 
 class Users(object):

@@ -100,6 +100,14 @@ class TestTenantAutodetect(TestCase):
             calling(Tenant.autodetect).with_args(tokens), raises(UnauthorizedTenant)
         )
 
+    def test_given_visible_tenants_called_twice_with_same_tenant(self):
+        base_tenant = 'base-tenant-uuid'
+        tenant = 'tenant'
+        token = Token(Mock(), Mock())
+        token._cache_tenants = {base_tenant: [tenant]}
+
+        assert_that(token.visible_tenants(base_tenant), equal_to([tenant]))
+
 
 class TestTenantFromHeaders(TestCase):
     @patch('xivo.tenant_helpers.request')
