@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -24,7 +24,7 @@ except ImportError:
 
 try:
     from xivo_bus.resources.services import event
-    from xivo_bus import Publisher, Marshaler
+    from xivo_bus import FailFastPublisher, Marshaler
 except ImportError:
     pass
 
@@ -289,7 +289,7 @@ class NotifyingRegisterer(Registerer):
                     self._bus_config['exchange_name'], self._bus_config['exchange_type']
                 )
                 producer = Producer(conn, exchange=exchange, auto_declare=True)
-                publisher = Publisher(producer, self._marshaler)
+                publisher = FailFastPublisher(producer, self._marshaler)
                 publisher.publish(msg)
         except socket.error:
             raise RegistererError('failed to publish on rabbitmq')
