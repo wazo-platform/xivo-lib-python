@@ -1,5 +1,5 @@
-nose
+kombu
 mock~=3.0
 pyhamcrest
-kombu
+pytest
 https://github.com/wazo-platform/xivo-test-helpers/archive/master.zip

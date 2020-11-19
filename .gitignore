@@ -1,10 +1,9 @@
-*.pyc
-.tox
 *.egg-info
-.coverage
-coverage.xml
-nosetests-*.xml
-pep8.txt
-pylint.txt
+*.pyc
 *.pyo
+.coverage
+.tox
+coverage.xml
 pycodestyle.txt
+pylint.txt
+unit-tests.xml
