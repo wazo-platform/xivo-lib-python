@@ -7,7 +7,7 @@ myservice:
 test-setup: myservice thread-exception egg-info
 
 test:
-	nosetests suite
+	pytest suite
 
 thread-exception:
 	docker build -t thread-exception -f Dockerfile-thread-exception ..
