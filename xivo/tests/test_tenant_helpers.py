@@ -162,7 +162,7 @@ class TestTenantCheckAgainstToken(TestCase):
 
         assert_that(result.uuid, equal_to(tenant_uuid))
 
-    def test_when_tenant_in_visible_tenants(self):
+    def test_when_visible_tenant_return_values(self):
         tenant = Tenant('subtenant')
         token = Mock(tenant_uuid='supertenant')
         token.visible_tenants.return_value = [
@@ -174,10 +174,19 @@ class TestTenantCheckAgainstToken(TestCase):
 
         assert_that(result.uuid, equal_to('subtenant'))
 
-    def test_when_tenant_not_in_visible_tenants(self):
+    def test_when_visible_tenants_return_error(self):
         tenant = Tenant('othertenant')
         token = Mock(tenant_uuid='supertenant')
-        token.visible_tenants.return_value = [Tenant('subtenant')]
+        token.visible_tenants.side_effect = InvalidTenant()
+
+        assert_that(
+            calling(tenant.check_against_token).with_args(token), raises(InvalidTenant)
+        )
+
+    def test_when_no_visible_tenants(self):
+        tenant = Tenant('othertenant')
+        token = Mock(tenant_uuid='supertenant')
+        token.visible_tenants.return_value = []
 
         assert_that(
             calling(tenant.check_against_token).with_args(token), raises(InvalidTenant)
