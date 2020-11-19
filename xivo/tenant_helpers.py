@@ -87,8 +87,7 @@ class Tenant(object):
     def check_against_token(self, token):
         if self.uuid == token.tenant_uuid:
             return self
-        visible_tenants = (tenant.uuid for tenant in token.visible_tenants())
-        if self.uuid not in visible_tenants:
+        if not token.visible_tenants(tenant_uuid=self.uuid):
             raise InvalidTenant(self.uuid)
         return self
 
