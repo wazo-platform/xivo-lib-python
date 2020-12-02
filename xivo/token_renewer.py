@@ -54,6 +54,9 @@ class TokenRenewer(object):
         logger.debug('joining token renewer thread...')
         self._thread.join()
 
+    def emit_stop(self):
+        self._stopped.set()
+
     def _run(self):
         while True:
             self._stopped.wait(self._renew_time)
