@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -46,6 +46,14 @@ def required_acl(acl_pattern, extract_token_id=None):
 def no_auth(func):
     func.no_auth = True
     return func
+
+
+def required_tenant(tenant_uuid):
+    def wrapper(func):
+        func.tenant_uuid = tenant_uuid
+        return func
+
+    return wrapper
 
 
 class Unauthorized(rest_api_helpers.APIException):
@@ -108,6 +116,26 @@ class AuthVerifier(object):
                 return self.handle_unreachable(e)
 
             if token_is_valid:
+                return func(*args, **kwargs)
+
+            return self.handle_unauthorized(token_id)
+
+        return wrapper
+
+    def verify_tenant(self, func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            required_tenant = getattr(func, 'tenant_uuid', None)
+            if not required_tenant:
+                return func(*args, **kwargs)
+            token_id = self.token()
+            try:
+                token = self.client().token.get(token_id)
+            except requests.RequestException as e:
+                return self.handle_unreachable(e)
+
+            tenant_uuid = token.get('metadata', {}).get('tenant_uuid')
+            if required_tenant == tenant_uuid:
                 return func(*args, **kwargs)
 
             return self.handle_unauthorized(token_id)
