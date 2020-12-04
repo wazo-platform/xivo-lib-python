@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
@@ -14,6 +14,7 @@ from ..auth_verifier import (
     _ACLCheck,
     no_auth,
     required_acl,
+    required_tenant,
 )
 
 
@@ -56,7 +57,7 @@ class TestAuthVerifier(unittest.TestCase):
 
         auth_client_init.assert_called_once_with(**expected_config)
 
-    def test_not_configured(self):
+    def test_verify_token_not_configured(self):
         auth_verifier = AuthVerifier()
 
         @auth_verifier.verify_token
@@ -66,7 +67,17 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(decorated, raises(RuntimeError))
 
-    def test_calls_auth_client(self):
+    def test_verify_tenant_not_configured(self):
+        auth_verifier = AuthVerifier()
+
+        @auth_verifier.verify_tenant
+        @required_tenant('foo')
+        def decorated():
+            pass
+
+        assert_that(decorated, raises(RuntimeError))
+
+    def test_verify_token_calls_auth_client(self):
         mock_client = Mock()
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
@@ -80,7 +91,22 @@ class TestAuthVerifier(unittest.TestCase):
 
         mock_client.token.is_valid.assert_called_once_with(s.token, 'foo')
 
-    def test_calls_function_when_no_auth(self):
+    def test_verify_tenant_calls_auth_client(self):
+        mock_client = Mock()
+        mock_client.token.get.return_value = {'metadata': {'tenant_uuid': ''}}
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+
+        @auth_verifier.verify_tenant
+        @required_tenant('foo')
+        def decorated():
+            pass
+
+        decorated()
+
+        mock_client.token.get.assert_called_once_with(s.token)
+
+    def test_verify_token_calls_function_when_no_auth(self):
         mock_client = Mock()
         mock_client.token.is_valid.return_value = False
         auth_verifier = StubVerifier()
@@ -96,7 +122,7 @@ class TestAuthVerifier(unittest.TestCase):
         assert_that(result, equal_to(s.result))
         assert_that(mock_client.token.is_valid.called, equal_to(False))
 
-    def test_calls_function_when_valid(self):
+    def test_verify_token_calls_function_when_valid(self):
         mock_client = Mock()
         mock_client.token.is_valid.return_value = True
         auth_verifier = StubVerifier()
@@ -111,7 +137,22 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(result, equal_to(s.result))
 
-    def test_calls_handle_unreachable(self):
+    def test_verify_tenant_calls_function_when_valid(self):
+        mock_client = Mock()
+        mock_client.token.get.return_value = {'metadata': {'tenant_uuid': 'foo'}}
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+
+        @auth_verifier.verify_tenant
+        @required_tenant('foo')
+        def decorated():
+            return s.result
+
+        result = decorated()
+
+        assert_that(result, equal_to(s.result))
+
+    def test_verify_token_calls_handle_unreachable(self):
         mock_client = Mock()
         mock_client.token.is_valid.side_effect = requests.RequestException
         auth_verifier = StubVerifier()
@@ -126,7 +167,22 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(result, equal_to(s.unreachable))
 
-    def test_calls_handle_unauthorized(self):
+    def test_verify_tenant_calls_handle_unreachable(self):
+        mock_client = Mock()
+        mock_client.token.get.side_effect = requests.RequestException
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+
+        @auth_verifier.verify_tenant
+        @required_tenant('foo')
+        def decorated():
+            return s.result
+
+        result = decorated()
+
+        assert_that(result, equal_to(s.unreachable))
+
+    def test_verify_token_calls_handle_unauthorized(self):
         mock_client = Mock()
         mock_client.token.is_valid.return_value = False
         auth_verifier = StubVerifier()
@@ -134,6 +190,22 @@ class TestAuthVerifier(unittest.TestCase):
 
         @auth_verifier.verify_token
         @required_acl('foo')
+        def decorated():
+            return s.result
+
+        result = decorated()
+
+        assert_that(result, equal_to(s.unauthorized))
+
+    def test_verify_tenant_calls_handle_unauthorized(self):
+        mock_client = Mock()
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+
+        mock_client.token.get.return_value = {'metadata': {'tenant_uuid': 'bar'}}
+
+        @auth_verifier.verify_tenant
+        @required_tenant('foo')
         def decorated():
             return s.result
 
