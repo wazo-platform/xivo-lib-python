@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2014-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -7,6 +7,28 @@ import sys
 
 DEFAULT_LOG_FORMAT = '%(asctime)s [%(process)d] (%(levelname)s) (%(name)s): %(message)s'
 DEFAULT_LOG_LEVEL = logging.INFO
+
+
+# This is fixed in Python 3.7.4 standard library, but Debian uses 3.7.3
+# See https://github.com/python/cpython/commit/6a7a9f1d83cef628d2bacd71ee568b93f53fd6b4
+
+class StreamHandler(logging.StreamHandler):
+
+    def emit(self, record):
+        try:
+            super(StreamHandler, self).emit(record)
+        except RecursionError:
+            raise
+
+    def handleError(self, record):
+        try:
+            super(StreamHandler, self).handleError(record)
+        except RecursionError:
+            raise
+
+
+class FileHandler(StreamHandler, logging.FileHandler):
+    pass
 
 
 class _StreamToLogger(object):
@@ -60,16 +82,16 @@ def setup_logging(
 
     formatter = logging.Formatter(log_format)
 
-    handler = logging.FileHandler(log_file)
+    handler = FileHandler(log_file)
     handler.setFormatter(formatter)
     root_logger.addHandler(handler)
 
-    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler = StreamHandler(sys.stdout)
     stdout_handler.addFilter(_LogLevelFilter(lambda level: level < logging.ERROR))
     stdout_handler.setFormatter(formatter)
     root_logger.addHandler(stdout_handler)
 
-    stderr_handler = logging.StreamHandler(sys.stderr)
+    stderr_handler = StreamHandler(sys.stderr)
     stderr_handler.addFilter(_LogLevelFilter(lambda level: level >= logging.ERROR))
     stderr_handler.setFormatter(formatter)
     root_logger.addHandler(stderr_handler)
@@ -91,9 +113,18 @@ def silence_loggers(logger_names, level):
 
 
 def excepthook(exception_class, exception_instance, traceback):
-    logging.getLogger().critical(
-        exception_instance, exc_info=(exception_class, exception_instance, traceback)
-    )
+    try:
+        logging.getLogger().critical(
+            exception_instance, exc_info=(exception_class, exception_instance, traceback)
+        )
+    except Exception:
+        # If we get an exception here, it means that there was a problem with the logger
+        # itself. Probably related to filesystem issues or formatting issues.
+        sys.stderr = sys.__stderr__
+        sys.stdout = sys.__stdout__
+        logging.getLogger().critical(
+            exception_instance, exc_info=(exception_class, exception_instance, traceback)
+        )
 
 
 def get_log_level_by_name(log_level_name):
