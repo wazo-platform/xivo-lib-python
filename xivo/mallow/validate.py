@@ -1,8 +1,9 @@
-# Copyright 2017-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from marshmallow import ValidationError
 from marshmallow.validate import (
+    ContainsOnly as _ContainsOnly,
     Email as _Email,
     Equal as _Equal,
     Length as _Length,
@@ -36,6 +37,20 @@ def validate_string_dict(dict_, max_key_length=128, max_value_length=2048):
                     },
                 }
             )
+
+
+class ContainsOnly(_ContainsOnly):
+
+    constraint_id = 'enum'
+
+    def _format_error(self, value):
+        msg = super(ContainsOnly, self)._format_error(value)
+
+        return {
+            'constraint_id': self.constraint_id,
+            'constraint': {'choices': self.choices},
+            'message': msg,
+        }
 
 
 class Email(_Email):
