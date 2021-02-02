@@ -48,7 +48,7 @@ class ContainsOnly(_ContainsOnly):
 
         return {
             'constraint_id': self.constraint_id,
-            'constraint': {'choices': self.choices},
+            'constraint': {'choices': list(self.choices)},
             'message': msg,
         }
 
@@ -108,7 +108,7 @@ class OneOf(_OneOf):
 
         return {
             'constraint_id': self.constraint_id,
-            'constraint': {'choices': self.choices},
+            'constraint': {'choices': list(self.choices)},
             'message': msg,
         }
 
