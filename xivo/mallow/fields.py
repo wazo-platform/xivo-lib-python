@@ -1,4 +1,4 @@
-# Copyright 2017-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from marshmallow.fields import (
@@ -14,6 +14,7 @@ from marshmallow.fields import (
     List as _List,
     Nested as _Nested,
     String as _String,
+    TimeDelta as _TimeDelta,
     URL as _URL,
     UUID as _UUID,
 )
@@ -172,6 +173,24 @@ class String(_String):
                 constraint_id='type',
                 constraint='string',
             )
+        }
+    )
+
+
+class TimeDelta(_TimeDelta):
+    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages.update(
+        {
+            'invalid': _StringifiedDict(
+                message=_TimeDelta.default_error_messages['invalid'],
+                constraint_id='type',
+                constraint='timedelta',
+            ),
+            'format': _StringifiedDict(
+                message=_TimeDelta.default_error_messages['format'],
+                constraint_id='type',
+                constraint='format',
+            ),
         }
     )
 
