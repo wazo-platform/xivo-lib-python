@@ -48,16 +48,29 @@ current_user = LocalProxy(get_current_user)
 
 class Tenant(tenant_helpers.Tenant):
     @classmethod
-    def autodetect(cls):
-        try:
-            tenant = cls.from_headers()
-        except tenant_helpers.InvalidTenant:
-            logger.debug('Invalid tenant from header, using token...')
+    def autodetect(cls, include_query=False):
+        tenant = None
+        if include_query:
+            try:
+                tenant = cls.from_query()
+            except tenant_helpers.InvalidTenant:
+                logger.debug('Invalid tenant from query, using header...')
+            else:
+                logger.debug('Found tenant "%s" from query', tenant.uuid)
+
+        if not tenant:
+            try:
+                tenant = cls.from_headers()
+            except tenant_helpers.InvalidTenant:
+                logger.debug('Invalid tenant from header, using token...')
+            else:
+                logger.debug('Found tenant "%s" from header', tenant.uuid)
+
+        if not tenant:
             tenant = cls.from_token(token)
             logger.debug('Found tenant "%s" from token', tenant.uuid)
             return tenant
 
-        logger.debug('Found tenant "%s" from header', tenant.uuid)
         try:
             return tenant.check_against_token(token)
         except tenant_helpers.InvalidTenant:
