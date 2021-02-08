@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -49,10 +49,6 @@ current_user = LocalProxy(get_current_user)
 class Tenant(tenant_helpers.Tenant):
     @classmethod
     def autodetect(cls):
-        return cls.autodetect_one()
-
-    @classmethod
-    def autodetect_one(cls):
         try:
             tenant = cls.from_headers()
         except tenant_helpers.InvalidTenant:
