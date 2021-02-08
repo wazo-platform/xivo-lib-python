@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
@@ -65,6 +65,14 @@ class Tenant(object):
             return tenant.check_against_token(token)
         except InvalidTenant:
             raise UnauthorizedTenant(tenant.uuid)
+
+    @classmethod
+    def from_query(cls):
+        try:
+            tenant_uuid = request.args['tenant']
+        except KeyError:
+            raise InvalidTenant()
+        return cls(uuid=tenant_uuid)
 
     @classmethod
     def from_headers(cls):

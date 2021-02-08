@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -48,20 +48,29 @@ current_user = LocalProxy(get_current_user)
 
 class Tenant(tenant_helpers.Tenant):
     @classmethod
-    def autodetect(cls):
-        return cls.autodetect_one()
+    def autodetect(cls, include_query=False):
+        tenant = None
+        if include_query:
+            try:
+                tenant = cls.from_query()
+            except tenant_helpers.InvalidTenant:
+                logger.debug('Invalid tenant from query, using header...')
+            else:
+                logger.debug('Found tenant "%s" from query', tenant.uuid)
 
-    @classmethod
-    def autodetect_one(cls):
-        try:
-            tenant = cls.from_headers()
-        except tenant_helpers.InvalidTenant:
-            logger.debug('Invalid tenant from header, using token...')
+        if not tenant:
+            try:
+                tenant = cls.from_headers()
+            except tenant_helpers.InvalidTenant:
+                logger.debug('Invalid tenant from header, using token...')
+            else:
+                logger.debug('Found tenant "%s" from header', tenant.uuid)
+
+        if not tenant:
             tenant = cls.from_token(token)
             logger.debug('Found tenant "%s" from token', tenant.uuid)
             return tenant
 
-        logger.debug('Found tenant "%s" from header', tenant.uuid)
         try:
             return tenant.check_against_token(token)
         except tenant_helpers.InvalidTenant:
