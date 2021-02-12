@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import itertools
 import logging
+import requests
 import threading
 
 logger = logging.getLogger(__name__)
@@ -74,12 +75,15 @@ class TokenRenewer(object):
         try:
             token = self._auth_client.token.new(expiration=self._expiration)
         except Exception as e:
-            logger.debug(
-                'Creating token with wazo-auth failed',
-                exc_info=True,
-            )
+            debug_message = 'Creating token with wazo-auth failed'
+            try:
+                raise
+            except requests.exceptions.ConnectionError as error:
+                logger.debug('%s: %s', debug_message, error)
+            except Exception:
+                logger.debug(debug_message, exc_info=True)
             response = getattr(e, 'response', None)
-            status_code = getattr(response, 'status_code', None)
+            status_code = getattr(response, 'status_code', '')
             self._renew_time = next(self._renew_time_failed)
             logger.warning(
                 'Creating token with wazo-auth failed (%s). Retrying in %s seconds...',
