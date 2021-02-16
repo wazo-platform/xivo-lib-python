@@ -74,25 +74,26 @@ class TokenRenewer(object):
         )
         try:
             token = self._auth_client.token.new(expiration=self._expiration)
-        except Exception as e:
+        except requests.exceptions.ConnectionError as error:
             debug_message = 'Creating token with wazo-auth failed'
-            try:
-                raise
-            except requests.exceptions.ConnectionError as error:
-                logger.debug('%s: %s', debug_message, error)
-            except Exception:
-                logger.debug(debug_message, exc_info=True)
-            response = getattr(e, 'response', None)
-            status_code = getattr(response, 'status_code', '')
-            self._renew_time = next(self._renew_time_failed)
-            logger.warning(
-                'Creating token with wazo-auth failed (%s). Retrying in %s seconds...',
-                status_code,
-                self._renew_time,
-            )
+            logger.debug('%s: %s', debug_message, error)
+            self._handle_renewal_error(error)
+        except Exception as error:
+            logger.debug('Creating token with wazo-auth failed', exc_info=True)
+            self._handle_renewal_error(error)
         else:
             self._renew_time = self._RENEW_TIME_COEFFICIENT * self._expiration
             self._notify_all(token)
+
+    def _handle_renewal_error(self, error):
+        response = getattr(error, 'response', None)
+        status_code = getattr(response, 'status_code', '')
+        self._renew_time = next(self._renew_time_failed)
+        logger.warning(
+            'Creating token with wazo-auth failed (%s). Retrying in %s seconds...',
+            status_code,
+            self._renew_time,
+        )
 
     def _notify_all(self, token):
         with self._callback_lock:
