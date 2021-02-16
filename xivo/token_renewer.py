@@ -75,8 +75,7 @@ class TokenRenewer(object):
         try:
             token = self._auth_client.token.new(expiration=self._expiration)
         except requests.exceptions.ConnectionError as error:
-            debug_message = 'Creating token with wazo-auth failed'
-            logger.debug('%s: %s', debug_message, error)
+            logger.debug('Creating token with wazo-auth failed: %s', error)
             self._handle_renewal_error(error)
         except Exception as error:
             logger.debug('Creating token with wazo-auth failed', exc_info=True)
