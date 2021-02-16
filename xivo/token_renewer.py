@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import itertools
 import logging
+import requests
 import threading
 
 logger = logging.getLogger(__name__)
@@ -73,22 +74,25 @@ class TokenRenewer(object):
         )
         try:
             token = self._auth_client.token.new(expiration=self._expiration)
-        except Exception as e:
-            logger.debug(
-                'Creating token with wazo-auth failed',
-                exc_info=True,
-            )
-            response = getattr(e, 'response', None)
-            status_code = getattr(response, 'status_code', None)
-            self._renew_time = next(self._renew_time_failed)
-            logger.warning(
-                'Creating token with wazo-auth failed (%s). Retrying in %s seconds...',
-                status_code,
-                self._renew_time,
-            )
+        except requests.exceptions.ConnectionError as error:
+            logger.debug('Creating token with wazo-auth failed: %s', error)
+            self._handle_renewal_error(error)
+        except Exception as error:
+            logger.debug('Creating token with wazo-auth failed', exc_info=True)
+            self._handle_renewal_error(error)
         else:
             self._renew_time = self._RENEW_TIME_COEFFICIENT * self._expiration
             self._notify_all(token)
+
+    def _handle_renewal_error(self, error):
+        response = getattr(error, 'response', None)
+        status_code = getattr(response, 'status_code', '')
+        self._renew_time = next(self._renew_time_failed)
+        logger.warning(
+            'Creating token with wazo-auth failed (%s). Retrying in %s seconds...',
+            status_code,
+            self._renew_time,
+        )
 
     def _notify_all(self, token):
         with self._callback_lock:
