@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-# Copyright 2013-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
 
-from hamcrest import assert_that
-from hamcrest import not_
+from hamcrest import (
+    assert_that,
+    is_,
+)
 from mock import Mock
 from mock import patch
 
@@ -52,7 +54,7 @@ class TestPubsub(unittest.TestCase):
 
         callback.assert_any_call(message_1)
         callback.assert_any_call(message_2)
-        self.assertEquals(callback.call_count, 2)
+        self.assertEqual(callback.call_count, 2)
 
     def test_unsubscribe_when_never_subscribed(self):
         callback = Mock()
@@ -69,7 +71,7 @@ class TestPubsub(unittest.TestCase):
         self.pubsub.unsubscribe(SOME_TOPIC, callback)
         self.pubsub.publish(SOME_TOPIC, SOME_MESSAGE)
 
-        self.assertEquals(callback.call_count, 0)
+        self.assertEqual(callback.call_count, 0)
 
     def publish_when_nobody_subscribed(self):
         try:
@@ -86,7 +88,7 @@ class TestPubsub(unittest.TestCase):
         self.pubsub.unsubscribe(SOME_TOPIC, callback_1)
         self.pubsub.publish(SOME_TOPIC, SOME_MESSAGE)
 
-        assert_that(not_(callback_1.called))
+        assert_that(callback_1.called, is_(False))
         callback_2.assert_called_once_with(SOME_MESSAGE)
 
     def test_when_exception_then_exception_is_handled(self):

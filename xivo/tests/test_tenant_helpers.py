@@ -7,7 +7,7 @@ import requests
 from hamcrest import (
     assert_that,
     calling,
-    contains,
+    contains_exactly,
     empty,
     equal_to,
     has_property,
@@ -284,7 +284,7 @@ class TestTokenVisibleTenants(TestCase):
 
         result = token.visible_tenants()
 
-        assert_that(result, contains(has_property('uuid', 'tenant')))
+        assert_that(result, contains_exactly(has_property('uuid', 'tenant')))
 
     def test_auth_exception(self):
         auth = Mock()
@@ -310,7 +310,7 @@ class TestTokenVisibleTenants(TestCase):
 
         assert_that(
             result,
-            contains(
+            contains_exactly(
                 has_property('uuid', 'supertenant'),
                 has_property('uuid', 'subtenant1'),
                 has_property('uuid', 'subtenant2'),
@@ -332,7 +332,7 @@ class TestTokenVisibleTenants(TestCase):
 
         assert_that(
             result,
-            contains(
+            contains_exactly(
                 has_property('uuid', 'supertenant'),
                 has_property('uuid', 'subtenant1'),
                 has_property('uuid', 'subtenant2'),
@@ -345,7 +345,7 @@ class TestTokenVisibleTenants(TestCase):
         token = Token({'metadata': {'tenant_uuid': 'tenant'}}, auth)
 
         result = token.visible_tenants("tenant")
-        assert_that(result, contains(has_property('uuid', 'tenant')))
+        assert_that(result, contains_exactly(has_property('uuid', 'tenant')))
 
         assert_that(
             calling(token.visible_tenants).with_args("other"), raises(InvalidTenant)

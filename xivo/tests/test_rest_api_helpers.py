@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from unittest import TestCase
 
 from hamcrest import (
     assert_that,
-    contains,
+    contains_exactly,
     equal_to,
     has_entries,
     instance_of,
@@ -52,7 +52,7 @@ class TestRestApiHelpers(TestCase):
 
         assert_that(
             result,
-            contains(
+            contains_exactly(
                 has_entries(
                     {
                         'message': s.message,
@@ -76,7 +76,7 @@ class TestRestApiHelpers(TestCase):
 
         assert_that(
             result,
-            contains(
+            contains_exactly(
                 has_entries(
                     {
                         'resource': s.resource,
