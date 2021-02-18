@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2014-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import print_function
@@ -14,16 +14,21 @@ import yaml
 from .chain_map import ChainMap
 
 
+class _YAMLExecLoader(yaml.SafeLoader):
+    pass
+
+
 class _YAMLExecTag(yaml.YAMLObject):
 
     yaml_tag = u'!exec'
+    yaml_loader = _YAMLExecLoader
 
     @classmethod
     def from_yaml(cls, loader, node):
         with open(os.devnull) as devnull:
             for key, value in node.value:
                 if key.value == 'command':
-                    return yaml.load(
+                    return yaml.safe_load(
                         subprocess.check_output(value.value.split(' '), stderr=devnull)
                     )
 
@@ -63,7 +68,7 @@ class ConfigParser(object):
     def parse_config_file(self, config_file_name):
         try:
             with open(config_file_name) as config_file:
-                data = yaml.load(config_file)
+                data = yaml.load(config_file, Loader=_YAMLExecLoader)
             return data if data else {}
         except EnvironmentError as e:
             self._error_handler.on_parse_config_file_env_error(config_file_name, e)
