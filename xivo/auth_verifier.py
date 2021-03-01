@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -101,12 +101,12 @@ class AuthVerifier(object):
     def verify_token(self, func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # backward compatibility: when func.acl is not defined, it should
-            # probably just raise an AttributeError
             no_auth = getattr(func, 'no_auth', False)
             if no_auth:
                 return func(*args, **kwargs)
 
+            # backward compatibility: when func.acl is not defined, it should
+            # probably just raise an AttributeError
             acl_check = getattr(func, 'acl', self._fallback_acl_check)
             token_id = (acl_check.extract_token_id or self.token)()
             required_acl = self._required_acl(acl_check, args, kwargs)
