@@ -152,10 +152,6 @@ class AuthVerifier(object):
         }
         return text_type(acl_check.pattern).format(**escaped_kwargs)
 
-    def acl(self, decorated_function, *args, **kwargs):
-        acl_check = getattr(decorated_function, 'acl', self._fallback_acl_check)
-        return self._required_acl(acl_check, args, kwargs)
-
     def handle_unreachable(self, error):
         raise AuthServerUnreachable(
             self._auth_config['host'], self._auth_config['port'], error

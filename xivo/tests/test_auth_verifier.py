@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
@@ -230,39 +230,6 @@ class TestAuthVerifier(unittest.TestCase):
         token = auth_verifier.token()
 
         assert_that(token, equal_to(s.token))
-
-    def test_acl_empty(self):
-        auth_verifier = AuthVerifier()
-        mock = Mock()
-        del mock.acl
-
-        acl = auth_verifier.acl(mock)
-
-        assert_that(acl, equal_to(''))
-
-    def test_acl_not_empty(self):
-        auth_verifier = AuthVerifier()
-        function = function_with_acl('{format1},{format2}')
-
-        acl = auth_verifier.acl(function, format1='test1', format2='test2')
-
-        assert_that(acl, equal_to('test1,test2'))
-
-    def test_acl_with_dot(self):
-        auth_verifier = AuthVerifier()
-        function = function_with_acl('{format1}.{format2}')
-
-        acl = auth_verifier.acl(function, format1='test.1', format2='test.2')
-
-        assert_that(acl, equal_to('test_1.test_2'))
-
-    def test_acl_with_non_str(self):
-        auth_verifier = AuthVerifier()
-        function = function_with_acl('{format1}.{format2}')
-
-        acl = auth_verifier.acl(function, format1=12, format2=17)
-
-        assert_that(acl, equal_to('12.17'))
 
     def test_handle_unreachable(self):
         auth_verifier = AuthVerifier()
