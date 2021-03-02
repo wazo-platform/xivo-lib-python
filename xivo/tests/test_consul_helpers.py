@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
 import uuid
 
-from hamcrest import assert_that, calling, contains, equal_to, raises
+from hamcrest import assert_that, calling, contains_exactly, equal_to, raises
 from mock import ANY, call, patch, Mock, sentinel as s
 from xivo_bus.resources.services import event
 
@@ -426,4 +426,4 @@ class TestRemoteServiceFinderListRunningServices(BaseFinderTestCase):
         finder = ServiceFinder(self.consul_config)
         result = finder._list_running_services('wazo-calld', 'dc1', None)
 
-        assert_that(result, contains(node_0_service, node_1_service))
+        assert_that(result, contains_exactly(node_0_service, node_1_service))

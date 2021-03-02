@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2014-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from operator import itemgetter
@@ -9,13 +9,15 @@ import string
 import tempfile
 import unittest
 
-from hamcrest import assert_that
-from hamcrest import calling
-from hamcrest import contains
-from hamcrest import equal_to
-from hamcrest import has_entry
-from hamcrest import is_not
-from hamcrest import raises
+from hamcrest import (
+    assert_that,
+    calling,
+    contains_exactly,
+    equal_to,
+    has_entry,
+    is_not,
+    raises,
+)
 from mock import patch
 from mock import Mock
 from mock import ANY
@@ -189,7 +191,7 @@ class TestParseConfigDir(unittest.TestCase):
 
         result = self.parser.parse_config_dir(dirname)
 
-        assert_that(result, contains())
+        assert_that(result, contains_exactly())
         self.error_handler.on_parse_config_dir_env_error.assert_called_once_with(
             dirname, ANY
         )
@@ -214,7 +216,7 @@ class TestParseConfigDir(unittest.TestCase):
             key=itemgetter('file'),
         )
         expected = [entry['content'] for entry in sorted_files]
-        assert_that(res, contains(*expected))
+        assert_that(res, contains_exactly(*expected))
 
     def test_that_valid_configs_are_returned_when_one_fails(self):
         dirname = _new_tmp_dir()
@@ -228,7 +230,7 @@ class TestParseConfigDir(unittest.TestCase):
 
         res = self.parser.parse_config_dir(dirname)
 
-        assert_that(res, contains({'test': 'one'}))
+        assert_that(res, contains_exactly({'test': 'one'}))
         self.error_handler.on_parse_config_dir_parse_exception.assert_called_once_with(
             os.path.basename(f2.name), ANY
         )
@@ -243,7 +245,7 @@ class TestParseConfigDir(unittest.TestCase):
         try:
             res = self.parser.parse_config_dir(dirname)
 
-            assert_that(res, is_not(contains({'test': 'one'})))
+            assert_that(res, is_not(contains_exactly({'test': 'one'})))
         finally:
             os.unlink(filename)
 
@@ -257,7 +259,7 @@ class TestParseConfigDir(unittest.TestCase):
         try:
             res = self.parser.parse_config_dir(dirname)
 
-            assert_that(res, is_not(contains({'test': 'two'})))
+            assert_that(res, is_not(contains_exactly({'test': 'two'})))
         finally:
             os.unlink(filename)
 

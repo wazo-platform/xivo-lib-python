@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -6,7 +6,7 @@ import unittest
 from hamcrest import (
     assert_that,
     calling,
-    contains,
+    contains_exactly,
     empty,
     has_entries,
     has_entry,
@@ -58,7 +58,9 @@ class TestLengthValidation(unittest.TestCase):
                 ValidationError,
                 has_property(
                     'messages',
-                    has_entry('equal', contains(has_entries(constraint={'equal': 2}))),
+                    has_entry(
+                        'equal', contains_exactly(has_entries(constraint={'equal': 2}))
+                    ),
                 ),
             ),
         )
@@ -72,7 +74,7 @@ class TestLengthValidation(unittest.TestCase):
                     'messages',
                     has_entry(
                         'min_max',
-                        contains(has_entries(constraint={'min': 2, 'max': 3})),
+                        contains_exactly(has_entries(constraint={'min': 2, 'max': 3})),
                     ),
                 ),
             ),
