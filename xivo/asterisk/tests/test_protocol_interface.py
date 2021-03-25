@@ -117,3 +117,12 @@ class TestProtocolInterface(unittest.TestCase):
         result = protocol_interface_from_channel(channel)
 
         self.assertEqual(result, expected_result)
+
+    def test_star_code_in_interface(self):
+        channel = 'Local/**96**996666@internal-00000006;1'
+
+        expected_result = ProtocolInterface('Local', '**96**996666@internal')
+
+        result = protocol_interface_from_channel(channel)
+
+        self.assertEqual(result, expected_result)
