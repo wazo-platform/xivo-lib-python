@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import collections
 import re
 
-channel_regexp = re.compile(r'(sip|sccp|local|dahdi|iax2)/([\w@/-]+)-', re.I)
+channel_regexp = re.compile(r'(sip|sccp|local|dahdi|iax2)/([*\w@/-]+)-', re.I)
 agent_channel_regex = re.compile(r'Local/id-(\d+)@agentcallback')
 device_regexp = re.compile(r'(sip|sccp|local|dahdi|iax2)/([\w@/-]+)', re.I)
 
