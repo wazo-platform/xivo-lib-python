@@ -210,21 +210,27 @@ class AccessCheck:
         return False
 
     @staticmethod
-    def _transform_access_to_regex(auth_id, access):
+    def _transform_access_to_regex(auth_id, token_id, access):
         access_regex = re.escape(access).replace('\\*', '[^.]*?').replace('\\#', '.*?')
-        access_regex = AccessCheck._transform_access_me_to_uuid_or_me(
-            access_regex, auth_id
+        access_regex = AccessCheck._replace_reserved_words(
+            access_regex,
+            ReservedWord('me', auth_id),
+            ReservedWord('my_token', token_id),
         )
         return re.compile('^{}$'.format(access_regex))
 
     @staticmethod
-    def _transform_access_me_to_uuid_or_me(access_regex, auth_id):
-        access_regex = access_regex.replace(
-            '\\.me\\.', '\\.(me|{auth_id})\\.'.format(auth_id=auth_id)
-        )
-        if access_regex.endswith('\\.me'):
-            access_regex = '{access_start}\\.(me|{auth_id})'.format(
-                access_start=access_regex[:-4],
-                auth_id=auth_id,
-            )
-        return access_regex
+    def _replace_reserved_words(access_regex, *reserved_words):
+        words = access_regex.split('\\.')
+        for reserved_word in reserved_words:
+            words = tuple(reserved_word.replace(word) for word in words)
+        return '\\.'.join(words)
+
+
+class ReservedWord:
+    def __init__(self, word, value):
+        self._reserved_word = word
+        self._replacement = '({word}|{value})'.format(word=word, value=value)
+
+    def replace(self, word):
+        return self._replacement if word == self._reserved_word else word
