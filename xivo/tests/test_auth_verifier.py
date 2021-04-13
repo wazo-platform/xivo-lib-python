@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
+import six
 import unittest
 
 from hamcrest import assert_that, calling, equal_to, raises
@@ -384,6 +385,7 @@ class TestAccessCheck(unittest.TestCase):
 
         assert_that(access_check.matches_required_access('foo.bar'), equal_to(False))
 
+    @unittest.skipIf(six.PY2, "not compatible with Python <3.3 (_ is re.escaped)")
     def test_matches_my_session(self):
         access_check = AccessCheck('123', 'session-uuid', ['foo.my_session'])
 
