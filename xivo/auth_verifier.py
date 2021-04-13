@@ -183,15 +183,15 @@ def extract_token_id_from_query_or_header():
 
 
 class AccessCheck:
-    def __init__(self, auth_id, acl):
+    def __init__(self, auth_id, session_id, acl):
         self.auth_id = auth_id
         self._positive_access_regexes = [
-            self._transform_access_to_regex(auth_id, access)
+            self._transform_access_to_regex(auth_id, session_id, access)
             for access in acl
             if not access.startswith('!')
         ]
         self._negative_access_regexes = [
-            self._transform_access_to_regex(auth_id, access[1:])
+            self._transform_access_to_regex(auth_id, session_id, access[1:])
             for access in acl
             if access.startswith('!')
         ]
@@ -210,12 +210,12 @@ class AccessCheck:
         return False
 
     @staticmethod
-    def _transform_access_to_regex(auth_id, token_id, access):
+    def _transform_access_to_regex(auth_id, session_id, access):
         access_regex = re.escape(access).replace('\\*', '[^.]*?').replace('\\#', '.*?')
         access_regex = AccessCheck._replace_reserved_words(
             access_regex,
             ReservedWord('me', auth_id),
-            ReservedWord('my_token', token_id),
+            ReservedWord('my_session', session_id),
         )
         return re.compile('^{}$'.format(access_regex))
 
