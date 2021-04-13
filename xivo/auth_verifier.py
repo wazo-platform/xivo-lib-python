@@ -185,45 +185,46 @@ def extract_token_id_from_query_or_header():
 class AccessCheck:
     def __init__(self, auth_id, acl):
         self.auth_id = auth_id
-        self.acl = acl
+        self._positive_access_regexes = [
+            self._transform_access_to_regex(auth_id, access)
+            for access in acl
+            if not access.startswith('!')
+        ]
+        self._negative_access_regexes = [
+            self._transform_access_to_regex(auth_id, access[1:])
+            for access in acl
+            if access.startswith('!')
+        ]
 
     def matches_required_access(self, required_access):
         if required_access is None:
             return True
 
-        positive_user_acl = set()
-        negative_user_acl = set()
-
-        for user_access in self.acl:
-            if user_access.startswith('!'):
-                negative_user_acl.add(user_access[1:])
-            else:
-                positive_user_acl.add(user_access)
-
-        for negative_access in negative_user_acl:
-            negative_access_regex = self._transform_access_to_regex(negative_access)
-            if re.match(negative_access_regex, required_access):
+        for access_regex in self._negative_access_regexes:
+            if access_regex.match(required_access):
                 return False
 
-        for positive_access in positive_user_acl:
-            positive_access_regex = self._transform_access_to_regex(positive_access)
-            if re.match(positive_access_regex, required_access):
+        for access_regex in self._positive_access_regexes:
+            if access_regex.match(required_access):
                 return True
         return False
 
-    def _transform_access_to_regex(self, access):
-        access_regex = re.escape(access)
-        access_regex = access_regex.replace('\\*', '[^.]*?').replace('\\#', '.*?')
-        access_regex = self._transform_access_me_to_uuid_or_me(access_regex)
+    @staticmethod
+    def _transform_access_to_regex(auth_id, access):
+        access_regex = re.escape(access).replace('\\*', '[^.]*?').replace('\\#', '.*?')
+        access_regex = AccessCheck._transform_access_me_to_uuid_or_me(
+            access_regex, auth_id
+        )
         return re.compile('^{}$'.format(access_regex))
 
-    def _transform_access_me_to_uuid_or_me(self, access_regex):
+    @staticmethod
+    def _transform_access_me_to_uuid_or_me(access_regex, auth_id):
         access_regex = access_regex.replace(
-            '\\.me\\.', '\\.(me|{auth_id})\\.'.format(auth_id=self.auth_id)
+            '\\.me\\.', '\\.(me|{auth_id})\\.'.format(auth_id=auth_id)
         )
         if access_regex.endswith('\\.me'):
             access_regex = '{access_start}\\.(me|{auth_id})'.format(
                 access_start=access_regex[:-4],
-                auth_id=self.auth_id,
+                auth_id=auth_id,
             )
         return access_regex
