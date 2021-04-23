@@ -1,4 +1,4 @@
-# Copyright 2016-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
@@ -134,7 +134,7 @@ class TestServiceDiscovery(_BaseTest):
         bus_url = BUS_URL.format(
             username='guest',
             password='guest',
-            host='localhost',
+            host='127.0.0.1',
             port=self.service_port(5672, 'rabbitmq'),
         )
         with kombu.Connection(bus_url) as conn:
@@ -202,7 +202,7 @@ class TestServiceDiscovery(_BaseTest):
 
     def _is_myservice_registered_to_consul(self, ip):
         port = self.service_port(8500, 'consul')
-        consul = Consul('localhost', port, 'the_one_ring')
+        consul = Consul('127.0.0.1', port, 'the_one_ring')
         services = consul.agent.services()
         for index, service in services.items():
             if service['Service'] == 'myservice' and service['Address'] == ip:
