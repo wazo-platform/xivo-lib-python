@@ -14,7 +14,6 @@ Replaces:  pf-xivo-lib-python
 Conflicts: pf-xivo-lib-python
 Depends: ${python:Depends},
          ${misc:Depends},
-         python-consul,
          python-psycopg2,
          python-six,
          python-yaml
