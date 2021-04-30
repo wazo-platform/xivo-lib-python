@@ -130,9 +130,12 @@ class AuthVerifier(object):
             if not required_tenant:
                 return func(*args, **kwargs)
             token_id = self.token()
+
             try:
                 token = self.client().token.get(token_id)
             except requests.RequestException as e:
+                if e.response is not None and e.response.status_code == 404:
+                    return self.handle_unauthorized(token_id)
                 return self.handle_unreachable(e)
 
             tenant_uuid = token.get('metadata', {}).get('tenant_uuid')

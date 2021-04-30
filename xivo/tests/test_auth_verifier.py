@@ -215,6 +215,23 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(result, equal_to(s.unauthorized))
 
+    def test_verify_tenant_calls_handle_unauthorized_when_404(self):
+        mock_client = Mock()
+        response = Mock(status_code=404)
+        exception = requests.RequestException(response=response)
+        mock_client.token.get.side_effect = exception
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+
+        @auth_verifier.verify_tenant
+        @required_tenant('foo')
+        def decorated():
+            return s.result
+
+        result = decorated()
+
+        assert_that(result, equal_to(s.unauthorized))
+
     @patch('xivo.auth_verifier.request')
     def test_token_empty(self, request):
         request.headers = {}
