@@ -277,6 +277,13 @@ class TestAccessCheck(unittest.TestCase):
         assert_that(check.matches_required_access('foo.bar.toto.tata'))
         assert_that(check.matches_required_access('other.bar.toto'), equal_to(False))
 
+        assert_that(check.matches_required_access('foo.bar.*'))
+        assert_that(check.matches_required_access('foo.bar.*.*'))
+        assert_that(check.matches_required_access('foo.bar.#'))
+        assert_that(check.matches_required_access('*.bar.toto'), equal_to(False))
+        assert_that(check.matches_required_access('*.*.toto'), equal_to(False))
+        assert_that(check.matches_required_access('#.bar.toto'), equal_to(False))
+
     def test_matches_required_access_when_user_access_has_not_special_character(self):
         check = AccessCheck('123', 'session-uuid', ['foo.bar.toto'])
 
@@ -284,12 +291,23 @@ class TestAccessCheck(unittest.TestCase):
         assert_that(check.matches_required_access('foo.bar.toto.tata'), equal_to(False))
         assert_that(check.matches_required_access('other.bar.toto'), equal_to(False))
 
+        assert_that(check.matches_required_access('foo.bar.*'), equal_to(False))
+        assert_that(check.matches_required_access('foo.bar.#'), equal_to(False))
+        assert_that(check.matches_required_access('*.bar.toto'), equal_to(False))
+        assert_that(check.matches_required_access('#.bar.toto'), equal_to(False))
+
     def test_matches_required_access_when_user_access_has_asterisks(self):
         check = AccessCheck('123', 'session-uuid', ['foo.*.*'])
 
         assert_that(check.matches_required_access('foo.bar.toto'))
         assert_that(check.matches_required_access('foo.bar.toto.tata'), equal_to(False))
         assert_that(check.matches_required_access('other.bar.toto'), equal_to(False))
+
+        assert_that(check.matches_required_access('foo.*.*'))
+        assert_that(check.matches_required_access('foo.*'), equal_to(False))
+        assert_that(check.matches_required_access('foo.bar.#'), equal_to(False))
+        assert_that(check.matches_required_access('*.bar.toto'), equal_to(False))
+        assert_that(check.matches_required_access('#.bar.toto'), equal_to(False))
 
     def test_matches_required_access_with_multiple_accesses(self):
         check = AccessCheck('123', 'session-uuid', ['foo', 'foo.bar.toto', 'other.#'])
@@ -300,6 +318,10 @@ class TestAccessCheck(unittest.TestCase):
         assert_that(check.matches_required_access('foo.bar.toto.tata'), equal_to(False))
         assert_that(check.matches_required_access('other.bar.toto'))
 
+        assert_that(check.matches_required_access('*'), equal_to(False))
+        assert_that(check.matches_required_access('*.*.toto'), equal_to(False))
+        assert_that(check.matches_required_access('#'), equal_to(False))
+
     def test_matches_required_access_when_user_access_has_hashtag_in_middle(self):
         check = AccessCheck('123', 'session-uuid', ['foo.bar.#.titi'])
 
@@ -307,6 +329,12 @@ class TestAccessCheck(unittest.TestCase):
         assert_that(check.matches_required_access('foo.bar.toto'), equal_to(False))
         assert_that(check.matches_required_access('foo.bar.toto.tata'), equal_to(False))
         assert_that(check.matches_required_access('foo.bar.toto.tata.titi'))
+
+        assert_that(check.matches_required_access('foo.bar.#.titi'))
+        assert_that(check.matches_required_access('foo.bar.*.*'), equal_to(False))
+        assert_that(check.matches_required_access('foo.bar.*.titi'))
+        assert_that(check.matches_required_access('foo.bar.*.*.titi'))
+        assert_that(check.matches_required_access('foo.bar.#'), equal_to(False))
 
     def test_matches_required_access_when_user_access_ends_with_me(self):
         check = AccessCheck('123', 'session-uuid', ['foo.#.me'])
@@ -325,6 +353,14 @@ class TestAccessCheck(unittest.TestCase):
             equal_to(False),
         )
 
+        assert_that(check.matches_required_access('foo.*.123'))
+        assert_that(check.matches_required_access('foo.*.456'), equal_to(False))
+        assert_that(check.matches_required_access('foo.#.me'))
+        assert_that(check.matches_required_access('foo.#.notme'), equal_to(False))
+        assert_that(check.matches_required_access('foo.*.*.123'))
+        assert_that(check.matches_required_access('foo.*'), equal_to(False))
+        assert_that(check.matches_required_access('foo.#'), equal_to(False))
+
     def test_matches_required_access_when_user_access_has_me_in_middle(self):
         check = AccessCheck('123', 'session-uuid', ['foo.#.me.bar'])
 
@@ -334,6 +370,14 @@ class TestAccessCheck(unittest.TestCase):
         assert_that(check.matches_required_access('foo.bar.me.bar'), equal_to(True))
         assert_that(check.matches_required_access('foo.bar.toto.123.bar'))
         assert_that(check.matches_required_access('foo.bar.toto.me.bar'))
+
+        assert_that(check.matches_required_access('foo.*.123.bar'))
+        assert_that(check.matches_required_access('foo.*.456.bar'), equal_to(False))
+        assert_that(check.matches_required_access('foo.#.me.bar'))
+        assert_that(check.matches_required_access('foo.#.notme.bar'), equal_to(False))
+        assert_that(check.matches_required_access('foo.*.*.123.bar'))
+        assert_that(check.matches_required_access('foo.*.bar'), equal_to(False))
+        assert_that(check.matches_required_access('foo.#.bar'), equal_to(False))
 
     def test_does_not_match_required_access_when_negating(self):
         check = AccessCheck('123', 'session-uuid', ['!foo.me.bar'])

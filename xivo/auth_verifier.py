@@ -214,7 +214,7 @@ class AccessCheck:
 
     @staticmethod
     def _transform_access_to_regex(auth_id, session_id, access):
-        access_regex = re.escape(access).replace('\\*', '[^.]*?').replace('\\#', '.*?')
+        access_regex = re.escape(access).replace('\\*', '[^.#]*?').replace('\\#', '.*?')
         access_regex = AccessCheck._replace_reserved_words(
             access_regex,
             ReservedWord('me', auth_id),
