@@ -31,7 +31,7 @@ class StubVerifier(AuthVerifier):
     def handle_unreachable(self, error):
         return s.unreachable
 
-    def handle_unauthorized(self, error):
+    def handle_unauthorized(self, error, required_access=None):
         return s.unauthorized
 
 
