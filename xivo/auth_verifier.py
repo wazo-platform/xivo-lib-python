@@ -58,12 +58,15 @@ def required_tenant(tenant_uuid):
 
 
 class Unauthorized(rest_api_helpers.APIException):
-    def __init__(self, token):
+    def __init__(self, token, required_access=None):
+        details = {'invalid_token': token}
+        if required_access:
+            details['required_access'] = required_access
         super(Unauthorized, self).__init__(
             status_code=401,
             message='Unauthorized',
             error_id='unauthorized',
-            details={'invalid_token': token},
+            details=details,
         )
 
 
@@ -119,7 +122,7 @@ class AuthVerifier(object):
             if token_is_valid:
                 return func(*args, **kwargs)
 
-            return self.handle_unauthorized(token_id)
+            return self.handle_unauthorized(token_id, required_access=required_acl)
 
         return wrapper
 
@@ -161,8 +164,8 @@ class AuthVerifier(object):
             self._auth_config['host'], self._auth_config['port'], error
         )
 
-    def handle_unauthorized(self, token):
-        raise Unauthorized(token)
+    def handle_unauthorized(self, token, required_access=None):
+        raise Unauthorized(token, required_access)
 
     def client(self):
         if not (self._auth_config or self._auth_client):
@@ -214,7 +217,7 @@ class AccessCheck:
 
     @staticmethod
     def _transform_access_to_regex(auth_id, session_id, access):
-        access_regex = re.escape(access).replace('\\*', '[^.]*?').replace('\\#', '.*?')
+        access_regex = re.escape(access).replace('\\*', '[^.#]*?').replace('\\#', '.*?')
         access_regex = AccessCheck._replace_reserved_words(
             access_regex,
             ReservedWord('me', auth_id),
