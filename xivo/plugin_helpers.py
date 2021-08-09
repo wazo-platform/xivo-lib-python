@@ -3,9 +3,10 @@
 
 import logging
 
+from collections import OrderedDict
+from functools import partial
 from six import iteritems
 from stevedore.named import NamedExtensionManager
-from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 
@@ -14,13 +15,19 @@ def enabled_names(plugins_dict):
     return [name for name, enabled in iteritems(plugins_dict) if enabled]
 
 
-def on_load_failure(_, entrypoint, exception):
-    logger.exception('There is an error with this module: %s', entrypoint)
+def on_load_failure(manager, entrypoint, exception):
+    logger.exception(
+        'Error in plugin namespace "%s" when loading module: "%s"',
+        manager.namespace,
+        entrypoint,
+    )
 
 
-def on_missing_entrypoints(missing_names):
+def on_missing_entrypoints(namespace, missing_names):
     logger.error(
-        'Unable to load plugins because the entrypoint is missing: %s', missing_names
+        'Error in plugin namespace "%s": the entrypoint is missing for plugins: %s',
+        namespace,
+        missing_names,
     )
 
 
@@ -31,7 +38,7 @@ def load_plugin(ext, *load_args, **load_kwargs):
 
 def load(namespace, names, dependencies):
     names = enabled_names(names)
-    logger.debug('Enabled plugins: %s', names)
+    logger.debug('Enabled plugins for namespace "%s": %s', namespace, names)
     if not names:
         logger.info('no enabled plugins')
         return
@@ -41,7 +48,7 @@ def load(namespace, names, dependencies):
         names,
         name_order=True,
         on_load_failure_callback=on_load_failure,
-        on_missing_entrypoints_callback=on_missing_entrypoints,
+        on_missing_entrypoints_callback=partial(on_missing_entrypoints, namespace),
         invoke_on_load=True,
     )
 
