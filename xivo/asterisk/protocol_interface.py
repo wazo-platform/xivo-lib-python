@@ -5,7 +5,7 @@
 import collections
 import re
 
-channel_regexp = re.compile(r'(sip|sccp|local|dahdi|iax2)/([*\w@/-]+)-', re.I)
+channel_regexp = re.compile(r'(pjsip|sip|sccp|local|dahdi|iax2)/([*\w@/-]+)-', re.I)
 agent_channel_regex = re.compile(r'Local/id-(\d+)@agentcallback')
 device_regexp = re.compile(r'(sip|sccp|local|dahdi|iax2)/([\w@/-]+)', re.I)
 
@@ -27,6 +27,11 @@ def protocol_interface_from_channel(channel):
 
     protocol = matches.group(1)
     interface = matches.group(2)
+
+    if protocol == 'pjsip':
+        protocol = 'sip'
+    elif protocol == 'PJSIP':
+        protocol = 'SIP'
 
     return ProtocolInterface(protocol, interface)
 
