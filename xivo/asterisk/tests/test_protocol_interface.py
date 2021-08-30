@@ -41,6 +41,22 @@ class TestProtocolInterface(unittest.TestCase):
 
         assert_that(result, contains_exactly(expected_result))
 
+    def test_protocol_interface_from_channel_pjsip_lower(self):
+        channel = 'pjsip/askdjhf-3216549'
+        expected_result = ProtocolInterface('sip', 'askdjhf')
+
+        result = protocol_interface_from_channel(channel)
+
+        self.assertEqual(expected_result, result)
+
+    def test_protocol_interface_from_channel_pjsip(self):
+        channel = 'PJSIP/askdjhf-3216549'
+        expected_result = ProtocolInterface('SIP', 'askdjhf')
+
+        result = protocol_interface_from_channel(channel)
+
+        self.assertEqual(expected_result, result)
+
     def test_protocol_interface_from_channel_sip(self):
         channel = 'SIP/askdjhf-3216549'
         expected_result = ProtocolInterface('SIP', 'askdjhf')
