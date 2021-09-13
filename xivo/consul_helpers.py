@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -185,7 +185,7 @@ class Registerer(object):
 
         try:
             result = self._client.agent.check.ttl_pass(self._check_id)
-        except ConnectionError as e:
+        except (ConnectionError, ConsulException) as e:
             logger.info('%s', e)
 
         if not result:
