@@ -215,6 +215,9 @@ class AccessCheck:
                 return True
         return False
 
+    def may_add_access(self, new_access):
+        return new_access.startswith('!') or self.matches_required_access(new_access)
+
     @staticmethod
     def _transform_access_to_regex(auth_id, session_id, access):
         access_regex = re.escape(access).replace('\\*', '[^.#]*?').replace('\\#', '.*?')

@@ -438,6 +438,23 @@ class TestAccessCheck(object):
         check = AccessCheck('123', 'session-uuid', acl)
         assert_that(check.matches_required_access(access), is_(expected_result))
 
+    def test_matches_required_access_with_negative_access(self):
+        check = AccessCheck('123', 'session-uuid', ['foo.bar'])
+
+        assert_that(check.matches_required_access('!foo.bar'), is_(False))
+        assert_that(check.matches_required_access('!anything'), is_(False))
+
+    @pytest.mark.parametrize(['acl', 'access', 'expected_result'], parameters)
+    def test_may_add_access(self, acl, access, expected_result):
+        check = AccessCheck('123', 'session-uuid', acl)
+        assert_that(check.may_add_access(access), is_(expected_result))
+
+    def test_may_add_access_with_negative_access(self):
+        check = AccessCheck('123', 'session-uuid', ['foo.bar'])
+
+        assert_that(check.may_add_access('!foo.bar'), is_(True))
+        assert_that(check.may_add_access('!anything'), is_(True))
+
     @unittest.skipIf(six.PY2, "not compatible with Python <3.3 (_ is re.escaped)")
     def test_matches_my_session(self):
         check = AccessCheck('123', 'session-uuid', ['foo.my_session'])
