@@ -4,9 +4,10 @@
 
 import requests
 import six
+import pytest
 import unittest
 
-from hamcrest import assert_that, calling, equal_to, raises
+from hamcrest import assert_that, calling, equal_to, is_, raises
 from mock import Mock, patch, sentinel as s
 from ..auth_verifier import (
     AccessCheck,
@@ -268,151 +269,174 @@ class TestAuthVerifier(unittest.TestCase):
         )
 
 
-class TestAccessCheck(unittest.TestCase):
-    def test_matches_required_access_when_user_access_ends_with_hashtag(self):
-        check = AccessCheck('123', 'session-uuid', ['foo.bar.#'])
+class TestAccessCheck(object):
 
-        assert_that(check.matches_required_access('foo.bar'), equal_to(False))
-        assert_that(check.matches_required_access('foo.bar.toto'))
-        assert_that(check.matches_required_access('foo.bar.toto.tata'))
-        assert_that(check.matches_required_access('other.bar.toto'), equal_to(False))
+    scenarios = [
+        {
+            'scenario': 'user_access_ends_with_hashtag',
+            'acl': ['foo.bar.#'],
+            'tests': [
+                ('foo.bar', False),
+                ('foo.bar.toto', True),
+                ('foo.bar.toto.tata', True),
+                ('other.bar.toto', False),
+                ('foo.bar.*', True),
+                ('foo.bar.*.*', True),
+                ('foo.bar.#', True),
+                ('*.bar.toto', False),
+                ('*.*.toto', False),
+                ('#.bar.toto', False),
+            ],
+        },
+        {
+            'scenario': 'user_access_has_not_special_character',
+            'acl': ['foo.bar.toto'],
+            'tests': [
+                ('foo.bar.toto', True),
+                ('foo.bar.toto.tata', False),
+                ('other.bar.toto', False),
+                ('foo.bar.*', False),
+                ('foo.bar.#', False),
+                ('*.bar.toto', False),
+                ('#.bar.toto', False),
+            ],
+        },
+        {
+            'scenario': 'user_access_has_asterisks',
+            'acl': ['foo.*.*'],
+            'tests': [
+                ('foo.bar.toto', True),
+                ('foo.bar.toto.tata', False),
+                ('other.bar.toto', False),
+                ('foo.*.*', True),
+                ('foo.*', False),
+                ('foo.bar.#', False),
+                ('*.bar.toto', False),
+                ('#.bar.toto', False),
+            ],
+        },
+        {
+            'scenario': 'with_multiple_accesses',
+            'acl': ['foo', 'foo.bar.toto', 'other.#'],
+            'tests': [
+                ('foo', True),
+                ('foo.bar', False),
+                ('foo.bar.toto', True),
+                ('foo.bar.toto.tata', False),
+                ('other.bar.toto', True),
+                ('*', False),
+                ('*.*.toto', False),
+                ('#', False),
+            ],
+        },
+        {
+            'scenario': 'user_access_has_hashtag_in_middle',
+            'acl': ['foo.bar.#.titi'],
+            'tests': [
+                ('foo.bar', False),
+                ('foo.bar.toto', False),
+                ('foo.bar.toto.tata', False),
+                ('foo.bar.toto.tata.titi', True),
+                ('foo.bar.#.titi', True),
+                ('foo.bar.*.*', False),
+                ('foo.bar.*.titi', True),
+                ('foo.bar.*.*.titi', True),
+                ('foo.bar.#', False),
+            ],
+        },
+        {
+            'scenario': 'user_access_ends_with_me',
+            'acl': ['foo.#.me'],
+            'tests': [
+                ('foo.bar', False),
+                ('foo.bar.me', True),
+                ('foo.bar.123', True),
+                ('foo.bar.toto.me', True),
+                ('foo.bar.toto.123', True),
+                ('foo.bar.toto.me.titi', False),
+                ('foo.bar.toto.123.titi', False),
+                ('foo.*.123', True),
+                ('foo.*.456', False),
+                ('foo.#.me', True),
+                ('foo.#.notme', False),
+                ('foo.*.*.123', True),
+                ('foo.*', False),
+                ('foo.#', False),
+            ],
+        },
+        {
+            'scenario': 'user_access_has_me_in_middle',
+            'acl': ['foo.#.me.bar'],
+            'tests': [
+                ('foo.bar.123', False),
+                ('foo.bar.me', False),
+                ('foo.bar.123.bar', True),
+                ('foo.bar.me.bar', True),
+                ('foo.bar.toto.123.bar', True),
+                ('foo.bar.toto.me.bar', True),
+                ('foo.*.123.bar', True),
+                ('foo.*.456.bar', False),
+                ('foo.#.me.bar', True),
+                ('foo.#.notme.bar', False),
+                ('foo.*.*.123.bar', True),
+                ('foo.*.bar', False),
+                ('foo.#.bar', False),
+            ],
+        },
+        {
+            'scenario': 'negating',
+            'acl': ['!foo.me.bar'],
+            'tests': [
+                ('foo.me.bar', False),
+            ],
+        },
+        {
+            'scenario': 'negating_multiple_identical_accesses',
+            'acl': ['foo.me.bar', '!foo.me.bar', 'foo.me.bar'],
+            'tests': [
+                ('foo.me.bar', False),
+            ],
+        },
+        {
+            'scenario': 'negating_ending_hashtag',
+            'acl': ['!foo.me.bar.#', 'foo.me.bar.123'],
+            'tests': [
+                ('foo.me.bar.123', False),
+            ],
+        },
+        {
+            'scenario': 'negating_hashtag_sublevel',
+            'acl': ['foo.#', '!foo.me.bar.#', 'foo.me.bar.123'],
+            'tests': [
+                ('foo.me.bar.123', False),
+            ],
+        },
+        {
+            'scenario': 'negating_specific',
+            'acl': ['foo.*.bar', '!foo.123.bar'],
+            'tests': [
+                ('foo.me.bar', True),
+                ('foo.123.bar', False),
+            ],
+        },
+        {
+            'scenario': 'negating_toplevel',
+            'acl': ['!*.bar', 'foo.bar'],
+            'tests': [
+                ('foo.bar', False),
+            ],
+        },
+    ]
+    parameters = [
+        (scenario['acl'], access, result)
+        for scenario in scenarios
+        for (access, result) in scenario['tests']
+    ]
 
-        assert_that(check.matches_required_access('foo.bar.*'))
-        assert_that(check.matches_required_access('foo.bar.*.*'))
-        assert_that(check.matches_required_access('foo.bar.#'))
-        assert_that(check.matches_required_access('*.bar.toto'), equal_to(False))
-        assert_that(check.matches_required_access('*.*.toto'), equal_to(False))
-        assert_that(check.matches_required_access('#.bar.toto'), equal_to(False))
-
-    def test_matches_required_access_when_user_access_has_not_special_character(self):
-        check = AccessCheck('123', 'session-uuid', ['foo.bar.toto'])
-
-        assert_that(check.matches_required_access('foo.bar.toto'))
-        assert_that(check.matches_required_access('foo.bar.toto.tata'), equal_to(False))
-        assert_that(check.matches_required_access('other.bar.toto'), equal_to(False))
-
-        assert_that(check.matches_required_access('foo.bar.*'), equal_to(False))
-        assert_that(check.matches_required_access('foo.bar.#'), equal_to(False))
-        assert_that(check.matches_required_access('*.bar.toto'), equal_to(False))
-        assert_that(check.matches_required_access('#.bar.toto'), equal_to(False))
-
-    def test_matches_required_access_when_user_access_has_asterisks(self):
-        check = AccessCheck('123', 'session-uuid', ['foo.*.*'])
-
-        assert_that(check.matches_required_access('foo.bar.toto'))
-        assert_that(check.matches_required_access('foo.bar.toto.tata'), equal_to(False))
-        assert_that(check.matches_required_access('other.bar.toto'), equal_to(False))
-
-        assert_that(check.matches_required_access('foo.*.*'))
-        assert_that(check.matches_required_access('foo.*'), equal_to(False))
-        assert_that(check.matches_required_access('foo.bar.#'), equal_to(False))
-        assert_that(check.matches_required_access('*.bar.toto'), equal_to(False))
-        assert_that(check.matches_required_access('#.bar.toto'), equal_to(False))
-
-    def test_matches_required_access_with_multiple_accesses(self):
-        check = AccessCheck('123', 'session-uuid', ['foo', 'foo.bar.toto', 'other.#'])
-
-        assert_that(check.matches_required_access('foo'))
-        assert_that(check.matches_required_access('foo.bar'), equal_to(False))
-        assert_that(check.matches_required_access('foo.bar.toto'))
-        assert_that(check.matches_required_access('foo.bar.toto.tata'), equal_to(False))
-        assert_that(check.matches_required_access('other.bar.toto'))
-
-        assert_that(check.matches_required_access('*'), equal_to(False))
-        assert_that(check.matches_required_access('*.*.toto'), equal_to(False))
-        assert_that(check.matches_required_access('#'), equal_to(False))
-
-    def test_matches_required_access_when_user_access_has_hashtag_in_middle(self):
-        check = AccessCheck('123', 'session-uuid', ['foo.bar.#.titi'])
-
-        assert_that(check.matches_required_access('foo.bar'), equal_to(False))
-        assert_that(check.matches_required_access('foo.bar.toto'), equal_to(False))
-        assert_that(check.matches_required_access('foo.bar.toto.tata'), equal_to(False))
-        assert_that(check.matches_required_access('foo.bar.toto.tata.titi'))
-
-        assert_that(check.matches_required_access('foo.bar.#.titi'))
-        assert_that(check.matches_required_access('foo.bar.*.*'), equal_to(False))
-        assert_that(check.matches_required_access('foo.bar.*.titi'))
-        assert_that(check.matches_required_access('foo.bar.*.*.titi'))
-        assert_that(check.matches_required_access('foo.bar.#'), equal_to(False))
-
-    def test_matches_required_access_when_user_access_ends_with_me(self):
-        check = AccessCheck('123', 'session-uuid', ['foo.#.me'])
-
-        assert_that(check.matches_required_access('foo.bar'), equal_to(False))
-        assert_that(check.matches_required_access('foo.bar.me'), equal_to(True))
-        assert_that(check.matches_required_access('foo.bar.123'))
-        assert_that(check.matches_required_access('foo.bar.toto.me'))
-        assert_that(check.matches_required_access('foo.bar.toto.123'))
-        assert_that(
-            check.matches_required_access('foo.bar.toto.me.titi'),
-            equal_to(False),
-        )
-        assert_that(
-            check.matches_required_access('foo.bar.toto.123.titi'),
-            equal_to(False),
-        )
-
-        assert_that(check.matches_required_access('foo.*.123'))
-        assert_that(check.matches_required_access('foo.*.456'), equal_to(False))
-        assert_that(check.matches_required_access('foo.#.me'))
-        assert_that(check.matches_required_access('foo.#.notme'), equal_to(False))
-        assert_that(check.matches_required_access('foo.*.*.123'))
-        assert_that(check.matches_required_access('foo.*'), equal_to(False))
-        assert_that(check.matches_required_access('foo.#'), equal_to(False))
-
-    def test_matches_required_access_when_user_access_has_me_in_middle(self):
-        check = AccessCheck('123', 'session-uuid', ['foo.#.me.bar'])
-
-        assert_that(check.matches_required_access('foo.bar.123'), equal_to(False))
-        assert_that(check.matches_required_access('foo.bar.me'), equal_to(False))
-        assert_that(check.matches_required_access('foo.bar.123.bar'))
-        assert_that(check.matches_required_access('foo.bar.me.bar'), equal_to(True))
-        assert_that(check.matches_required_access('foo.bar.toto.123.bar'))
-        assert_that(check.matches_required_access('foo.bar.toto.me.bar'))
-
-        assert_that(check.matches_required_access('foo.*.123.bar'))
-        assert_that(check.matches_required_access('foo.*.456.bar'), equal_to(False))
-        assert_that(check.matches_required_access('foo.#.me.bar'))
-        assert_that(check.matches_required_access('foo.#.notme.bar'), equal_to(False))
-        assert_that(check.matches_required_access('foo.*.*.123.bar'))
-        assert_that(check.matches_required_access('foo.*.bar'), equal_to(False))
-        assert_that(check.matches_required_access('foo.#.bar'), equal_to(False))
-
-    def test_does_not_match_required_access_when_negating(self):
-        check = AccessCheck('123', 'session-uuid', ['!foo.me.bar'])
-
-        assert_that(check.matches_required_access('foo.me.bar'), equal_to(False))
-
-    def test_does_not_match_required_access_when_negating_multiple_identical_accesses(
-        self,
-    ):
-        acl = ['foo.me.bar', '!foo.me.bar', 'foo.me.bar']
+    @pytest.mark.parametrize(['acl', 'access', 'expected_result'], parameters)
+    def test_matches_required_access(self, acl, access, expected_result):
         check = AccessCheck('123', 'session-uuid', acl)
-
-        assert_that(check.matches_required_access('foo.me.bar'), equal_to(False))
-
-    def test_does_not_match_required_access_when_negating_ending_hashtag(self):
-        check = AccessCheck('123', 'session-uuid', ['!foo.me.bar.#', 'foo.me.bar.123'])
-
-        assert_that(check.matches_required_access('foo.me.bar.123'), equal_to(False))
-
-    def test_does_not_match_required_access_when_negating_hashtag_sublevel(self):
-        acl = ['foo.#', '!foo.me.bar.#', 'foo.me.bar.123']
-        check = AccessCheck('123', 'session-uuid', acl)
-
-        assert_that(check.matches_required_access('foo.me.bar.123'), equal_to(False))
-
-    def test_matches_required_access_when_negating_specific(self):
-        check = AccessCheck('123', 'session-uuid', ['foo.*.bar', '!foo.123.bar'])
-
-        assert_that(check.matches_required_access('foo.me.bar'))
-        assert_that(check.matches_required_access('foo.123.bar'), equal_to(False))
-
-    def test_does_not_match_required_access_when_negating_toplevel(self):
-        check = AccessCheck('123', 'session-uuid', ['!*.bar', 'foo.bar'])
-
-        assert_that(check.matches_required_access('foo.bar'), equal_to(False))
+        assert_that(check.matches_required_access(access), is_(expected_result))
 
     @unittest.skipIf(six.PY2, "not compatible with Python <3.3 (_ is re.escaped)")
     def test_matches_my_session(self):
