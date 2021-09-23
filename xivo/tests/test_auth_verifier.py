@@ -42,6 +42,7 @@ class TestAuthVerifier(unittest.TestCase):
         self.request_mock = self.patcher.start()
         del self.request_mock.token_id
         del self.request_mock._token_content
+        del self.request_mock.user_uuid
 
     def tearDown(self):
         self.patcher.stop()
@@ -315,6 +316,22 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(token_content, equal_to(mock_client.token.get.return_value))
         mock_client.token.get.assert_not_called()
+
+    def test_user_uuid_to_the_request(self):
+        self.request_mock._token_content = {'metadata': {'pbx_user_uuid': s.uuid}}
+        mock_client = Mock()
+        mock_client.token.is_valid.return_value = True
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+
+        @auth_verifier.verify_token
+        @required_acl('foo')
+        def decorated():
+            return self.request_mock.user_uuid
+
+        user_uuid = decorated()
+
+        assert_that(user_uuid, equal_to(s.uuid))
 
 
 class TestAccessCheck(object):

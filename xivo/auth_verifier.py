@@ -129,12 +129,17 @@ class AuthVerifier(object):
     def _add_request_callbacks(self, token_id):
         request.token_id = token_id
         request._get_token_content = self._get_token_content
+        request._get_user_uuid = self._get_user_uuid
         request.__class__.token_content = property(lambda _: request._get_token_content())
+        request.__class__.user_uuid = property(lambda _: request._get_user_uuid())
 
     def _get_token_content(self):
         if not hasattr(request, '_token_content'):
             request._token_content = self.client().token.get(request.token_id)
         return request._token_content
+
+    def _get_user_uuid(self):
+        return request.token_content.get('metadata').get('pbx_user_uuid')
 
     def verify_tenant(self, func):
         @wraps(func)
