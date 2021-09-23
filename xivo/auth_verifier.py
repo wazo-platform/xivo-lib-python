@@ -115,14 +115,18 @@ class AuthVerifier(object):
             self._add_request_properties((acl_check.extract_token_id or self.token)())
             required_acl = self._required_acl(acl_check, args, kwargs)
             try:
-                token_is_valid = self.client().token.is_valid(request.token_id, required_acl)
+                token_is_valid = self.client().token.is_valid(
+                    request.token_id, required_acl
+                )
             except requests.RequestException as e:
                 return self.handle_unreachable(e)
 
             if token_is_valid:
                 return func(*args, **kwargs)
 
-            return self.handle_unauthorized(request.token_id, required_access=required_acl)
+            return self.handle_unauthorized(
+                request.token_id, required_access=required_acl
+            )
 
         return wrapper
 
@@ -130,7 +134,9 @@ class AuthVerifier(object):
         request.token_id = token_id
         request._get_token_content = self._get_token_content
         request._get_user_uuid = self._get_user_uuid
-        request.__class__.token_content = property(lambda this: this._get_token_content())
+        request.__class__.token_content = property(
+            lambda this: this._get_token_content()
+        )
         request.__class__.user_uuid = property(lambda this: this._get_user_uuid())
 
     def _get_token_content(self):
