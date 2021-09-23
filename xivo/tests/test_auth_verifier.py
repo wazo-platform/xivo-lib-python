@@ -288,6 +288,32 @@ class TestAuthVerifier(unittest.TestCase):
             raises(Unauthorized),
         )
 
+    @patch('xivo.auth_verifier.request')
+    def test_token_content_from_the_request(self, request):
+        mock_client = Mock()
+        mock_client.token.is_valid.return_value = True
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+        del request._token_content
+
+        @auth_verifier.verify_token
+        @required_acl('foo')
+        def decorated():
+            return request.token_content()
+
+        token_content = decorated()
+
+        assert_that(token_content, equal_to(mock_client.token.get.return_value))
+        mock_client.token.get.assert_called_once_with(s.token)
+
+        mock_client.reset_mock()
+
+        # Second call should hit the cache
+        token_content = decorated()
+
+        assert_that(token_content, equal_to(mock_client.token.get.return_value))
+        mock_client.token.get.assert_not_called()
+
 
 class TestAccessCheck(object):
 

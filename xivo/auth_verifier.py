@@ -113,6 +113,7 @@ class AuthVerifier(object):
             # probably just raise an AttributeError
             acl_check = getattr(func, 'acl', self._fallback_acl_check)
             request.token_id = (acl_check.extract_token_id or self.token)()
+            request.token_content = self._get_token_content
             required_acl = self._required_acl(acl_check, args, kwargs)
             try:
                 token_is_valid = self.client().token.is_valid(request.token_id, required_acl)
@@ -125,6 +126,11 @@ class AuthVerifier(object):
             return self.handle_unauthorized(request.token_id, required_access=required_acl)
 
         return wrapper
+
+    def _get_token_content(self):
+        if not hasattr(request, '_token_content'):
+            request._token_content = self.client().token.get(request.token_id)
+        return request._token_content
 
     def verify_tenant(self, func):
         @wraps(func)
