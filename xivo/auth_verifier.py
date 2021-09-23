@@ -112,17 +112,17 @@ class AuthVerifier(object):
             # backward compatibility: when func.acl is not defined, it should
             # probably just raise an AttributeError
             acl_check = getattr(func, 'acl', self._fallback_acl_check)
-            token_id = (acl_check.extract_token_id or self.token)()
+            request.token_id = (acl_check.extract_token_id or self.token)()
             required_acl = self._required_acl(acl_check, args, kwargs)
             try:
-                token_is_valid = self.client().token.is_valid(token_id, required_acl)
+                token_is_valid = self.client().token.is_valid(request.token_id, required_acl)
             except requests.RequestException as e:
                 return self.handle_unreachable(e)
 
             if token_is_valid:
                 return func(*args, **kwargs)
 
-            return self.handle_unauthorized(token_id, required_access=required_acl)
+            return self.handle_unauthorized(request.token_id, required_access=required_acl)
 
         return wrapper
 

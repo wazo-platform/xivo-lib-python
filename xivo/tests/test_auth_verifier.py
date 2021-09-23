@@ -80,7 +80,8 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(decorated, raises(RuntimeError))
 
-    def test_verify_token_calls_auth_client(self):
+    @patch('xivo.auth_verifier.request')
+    def test_verify_token_calls_auth_client(self, _):
         mock_client = Mock()
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
@@ -125,7 +126,8 @@ class TestAuthVerifier(unittest.TestCase):
         assert_that(result, equal_to(s.result))
         assert_that(mock_client.token.is_valid.called, equal_to(False))
 
-    def test_verify_token_calls_function_when_valid(self):
+    @patch('xivo.auth_verifier.request')
+    def test_verify_token_calls_function_when_valid(self, _):
         mock_client = Mock()
         mock_client.token.is_valid.return_value = True
         auth_verifier = StubVerifier()
@@ -155,7 +157,8 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(result, equal_to(s.result))
 
-    def test_verify_token_calls_handle_unreachable(self):
+    @patch('xivo.auth_verifier.request')
+    def test_verify_token_calls_handle_unreachable(self, _):
         mock_client = Mock()
         mock_client.token.is_valid.side_effect = requests.RequestException
         auth_verifier = StubVerifier()
@@ -169,6 +172,22 @@ class TestAuthVerifier(unittest.TestCase):
         result = decorated()
 
         assert_that(result, equal_to(s.unreachable))
+
+    @patch('xivo.auth_verifier.request')
+    def test_verify_token_sets_the_token_id_on_the_request(self, request):
+        mock_client = Mock()
+        mock_client.token.is_valid.side_effect = requests.RequestException
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+
+        @auth_verifier.verify_token
+        @required_acl('foo')
+        def decorated():
+            return s.result
+
+        decorated()
+
+        assert_that(request.token_id, equal_to(s.token))
 
     def test_verify_tenant_calls_handle_unreachable(self):
         mock_client = Mock()
@@ -185,7 +204,8 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(result, equal_to(s.unreachable))
 
-    def test_verify_token_calls_handle_unauthorized(self):
+    @patch('xivo.auth_verifier.request')
+    def test_verify_token_calls_handle_unauthorized(self, _):
         mock_client = Mock()
         mock_client.token.is_valid.return_value = False
         auth_verifier = StubVerifier()
