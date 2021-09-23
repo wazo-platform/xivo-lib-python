@@ -139,7 +139,7 @@ class AuthVerifier(object):
         return request._token_content
 
     def _get_user_uuid(self):
-        return request.token_content.get('metadata').get('pbx_user_uuid')
+        return request.token_content.get('metadata', {}).get('pbx_user_uuid')
 
     def verify_tenant(self, func):
         @wraps(func)
