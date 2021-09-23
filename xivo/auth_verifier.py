@@ -128,7 +128,8 @@ class AuthVerifier(object):
 
     def _add_request_callbacks(self, token_id):
         request.token_id = token_id
-        request.token_content = self._get_token_content
+        request._get_token_content = self._get_token_content
+        request.__class__.token_content = property(lambda _: request._get_token_content())
 
     def _get_token_content(self):
         if not hasattr(request, '_token_content'):
@@ -144,7 +145,7 @@ class AuthVerifier(object):
             self._add_request_callbacks(self.token())
 
             try:
-                token = self._get_token_content()
+                token = request.token_content
             except requests.RequestException as e:
                 if e.response is not None and e.response.status_code == 404:
                     return self.handle_unauthorized(request.token_id)

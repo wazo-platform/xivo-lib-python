@@ -291,19 +291,21 @@ class TestAuthVerifier(unittest.TestCase):
         )
 
     def test_token_content_from_the_request(self):
+        original_content = {'metadata': {'foo': 'bar'}}
         mock_client = Mock()
         mock_client.token.is_valid.return_value = True
+        mock_client.token.get.return_value = original_content
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 
         @auth_verifier.verify_token
         @required_acl('foo')
         def decorated():
-            return self.request_mock.token_content()
+            return self.request_mock.token_content
 
         token_content = decorated()
 
-        assert_that(token_content, equal_to(mock_client.token.get.return_value))
+        assert_that(token_content, equal_to(original_content))
         mock_client.token.get.assert_called_once_with(s.token)
 
         mock_client.reset_mock()
