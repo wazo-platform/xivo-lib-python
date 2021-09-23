@@ -112,7 +112,7 @@ class AuthVerifier(object):
             # backward compatibility: when func.acl is not defined, it should
             # probably just raise an AttributeError
             acl_check = getattr(func, 'acl', self._fallback_acl_check)
-            self._add_request_callbacks((acl_check.extract_token_id or self.token)())
+            self._add_request_properties((acl_check.extract_token_id or self.token)())
             required_acl = self._required_acl(acl_check, args, kwargs)
             try:
                 token_is_valid = self.client().token.is_valid(request.token_id, required_acl)
@@ -126,7 +126,7 @@ class AuthVerifier(object):
 
         return wrapper
 
-    def _add_request_callbacks(self, token_id):
+    def _add_request_properties(self, token_id):
         request.token_id = token_id
         request._get_token_content = self._get_token_content
         request._get_user_uuid = self._get_user_uuid
@@ -147,7 +147,7 @@ class AuthVerifier(object):
             required_tenant = getattr(func, 'tenant_uuid', None)
             if not required_tenant:
                 return func(*args, **kwargs)
-            self._add_request_callbacks(self.token())
+            self._add_request_properties(self.token())
 
             try:
                 token = request.token_content
