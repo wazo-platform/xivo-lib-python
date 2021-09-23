@@ -144,7 +144,7 @@ class AuthVerifier(object):
             self._add_request_callbacks(self.token())
 
             try:
-                token = self.client().token.get(request.token_id)
+                token = self._get_token_content()
             except requests.RequestException as e:
                 if e.response is not None and e.response.status_code == 404:
                     return self.handle_unauthorized(request.token_id)
