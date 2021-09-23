@@ -130,8 +130,8 @@ class AuthVerifier(object):
         request.token_id = token_id
         request._get_token_content = self._get_token_content
         request._get_user_uuid = self._get_user_uuid
-        request.__class__.token_content = property(lambda _: request._get_token_content())
-        request.__class__.user_uuid = property(lambda _: request._get_user_uuid())
+        request.__class__.token_content = property(lambda this: this._get_token_content())
+        request.__class__.user_uuid = property(lambda this: this._get_user_uuid())
 
     def _get_token_content(self):
         if not hasattr(request, '_token_content'):
