@@ -37,6 +37,16 @@ class StubVerifier(AuthVerifier):
 
 
 class TestAuthVerifier(unittest.TestCase):
+    def setUp(self):
+        self.patcher = patch('xivo.auth_verifier.request')
+        self.request_mock = self.patcher.start()
+        del self.request_mock.token_id
+        del self.request_mock._token_content
+        del self.request_mock.user_uuid
+
+    def tearDown(self):
+        self.patcher.stop()
+
     def test_set_client(self):
         auth_verifier = AuthVerifier()
 
@@ -170,6 +180,21 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(result, equal_to(s.unreachable))
 
+    def test_verify_token_sets_the_token_id_on_the_request(self):
+        mock_client = Mock()
+        mock_client.token.is_valid.side_effect = requests.RequestException
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+
+        @auth_verifier.verify_token
+        @required_acl('foo')
+        def decorated():
+            return s.result
+
+        decorated()
+
+        assert_that(self.request_mock.token_id, equal_to(s.token))
+
     def test_verify_tenant_calls_handle_unreachable(self):
         mock_client = Mock()
         mock_client.token.get.side_effect = requests.RequestException
@@ -233,18 +258,16 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(result, equal_to(s.unauthorized))
 
-    @patch('xivo.auth_verifier.request')
-    def test_token_empty(self, request):
-        request.headers = {}
+    def test_token_empty(self):
+        self.request_mock.headers = {}
         auth_verifier = AuthVerifier()
 
         token = auth_verifier.token()
 
         assert_that(token, equal_to(''))
 
-    @patch('xivo.auth_verifier.request')
-    def test_token_not_empty(self, request):
-        request.headers = {'X-Auth-Token': s.token}
+    def test_token_not_empty(self):
+        self.request_mock.headers = {'X-Auth-Token': s.token}
         auth_verifier = AuthVerifier()
 
         token = auth_verifier.token()
@@ -267,6 +290,48 @@ class TestAuthVerifier(unittest.TestCase):
             calling(auth_verifier.handle_unauthorized).with_args(None),
             raises(Unauthorized),
         )
+
+    def test_token_content_from_the_request(self):
+        original_content = {'metadata': {'foo': 'bar'}}
+        mock_client = Mock()
+        mock_client.token.is_valid.return_value = True
+        mock_client.token.get.return_value = original_content
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+
+        @auth_verifier.verify_token
+        @required_acl('foo')
+        def decorated():
+            return self.request_mock.token_content
+
+        token_content = decorated()
+
+        assert_that(token_content, equal_to(original_content))
+        mock_client.token.get.assert_called_once_with(s.token)
+
+        mock_client.reset_mock()
+
+        # Second call should hit the cache
+        token_content = decorated()
+
+        assert_that(token_content, equal_to(mock_client.token.get.return_value))
+        mock_client.token.get.assert_not_called()
+
+    def test_user_uuid_to_the_request(self):
+        self.request_mock._token_content = {'metadata': {'pbx_user_uuid': s.uuid}}
+        mock_client = Mock()
+        mock_client.token.is_valid.return_value = True
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+
+        @auth_verifier.verify_token
+        @required_acl('foo')
+        def decorated():
+            return self.request_mock.user_uuid
+
+        user_uuid = decorated()
+
+        assert_that(user_uuid, equal_to(s.uuid))
 
 
 class TestAccessCheck(object):

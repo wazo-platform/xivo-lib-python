@@ -112,19 +112,40 @@ class AuthVerifier(object):
             # backward compatibility: when func.acl is not defined, it should
             # probably just raise an AttributeError
             acl_check = getattr(func, 'acl', self._fallback_acl_check)
-            token_id = (acl_check.extract_token_id or self.token)()
+            self._add_request_properties((acl_check.extract_token_id or self.token)())
             required_acl = self._required_acl(acl_check, args, kwargs)
             try:
-                token_is_valid = self.client().token.is_valid(token_id, required_acl)
+                token_is_valid = self.client().token.is_valid(
+                    request.token_id, required_acl
+                )
             except requests.RequestException as e:
                 return self.handle_unreachable(e)
 
             if token_is_valid:
                 return func(*args, **kwargs)
 
-            return self.handle_unauthorized(token_id, required_access=required_acl)
+            return self.handle_unauthorized(
+                request.token_id, required_access=required_acl
+            )
 
         return wrapper
+
+    def _add_request_properties(self, token_id):
+        request.token_id = token_id
+        request._get_token_content = self._get_token_content
+        request._get_user_uuid = self._get_user_uuid
+        request.__class__.token_content = property(
+            lambda this: this._get_token_content()
+        )
+        request.__class__.user_uuid = property(lambda this: this._get_user_uuid())
+
+    def _get_token_content(self):
+        if not hasattr(request, '_token_content'):
+            request._token_content = self.client().token.get(request.token_id)
+        return request._token_content
+
+    def _get_user_uuid(self):
+        return request.token_content.get('metadata', {}).get('pbx_user_uuid')
 
     def verify_tenant(self, func):
         @wraps(func)
@@ -132,20 +153,20 @@ class AuthVerifier(object):
             required_tenant = getattr(func, 'tenant_uuid', None)
             if not required_tenant:
                 return func(*args, **kwargs)
-            token_id = self.token()
+            self._add_request_properties(self.token())
 
             try:
-                token = self.client().token.get(token_id)
+                token = request.token_content
             except requests.RequestException as e:
                 if e.response is not None and e.response.status_code == 404:
-                    return self.handle_unauthorized(token_id)
+                    return self.handle_unauthorized(request.token_id)
                 return self.handle_unreachable(e)
 
             tenant_uuid = token.get('metadata', {}).get('tenant_uuid')
             if required_tenant == tenant_uuid:
                 return func(*args, **kwargs)
 
-            return self.handle_unauthorized(token_id)
+            return self.handle_unauthorized(request.token_id)
 
         return wrapper
 
