@@ -318,7 +318,7 @@ class TestAuthVerifier(unittest.TestCase):
         mock_client.token.get.assert_not_called()
 
     def test_user_uuid_to_the_request(self):
-        self.request_mock._token_content = {'metadata': {'pbx_user_uuid': s.uuid}}
+        self.request_mock._token_content = {'metadata': {'uuid': s.uuid}}
         mock_client = Mock()
         mock_client.token.is_valid.return_value = True
         auth_verifier = StubVerifier()
