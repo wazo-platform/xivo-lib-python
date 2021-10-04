@@ -14,10 +14,10 @@ services:
       - "5672"
 
   consul:
-    image: progrium/consul
+    image: consul:1.0.7
     ports:
       - "8500"
-    command: "-client 0.0.0.0 -config-dir /tmp"
+    command: "agent -server -client 0.0.0.0 -bootstrap-expect=1"
 
   thread-exception:
     image: thread-exception
