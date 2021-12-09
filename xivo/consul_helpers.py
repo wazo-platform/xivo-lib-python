@@ -4,7 +4,6 @@
 
 import logging
 import threading
-import socket
 
 from uuid import uuid4
 import requests
@@ -13,18 +12,13 @@ from consul import Check, Consul, ConsulException
 from requests.exceptions import ConnectionError
 
 try:
-    from kombu import Connection, Exchange, Producer
-except ImportError:
-    pass
-
-try:
     import netifaces
 except ImportError:
     pass
 
 try:
+    from xivo_bus import BusPublisherFailFast, EventPublisherMiddleware
     from xivo_bus.resources.services import event
-    from xivo_bus import FailFastPublisher, Marshaler
 except ImportError:
     pass
 
@@ -244,20 +238,15 @@ def _find_address(main_iface):
 
 
 class NotifyingRegisterer(Registerer):
-
-    bus_uri_pattern = 'amqp://{username}:{password}@{host}:{port}//'
-
     def __init__(self, name, uuid, consul_config, service_discovery_config, bus_config):
         super(NotifyingRegisterer, self).__init__(
             name, uuid, consul_config, service_discovery_config
         )
-        self._bus_config = bus_config
-        self._marshaler = Marshaler(uuid)
         try:
-            self._bus_url = bus_config.get('uri') or self.bus_uri_pattern.format(
-                **bus_config
+            self._buspub = BusPublisherFailFast.from_config(
+                bus_config, middlewares=[EventPublisherMiddleware(uuid)]
             )
-        except KeyError as e:
+        except ValueError as e:
             raise MissingConfigurationError(str(e))
 
     def register(self):
@@ -283,16 +272,7 @@ class NotifyingRegisterer(Registerer):
         return should_send_msg
 
     def _send_msg(self, msg):
-        try:
-            with Connection(self._bus_url) as conn:
-                exchange = Exchange(
-                    self._bus_config['exchange_name'], self._bus_config['exchange_type']
-                )
-                producer = Producer(conn, exchange=exchange, auto_declare=True)
-                publisher = FailFastPublisher(producer, self._marshaler)
-                publisher.publish(msg)
-        except socket.error:
-            raise RegistererError('failed to publish on rabbitmq')
+        self._buspub.publish(msg)
 
     def _new_deregistered_event(self):
         return event.ServiceDeregisteredEvent(
