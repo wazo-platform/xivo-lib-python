@@ -2,4 +2,4 @@ kombu
 mock~=3.0
 pyhamcrest
 pytest
-https://github.com/wazo-platform/xivo-test-helpers/archive/master.zip
+https://github.com/wazo-platform/wazo-test-helpers/archive/master.zip

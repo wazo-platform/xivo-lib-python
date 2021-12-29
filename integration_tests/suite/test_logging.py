@@ -1,10 +1,10 @@
-# Copyright 2018-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 
 from hamcrest import assert_that, contains_string
-from xivo_test_helpers.asset_launching_test_case import AssetLaunchingTestCase
+from wazo_test_helpers.asset_launching_test_case import AssetLaunchingTestCase
 
 ASSET_ROOT = os.path.join(os.path.dirname(__file__), '..', 'assets')
 
