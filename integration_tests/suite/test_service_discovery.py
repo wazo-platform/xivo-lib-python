@@ -11,8 +11,8 @@ from contextlib import contextmanager
 from hamcrest import assert_that, contains_inanyorder, contains_string, equal_to
 from six.moves import queue
 from kombu.mixins import ConsumerMixin
-from xivo_test_helpers import until
-from xivo_test_helpers.asset_launching_test_case import AssetLaunchingTestCase
+from wazo_test_helpers import until
+from wazo_test_helpers.asset_launching_test_case import AssetLaunchingTestCase
 
 ASSET_ROOT = os.path.join(os.path.dirname(__file__), '..', 'assets')
 BUS_URL = 'amqp://{username}:{password}@{host}:{port}//'

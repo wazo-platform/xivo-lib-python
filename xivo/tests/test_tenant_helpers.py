@@ -17,7 +17,7 @@ from mock import Mock, patch
 from requests import HTTPError, RequestException
 from unittest import TestCase
 from xivo.auth_verifier import AuthServerUnreachable
-from xivo_test_helpers.hamcrest.raises import raises
+from wazo_test_helpers.hamcrest.raises import raises
 
 from ..tenant_helpers import (
     InvalidTenant,

@@ -6,7 +6,7 @@ import unittest
 from hamcrest import assert_that, calling, empty, has_entry, has_property, is_not
 from marshmallow import Schema, ValidationError
 
-from xivo_test_helpers.hamcrest.raises import raises
+from wazo_test_helpers.hamcrest.raises import raises
 
 from .. import fields
 
