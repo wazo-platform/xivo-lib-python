@@ -243,8 +243,8 @@ class IP(_String):
             raise RuntimeError('IP field requires the python ipaddress library')
         super(IP, self).__init__(*args, **kwargs)
 
-    def _deserialize(self, value, attr, data):
-        deserialized = super(IP, self)._deserialize(value, attr, data)
+    def _deserialize(self, value, attr, data, **kwargs):
+        deserialized = super(IP, self)._deserialize(value, attr, data, **kwargs)
         return self._validated(deserialized)
 
     def _validated(self, value):
