@@ -1,0 +1,179 @@
+GLOB sdist-make: /root/xivo-lib-python/setup.py
+py37 recreate: /root/xivo-lib-python/.tox/py37
+py37 installdeps: -rrequirements.txt, -rtest-requirements.txt, pytest-cov
+py37 inst: /root/xivo-lib-python/.tox/.tmp/package/1/xivo-1.0.zip
+py37 installed: amqp==5.0.9,attrs==21.4.0,backports.functools-lru-cache==1.6.4,cached-property==1.5.2,certifi==2021.10.8,chardet==3.0.4,cheroot==6.5.4,click==8.0.3,coverage==6.2,docker==5.0.3,Flask==1.0.2,idna==2.8,importlib-metadata==4.10.0,iniconfig==1.1.1,itsdangerous==2.0.1,Jinja2==3.0.3,kombu==5.2.3,MarkupSafe==2.0.1,marshmallow==3.10.0,mock==3.0.5,more-itertools==8.12.0,netifaces==0.10.4,packaging==21.3,pbr==5.8.0,pluggy==1.0.0,psycopg2==2.7.7,py==1.11.0,PyHamcrest==2.0.3,pyparsing==3.0.6,pytest==6.2.5,pytest-cov==3.0.0,python-consul==1.1.0,PyYAML==3.13,requests==2.21.0,six==1.12.0,stevedore==1.29.0,toml==0.10.2,tomli==2.0.0,typing_extensions==4.0.1,urllib3==1.24.3,vine==5.0.0,wazo-auth-client @ https://github.com/wazo-platform/wazo-auth-client/archive/master.zip,wazo-lib-rest-client @ https://github.com/wazo-platform/wazo-lib-rest-client/archive/master.zip,wazo-test-helpers @ https://github.com/wazo-platform/wazo-test-helpers/archive/master.zip,websocket-client==1.2.3,Werkzeug==2.0.2,xivo @ file:///root/xivo-lib-python/.tox/.tmp/package/1/xivo-1.0.zip,xivo-bus @ https://github.com/wazo-platform/xivo-bus/archive/master.zip,zipp==3.6.0
+py37 run-test-pre: PYTHONHASHSEED='3596362341'
+py37 run-test: commands[0] | pytest --junitxml=unit-tests.xml --cov=xivo --cov-report term --cov-report xml:coverage.xml xivo
+============================= test session starts ==============================
+platform linux -- Python 3.7.3, pytest-6.2.5, py-1.11.0, pluggy-1.0.0
+cachedir: .tox/py37/.pytest_cache
+rootdir: /root/xivo-lib-python, configfile: setup.cfg, testpaths: xivo
+plugins: cov-3.0.0
+collected 385 items
+
+xivo/asterisk/tests/test_line_identity.py ..                             [  0%]
+xivo/asterisk/tests/test_protocol_interface.py ................          [  4%]
+xivo/cli/completion/tests/test_completer.py ......                       [  6%]
+xivo/cli/tests/test_parser.py ......                                     [  7%]
+xivo/cli/tests/test_registry.py ........                                 [  9%]
+xivo/cli/tests/test_utils.py .....                                       [ 11%]
+xivo/mallow/tests/test_fields.py ......                                  [ 12%]
+xivo/mallow/tests/test_validate.py .....                                 [ 14%]
+xivo/tests/test_auth_verifier.py ....................................... [ 24%]
+........................................................................ [ 42%]
+.................................................................        [ 59%]
+xivo/tests/test_caller_id.py .........                                   [ 62%]
+xivo/tests/test_chain_map.py .....                                       [ 63%]
+xivo/tests/test_config_helper.py ...................                     [ 68%]
+xivo/tests/test_consul_helpers.py .....................                  [ 73%]
+xivo/tests/test_daemonize.py ...                                         [ 74%]
+xivo/tests/test_dialaction.py ...                                        [ 75%]
+xivo/tests/test_http_helpers.py .........                                [ 77%]
+xivo/tests/test_http_json_server.py .                                    [ 77%]
+xivo/tests/test_mallow_helpers.py .........                              [ 80%]
+xivo/tests/test_permission.py .                                          [ 80%]
+xivo/tests/test_pubsub.py ..............                                 [ 84%]
+xivo/tests/test_rest_api_helpers.py .....                                [ 85%]
+xivo/tests/test_tenant_helpers.py .............................          [ 92%]
+xivo/tests/test_token_renewer.py ....                                    [ 94%]
+xivo/tests/test_user_rights.py ...                                       [ 94%]
+xivo/tests/test_xivo_helpers.py ....                                     [ 95%]
+xivo/tests/test_xivo_logging.py ................                         [100%]
+
+=============================== warnings summary ===============================
+.tox/py37/lib/python3.7/site-packages/flask/json/__init__.py:26
+  /root/xivo-lib-python/.tox/py37/lib/python3.7/site-packages/flask/json/__init__.py:26: DeprecationWarning: Importing 'itsdangerous.json' is deprecated and will be removed in ItsDangerous 2.1. Use Python's 'json' module instead.
+    _slash_escape = '\\/' not in _json.dumps('/')
+
+.tox/py37/lib/python3.7/site-packages/flask/json/__init__.py:48
+  /root/xivo-lib-python/.tox/py37/lib/python3.7/site-packages/flask/json/__init__.py:48: DeprecationWarning: Importing 'itsdangerous.json' is deprecated and will be removed in ItsDangerous 2.1. Use Python's 'json' module instead.
+    class JSONEncoder(_json.JSONEncoder):
+
+.tox/py37/lib/python3.7/site-packages/flask/json/__init__.py:84
+  /root/xivo-lib-python/.tox/py37/lib/python3.7/site-packages/flask/json/__init__.py:84: DeprecationWarning: Importing 'itsdangerous.json' is deprecated and will be removed in ItsDangerous 2.1. Use Python's 'json' module instead.
+    class JSONDecoder(_json.JSONDecoder):
+
+.tox/py37/lib/python3.7/site-packages/flask/sessions.py:14
+  /root/xivo-lib-python/.tox/py37/lib/python3.7/site-packages/flask/sessions.py:14: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated, and in 3.8 it will stop working
+    from collections import MutableMapping
+
+.tox/py37/lib/python3.7/site-packages/kombu/utils/compat.py:82
+  /root/xivo-lib-python/.tox/py37/lib/python3.7/site-packages/kombu/utils/compat.py:82: DeprecationWarning: SelectableGroups dict interface is deprecated. Use select.
+    for ep in importlib_metadata.entry_points().get(namespace, [])
+
+xivo/mallow/tests/test_fields.py::TestFields::test_given_invalid_ipv4_then_return_errors
+xivo/mallow/tests/test_fields.py::TestFields::test_given_invalid_ipv6_then_return_errors
+  /root/xivo-lib-python/.tox/py37/lib/python3.7/site-packages/marshmallow/fields.py:289: RemovedInMarshmallow4Warning: `Field.fail` is deprecated. Use `raise self.make_error("invalid", ...)` instead.
+    RemovedInMarshmallow4Warning,
+
+xivo/tests/test_config_helper.py::TestParseConfigFile::test_exec_tag
+  /root/xivo-lib-python/.tox/py37/lib/python3.7/site-packages/yaml/constructor.py:126: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated, and in 3.8 it will stop working
+    if not isinstance(key, collections.Hashable):
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+----------- generated xml file: /root/xivo-lib-python/unit-tests.xml -----------
+
+----------- coverage: platform linux, python 3.7.3-final-0 -----------
+Name                                             Stmts   Miss  Cover
+--------------------------------------------------------------------
+xivo/BackSQL/__init__.py                            16     16     0%
+xivo/BackSQL/backpostgresql.py                      41     41     0%
+xivo/ThreadingHTTPServer.py                         12      4    67%
+xivo/__init__.py                                     1      0   100%
+xivo/agi.py                                        272    272     0%
+xivo/agitb.py                                      140    140     0%
+xivo/anysql.py                                     185    185     0%
+xivo/asterisk/__init__.py                            0      0   100%
+xivo/asterisk/line_identity.py                       6      0   100%
+xivo/asterisk/protocol_interface.py                 39      1    97%
+xivo/asterisk/tests/__init__.py                      0      0   100%
+xivo/asterisk/tests/test_line_identity.py           14      0   100%
+xivo/asterisk/tests/test_protocol_interface.py      84      0   100%
+xivo/auth_verifier.py                              155     12    92%
+xivo/caller_id.py                                   18      0   100%
+xivo/chain_map.py                                   16      0   100%
+xivo/cli/__init__.py                                 3      0   100%
+xivo/cli/command/__init__.py                         0      0   100%
+xivo/cli/command/base.py                             5      2    60%
+xivo/cli/command/exit.py                             7      1    86%
+xivo/cli/command/help.py                            32     19    41%
+xivo/cli/command/unknown.py                         15      3    80%
+xivo/cli/commandline.py                              7      1    86%
+xivo/cli/completion/__init__.py                      0      0   100%
+xivo/cli/completion/completer.py                    10      0   100%
+xivo/cli/completion/readline.py                     33     24    27%
+xivo/cli/completion/tests/__init__.py                0      0   100%
+xivo/cli/completion/tests/test_completer.py         41      0   100%
+xivo/cli/errorhandler.py                             7      2    71%
+xivo/cli/exception.py                                6      0   100%
+xivo/cli/executor.py                                26     19    27%
+xivo/cli/facade.py                                  57     33    42%
+xivo/cli/history.py                                 20     14    30%
+xivo/cli/parser.py                                  17      0   100%
+xivo/cli/registry.py                                51     10    80%
+xivo/cli/source/__init__.py                          0      0   100%
+xivo/cli/source/input.py                            19     11    42%
+xivo/cli/tests/__init__.py                           0      0   100%
+xivo/cli/tests/test_parser.py                       60      0   100%
+xivo/cli/tests/test_registry.py                     64      0   100%
+xivo/cli/tests/test_utils.py                        17      0   100%
+xivo/cli/utils.py                                   20      8    60%
+xivo/config_helper.py                               82      4    95%
+xivo/consul_helpers.py                             224     87    61%
+xivo/daemonize.py                                  103     78    24%
+xivo/db_helper.py                                   18     18     0%
+xivo/debug.py                                       28     28     0%
+xivo/dialaction.py                                   9      0   100%
+xivo/http_helpers.py                               116     37    68%
+xivo/http_json_server.py                           215    150    30%
+xivo/mallow/__init__.py                              0      0   100%
+xivo/mallow/fields.py                               70      4    94%
+xivo/mallow/tests/__init__.py                        0      0   100%
+xivo/mallow/tests/test_fields.py                    36      0   100%
+xivo/mallow/tests/test_validate.py                  23      0   100%
+xivo/mallow/validate.py                             66     21    68%
+xivo/mallow_helpers.py                              50      7    86%
+xivo/moresynchro.py                                 77     77     0%
+xivo/permission.py                                   2      0   100%
+xivo/plugin_helpers.py                              26     26     0%
+xivo/pubsub.py                                      61      2    97%
+xivo/rest_api_helpers.py                            33      8    76%
+xivo/shvar.py                                      246    246     0%
+xivo/status.py                                      23     23     0%
+xivo/system.py                                      31     31     0%
+xivo/tenant_flask_helpers.py                        52     52     0%
+xivo/tenant_helpers.py                             123     11    91%
+xivo/tests/__init__.py                               0      0   100%
+xivo/tests/shvar.py                                154    154     0%
+xivo/tests/test_auth_verifier.py                   227     10    96%
+xivo/tests/test_caller_id.py                        37      0   100%
+xivo/tests/test_chain_map.py                        38      0   100%
+xivo/tests/test_config_helper.py                   180      0   100%
+xivo/tests/test_consul_helpers.py                  187      0   100%
+xivo/tests/test_daemonize.py                        20      0   100%
+xivo/tests/test_dialaction.py                       17      0   100%
+xivo/tests/test_http_helpers.py                     59      0   100%
+xivo/tests/test_http_json_server.py                 15      0   100%
+xivo/tests/test_mallow_helpers.py                   53      0   100%
+xivo/tests/test_permission.py                       11      0   100%
+xivo/tests/test_pubsub.py                          141      6    96%
+xivo/tests/test_rest_api_helpers.py                 33      0   100%
+xivo/tests/test_tenant_helpers.py                  184      0   100%
+xivo/tests/test_token_renewer.py                    47      0   100%
+xivo/tests/test_user_rights.py                      26      0   100%
+xivo/tests/test_xivo_helpers.py                     22      0   100%
+xivo/tests/test_xivo_logging.py                    124      0   100%
+xivo/token_renewer.py                               78     22    72%
+xivo/user_rights.py                                 16      0   100%
+xivo/xivo_config.py                                 70     70     0%
+xivo/xivo_helpers.py                                74     31    58%
+xivo/xivo_logging.py                                55      7    87%
+--------------------------------------------------------------------
+TOTAL                                             5098   2028    60%
+Coverage XML written to file coverage.xml
+
+======================= 385 passed, 8 warnings in 57.97s =======================
+___________________________________ summary ____________________________________
+  py37: commands succeeded
+  congratulations :)
