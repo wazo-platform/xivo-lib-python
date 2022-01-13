@@ -1,4 +1,4 @@
-# Copyright 2016-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
@@ -12,7 +12,11 @@ from hamcrest import assert_that, contains_inanyorder, contains_string, equal_to
 from six.moves import queue
 from kombu.mixins import ConsumerMixin
 from wazo_test_helpers import until
-from wazo_test_helpers.asset_launching_test_case import AssetLaunchingTestCase
+from wazo_test_helpers.asset_launching_test_case import (
+    AssetLaunchingTestCase,
+    _run_cmd,
+    NoSuchService,
+)
 
 ASSET_ROOT = os.path.join(os.path.dirname(__file__), '..', 'assets')
 BUS_URL = 'amqp://{username}:{password}@{host}:{port}//'
@@ -89,6 +93,27 @@ class _BaseTest(AssetLaunchingTestCase):
                 ' '.join(self._docker_compose_options()), ' '.join(cmd)
             )
         )
+
+    # NOTE(fblackburn): override to include containers started with run command
+    @classmethod
+    def _container_id(cls, service_name):
+        specific_options = ['-a', '--status', 'running']
+        result = _run_cmd(
+            ['docker-compose']
+            + cls._docker_compose_options()
+            + ['ps', '-q']
+            + specific_options
+            + [service_name],
+            stderr=False,
+        ).stdout.strip()
+        result = result.decode('utf-8')
+        if '\n' in result:
+            raise AssertionError(
+                f'There is more than one container running with name {service_name}'
+            )
+        if not result:
+            raise NoSuchService(service_name)
+        return result
 
 
 class TestServiceDiscoveryDisabled(_BaseTest):
