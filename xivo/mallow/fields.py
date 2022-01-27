@@ -1,23 +1,35 @@
 # Copyright 2017-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from marshmallow.fields import (
-    Boolean as _Boolean,
-    Constant as _Constant,
-    Date as _Date,
-    DateTime as _DateTime,
-    Dict as _Dict,
-    Email as _Email,
-    Field as _Field,
-    Float as _Float,
-    Integer as _Integer,
-    List as _List,
-    Nested as _Nested,
-    String as _String,
-    TimeDelta as _TimeDelta,
-    URL as _URL,
-    UUID as _UUID,
-)
+try:
+
+    from marshmallow.fields import (
+        Boolean as _Boolean,
+        Constant as _Constant,
+        Date as _Date,
+        DateTime as _DateTime,
+        Dict as _Dict,
+        Email as _Email,
+        Field as _Field,
+        Float as _Float,
+        Integer as _Integer,
+        List as _List,
+        Nested as _Nested,
+        String as _String,
+        TimeDelta as _TimeDelta,
+        URL as _URL,
+        UUID as _UUID,
+    )
+
+except Exception:
+    import sys
+
+    python_major_version = sys.version_info.major
+    if python_major_version == 2:
+        raise ImportError(
+            "Marshamallow library is incompatible with Python version %s" % sys.version
+        )
+
 
 ipaddress_available = True
 try:
@@ -243,8 +255,8 @@ class IP(_String):
             raise RuntimeError('IP field requires the python ipaddress library')
         super(IP, self).__init__(*args, **kwargs)
 
-    def _deserialize(self, value, attr, data):
-        deserialized = super(IP, self)._deserialize(value, attr, data)
+    def _deserialize(self, value, attr, data, **kwargs):
+        deserialized = super(IP, self)._deserialize(value, attr, data, **kwargs)
         return self._validated(deserialized)
 
     def _validated(self, value):

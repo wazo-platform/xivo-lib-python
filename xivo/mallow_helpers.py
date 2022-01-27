@@ -4,7 +4,16 @@
 
 from functools import wraps
 
-import marshmallow
+try:
+    import marshmallow
+except Exception:
+    import sys
+
+    python_major_version = sys.version_info.major
+    if python_major_version == 2:
+        raise ImportError(
+            "Marshamallow library is incompatible with Python version %s" % sys.version
+        )
 
 from .mallow import fields, validate
 from .rest_api_helpers import APIException
@@ -64,7 +73,7 @@ class ListSchema(marshmallow.Schema):
             field_obj.allow_none = False
 
     @marshmallow.post_load(pass_original=True)
-    def add_searchable_fields(self, data, original_data):
+    def add_searchable_fields(self, data, original_data, **kwargs):
         for key, value in original_data.items():
             if key in self.searchable_columns:
                 data.setdefault(key, value)
@@ -74,9 +83,10 @@ class ListSchema(marshmallow.Schema):
 
 class Schema(marshmallow.Schema):
     class Meta:
+        register = False
         ordered = True
         unknown = marshmallow.EXCLUDE
 
     @marshmallow.pre_load
-    def ensure_dict(self, data):
+    def ensure_dict(self, data, **kwargs):
         return data or {}

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # Copyright 2018-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
-
+import sys
+import pytest
 from collections import OrderedDict
 import unittest
 
@@ -16,12 +17,22 @@ from hamcrest import (
     instance_of,
     not_,
 )
-from marshmallow import fields, ValidationError
+
+try:
+    from marshmallow import fields, ValidationError
+except Exception:
+
+    python_major_version = sys.version_info.major
+    if python_major_version == 2:
+        raise ImportError(
+            "Marshamallow library is incompatible with Python version %s" % sys.version
+        )
 from wazo_test_helpers.hamcrest.raises import raises
 
 from ..mallow_helpers import ListSchema, Schema
 
 
+@pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3 or higher")
 class TestSchema(unittest.TestCase):
     def test_ensure_dict(self):
         schema = Schema()
@@ -45,6 +56,7 @@ class TestSchema(unittest.TestCase):
         assert_that(result, instance_of(OrderedDict))
 
 
+@pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3 or higher")
 class TestListSchema(unittest.TestCase):
     def test_arbitrary_field_search(self):
         class Schema(ListSchema):
