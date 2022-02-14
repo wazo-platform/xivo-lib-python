@@ -1,7 +1,8 @@
-# Copyright 2018-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
-import sys
-import pytest
+
+# NOTE: File ignored by conftest.py for python2
+
 import unittest
 
 from hamcrest import (
@@ -14,20 +15,9 @@ from hamcrest import (
     has_property,
     is_not,
 )
-
-try:
-    from marshmallow import Schema, ValidationError
-except Exception:
-
-    python_major_version = sys.version_info.major
-    if python_major_version == 2:
-        raise ImportError(
-            "Marshamallow library is incompatible with Python version %s" % sys.version
-        )
-
+from marshmallow import Schema, ValidationError
 
 from wazo_test_helpers.hamcrest.raises import raises
-
 
 from .. import fields, validate
 
@@ -36,7 +26,6 @@ class ValidateSchema(Schema):
     string_dict = fields.Dict(validate=validate.validate_string_dict)
 
 
-@pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3 or higher")
 class TestValidation(unittest.TestCase):
     def test_given_valid_string_dict_then_validation_works(self):
         data = ValidateSchema().load({'string_dict': {'some': 'str'}})
@@ -62,7 +51,6 @@ class LengthSchema(Schema):
     min_max = fields.String(validate=validate.Length(min=2, max=3))
 
 
-@pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3 or higher")
 class TestLengthValidation(unittest.TestCase):
     def test_length_equal(self):
         assert_that(

@@ -1,22 +1,13 @@
-# Copyright 2018-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
-import sys
-import pytest
+
+# NOTE: File ignored by conftest.py for python2
+
 import unittest
 
 from hamcrest import assert_that, calling, empty, has_entry, has_property, is_not
 
-try:
-    from marshmallow import Schema, ValidationError
-except Exception:
-
-    python_major_version = sys.version_info.major
-    if python_major_version == 2:
-        raise ImportError(
-            "Marshamallow library is incompatible with Python version %s" % sys.version
-        )
-
-
+from marshmallow import Schema, ValidationError
 from wazo_test_helpers.hamcrest.raises import raises
 
 from .. import fields
@@ -39,7 +30,6 @@ class AllFieldsSchema(Schema):
     timedelta = fields.TimeDelta()
 
 
-@pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3 or higher")
 class TestFields(unittest.TestCase):
     def test_when_not_dict_object_then_no_crash_occurs(self):
         assert_that(

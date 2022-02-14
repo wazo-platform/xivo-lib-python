@@ -1,35 +1,31 @@
-# Copyright 2017-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-try:
+import sys
 
-    from marshmallow.fields import (
-        Boolean as _Boolean,
-        Constant as _Constant,
-        Date as _Date,
-        DateTime as _DateTime,
-        Dict as _Dict,
-        Email as _Email,
-        Field as _Field,
-        Float as _Float,
-        Integer as _Integer,
-        List as _List,
-        Nested as _Nested,
-        String as _String,
-        TimeDelta as _TimeDelta,
-        URL as _URL,
-        UUID as _UUID,
+python_major_version = sys.version_info.major
+if python_major_version == 2:
+    raise ImportError(
+        'Marshamallow library is incompatible with Python version %s' % sys.version
     )
 
-except Exception:
-    import sys
-
-    python_major_version = sys.version_info.major
-    if python_major_version == 2:
-        raise ImportError(
-            "Marshamallow library is incompatible with Python version %s" % sys.version
-        )
-
+from marshmallow.fields import (  # noqa: E402
+    Boolean as _Boolean,
+    Constant as _Constant,
+    Date as _Date,
+    DateTime as _DateTime,
+    Dict as _Dict,
+    Email as _Email,
+    Field as _Field,
+    Float as _Float,
+    Integer as _Integer,
+    List as _List,
+    Nested as _Nested,
+    String as _String,
+    TimeDelta as _TimeDelta,
+    URL as _URL,
+    UUID as _UUID,
+)
 
 ipaddress_available = True
 try:

@@ -1,22 +1,20 @@
-# -*- coding: utf-8 -*-
-# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from functools import wraps
+import sys
 
-try:
-    import marshmallow
-except Exception:
-    import sys
+python_major_version = sys.version_info.major
+if python_major_version == 2:
+    raise ImportError(
+        "Marshamallow library is incompatible with Python version %s" % sys.version
+    )
 
-    python_major_version = sys.version_info.major
-    if python_major_version == 2:
-        raise ImportError(
-            "Marshamallow library is incompatible with Python version %s" % sys.version
-        )
 
-from .mallow import fields, validate
-from .rest_api_helpers import APIException
+from functools import wraps  # noqa: E402
+import marshmallow  # noqa: E402
+
+from .mallow import fields, validate  # noqa: E402
+from .rest_api_helpers import APIException  # noqa: E402
 
 
 class ValidationError(APIException):

@@ -1,27 +1,27 @@
-# Copyright 2017-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
-try:
-    from marshmallow import ValidationError
-    from marshmallow.validate import (
-        ContainsOnly as _ContainsOnly,
-        Email as _Email,
-        Equal as _Equal,
-        Length as _Length,
-        OneOf as _OneOf,
-        NoneOf as _NoneOf,
-        Predicate as _Predicate,
-        Range as _Range,
-        Regexp as _Regexp,
-        URL as _URL,
-    )
-except Exception:
-    import sys
 
-    python_major_version = sys.version_info.major
-    if python_major_version == 2:
-        raise ImportError(
-            "Marshamallow library is incompatible with Python version %s" % sys.version
-        )
+import sys
+
+python_major_version = sys.version_info.major
+if python_major_version == 2:
+    raise ImportError(
+        "Marshamallow library is incompatible with Python version %s" % sys.version
+    )
+
+from marshmallow import ValidationError  # noqa: E402
+from marshmallow.validate import (  # noqa: E402
+    ContainsOnly as _ContainsOnly,
+    Email as _Email,
+    Equal as _Equal,
+    Length as _Length,
+    OneOf as _OneOf,
+    NoneOf as _NoneOf,
+    Predicate as _Predicate,
+    Range as _Range,
+    Regexp as _Regexp,
+    URL as _URL,
+)
 
 
 def validate_string_dict(dict_, max_key_length=128, max_value_length=2048):
