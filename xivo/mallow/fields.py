@@ -4,7 +4,7 @@
 import sys
 
 python_major_version = sys.version_info.major
-if python_major_version == 2:
+if python_major_version < 3:
     raise ImportError(
         'Marshamallow library is incompatible with Python version {version}'.format(
             version=sys.version
