@@ -3,10 +3,11 @@ https://github.com/wazo-platform/wazo-auth-client/archive/master.zip
 https://github.com/wazo-platform/xivo-bus/archive/master.zip
 cheroot==6.5.4
 flask==1.0.2
+itsdangerous==0.24  # from flask
+marshmallow==3.0.0b14
 netifaces==0.10.4
 psycopg2==2.7.7
-pyyaml==3.13
 python-consul==1.1.0
-marshmallow==3.0.0b14
+pyyaml==3.13
 six==1.12.0
 stevedore==1.29.0
