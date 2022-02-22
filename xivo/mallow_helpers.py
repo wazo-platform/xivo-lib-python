@@ -83,7 +83,6 @@ class ListSchema(marshmallow.Schema):
 
 class Schema(marshmallow.Schema):
     class Meta:
-        register = False
         ordered = True
         unknown = marshmallow.EXCLUDE
 
