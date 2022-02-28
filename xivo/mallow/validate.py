@@ -1,8 +1,18 @@
-# Copyright 2017-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from marshmallow import ValidationError
-from marshmallow.validate import (
+import sys
+
+python_major_version = sys.version_info.major
+if python_major_version < 3:
+    raise ImportError(
+        'Marshamallow library is incompatible with Python version {version}'.format(
+            version=sys.version
+        )
+    )
+
+from marshmallow import ValidationError  # noqa: E402
+from marshmallow.validate import (  # noqa: E402
     ContainsOnly as _ContainsOnly,
     Email as _Email,
     Equal as _Equal,

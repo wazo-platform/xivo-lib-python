@@ -1,13 +1,22 @@
-# -*- coding: utf-8 -*-
-# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from functools import wraps
+import sys
 
-import marshmallow
+python_major_version = sys.version_info.major
+if python_major_version < 3:
+    raise ImportError(
+        'Marshamallow library is incompatible with Python version {version}'.format(
+            version=sys.version
+        )
+    )
 
-from .mallow import fields, validate
-from .rest_api_helpers import APIException
+
+from functools import wraps  # noqa: E402
+import marshmallow  # noqa: E402
+
+from .mallow import fields, validate  # noqa: E402
+from .rest_api_helpers import APIException  # noqa: E402
 
 
 class ValidationError(APIException):
@@ -64,7 +73,7 @@ class ListSchema(marshmallow.Schema):
             field_obj.allow_none = False
 
     @marshmallow.post_load(pass_original=True)
-    def add_searchable_fields(self, data, original_data):
+    def add_searchable_fields(self, data, original_data, **kwargs):
         for key, value in original_data.items():
             if key in self.searchable_columns:
                 data.setdefault(key, value)
@@ -78,5 +87,5 @@ class Schema(marshmallow.Schema):
         unknown = marshmallow.EXCLUDE
 
     @marshmallow.pre_load
-    def ensure_dict(self, data):
+    def ensure_dict(self, data, **kwargs):
         return data or {}
