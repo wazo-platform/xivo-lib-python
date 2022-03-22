@@ -35,6 +35,12 @@ class StubVerifier(AuthVerifier):
     def handle_unauthorized(self, error, required_access=None):
         return s.unauthorized
 
+    def _handle_invalid_token_exception(self, error, required_access=None):
+        return s.invalid_token
+
+    def _handle_missing_permissions_token_exception(self, error, required_access=None):
+        return s.missing_permison
+
 
 class TestAuthVerifier(unittest.TestCase):
     def setUp(self):
