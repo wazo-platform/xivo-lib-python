@@ -10,6 +10,7 @@ import unittest
 from hamcrest import assert_that, calling, equal_to, is_, raises
 from mock import Mock, patch, sentinel as s
 from ..auth_verifier import (
+    Invalid_Token_Exception,
     AccessCheck,
     AuthServerUnreachable,
     AuthVerifier,
@@ -39,7 +40,7 @@ class StubVerifier(AuthVerifier):
         return s.invalid_token
 
     def _handle_missing_permissions_token_exception(self, error, required_access=None):
-        return s.missing_permison
+        return s.missing_permission
 
 
 class TestAuthVerifier(unittest.TestCase):
@@ -216,9 +217,9 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(result, equal_to(s.unreachable))
 
-    def test_verify_token_calls_handle_unauthorized(self):
+    def test_verify_invalid_token_calls_handle_invalid_token(self):
         mock_client = Mock()
-        mock_client.token.is_valid.return_value = False
+        mock_client.token.is_valid.side_effect = Invalid_Token_Exception
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 
@@ -229,7 +230,7 @@ class TestAuthVerifier(unittest.TestCase):
 
         result = decorated()
 
-        assert_that(result, equal_to(s.unauthorized))
+        assert_that(result, equal_to(s.invalid_token))
 
     def test_verify_tenant_calls_handle_unauthorized(self):
         mock_client = Mock()
