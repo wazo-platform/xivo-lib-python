@@ -20,7 +20,7 @@ except ImportError:
 # wazo-auth uses its own version of the client to avoid using its own
 # rest-api to call itself.
 try:
-    from wazo_auth_client import Client, exceptions
+    from wazo_auth_client import Client
 except ImportError as e:
 
     class Client(object):
@@ -148,10 +148,6 @@ class AuthVerifier(object):
                 token_is_valid = self.client().token.is_valid(
                     request.token_id, required_acl
                 )
-            except exceptions.InvalidTokenException as invalid_e:
-                return self.handle_unreachable(invalid_e)
-            except exceptions.MissingPermissionsTokenException as missing_e:
-                return self.handle_unreachable(missing_e)
             except requests.RequestException as e:
                 return self.handle_unreachable(e)
 
@@ -222,13 +218,11 @@ class AuthVerifier(object):
     def handle_unauthorized(self, token, required_access=None):
         raise Unauthorized(token, required_access)
 
-    def _handle_invalid_token(self, token, required_access=None):
-        raise exceptions.InvalidTokenException(
-            token, required_access, 'not_found_or_expired'
-        )
+    def _handle_invalid_token_exception(self, token, required_access=None):
+        raise Invalid_Token_Exception(token, required_access, 'not_found_or_expired')
 
-    def _handle_token_missing_permissions(self, token, required_access=None):
-        raise exceptions.InvalidTokenException(
+    def _handle_missing_permissions_token_exception(self, token, required_access=None):
+        raise Missing_Permissions_Token_Exception(
             token, required_access, 'missing_permission'
         )
 
