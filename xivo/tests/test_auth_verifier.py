@@ -11,6 +11,7 @@ from hamcrest import assert_that, calling, equal_to, is_, raises
 from mock import Mock, patch, sentinel as s
 from ..auth_verifier import (
     Invalid_Token_Exception,
+    Missing_Permissions_Token_Exception,
     AccessCheck,
     AuthServerUnreachable,
     AuthVerifier,
@@ -128,7 +129,7 @@ class TestAuthVerifier(unittest.TestCase):
 
     def test_verify_token_calls_function_when_no_auth(self):
         mock_client = Mock()
-        mock_client.token.is_valid.return_value = False
+        mock_client.token.is_valid.side_effect = Missing_Permissions_Token_Exception
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 
@@ -139,8 +140,22 @@ class TestAuthVerifier(unittest.TestCase):
 
         result = decorated()
 
-        assert_that(result, equal_to(s.result))
-        assert_that(mock_client.token.is_valid.called, equal_to(False))
+        assert_that(result, equal_to(s.missing_permission))
+
+    def test_verify_token_with_no_acl_permission_raises_exception(self):
+        mock_client = Mock()
+        mock_client.token.is_valid.side_effect = Missing_Permissions_Token_Exception
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+
+        @auth_verifier.verify_token
+        @required_acl('confd')
+        def decorated():
+            return s.result
+
+        result = decorated()
+
+        assert_that(result, equal_to(s.missing_permission))
 
     def test_verify_token_calls_function_when_valid(self):
         mock_client = Mock()
