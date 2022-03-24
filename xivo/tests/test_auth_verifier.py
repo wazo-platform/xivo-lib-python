@@ -10,8 +10,6 @@ import unittest
 from hamcrest import assert_that, calling, equal_to, is_, raises
 from mock import Mock, patch, sentinel as s
 from ..auth_verifier import (
-    Invalid_Token_Exception,
-    Missing_Permissions_Token_Exception,
     AccessCheck,
     AuthServerUnreachable,
     AuthVerifier,
@@ -20,6 +18,10 @@ from ..auth_verifier import (
     no_auth,
     required_acl,
     required_tenant,
+)
+from wazo_auth_client.exceptions import (
+    InvalidTokenException,
+    MissingPermissionsTokenException,
 )
 
 
@@ -129,7 +131,7 @@ class TestAuthVerifier(unittest.TestCase):
 
     def test_verify_token_calls_function_when_no_auth(self):
         mock_client = Mock()
-        mock_client.token.is_valid.side_effect = Missing_Permissions_Token_Exception
+        mock_client.token.is_valid.side_effect = MissingPermissionsTokenException
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 
@@ -140,11 +142,11 @@ class TestAuthVerifier(unittest.TestCase):
 
         result = decorated()
 
-        assert_that(result, equal_to(s.missing_permission))
+        assert_that(result, equal_to(s.result))
 
     def test_verify_token_with_no_acl_permission_raises_exception(self):
         mock_client = Mock()
-        mock_client.token.is_valid.side_effect = Missing_Permissions_Token_Exception
+        mock_client.token.is_valid.side_effect = MissingPermissionsTokenException
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 
@@ -234,7 +236,7 @@ class TestAuthVerifier(unittest.TestCase):
 
     def test_verify_invalid_token_calls_handle_invalid_token(self):
         mock_client = Mock()
-        mock_client.token.is_valid.side_effect = Invalid_Token_Exception
+        mock_client.token.is_valid.side_effect = InvalidTokenException
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 
