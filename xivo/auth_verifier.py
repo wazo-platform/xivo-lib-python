@@ -71,12 +71,10 @@ class Unauthorized(rest_api_helpers.APIException):
 
 
 class Invalid_Token_Exception(rest_api_helpers.APIException):
-    def __init__(self, token, required_access=None, cause=None):
-        details = {'invalid_token': token}
+    def __init__(self, token, required_access=None):
+        details = {'invalid_token': token, 'reason': 'not_found_or_expired'}
         if required_access:
             details['required_access'] = required_access
-        if cause:
-            details['reason'] = cause
         super(Invalid_Token_Exception, self).__init__(
             status_code=401,
             message='Unauthorized',
@@ -86,12 +84,10 @@ class Invalid_Token_Exception(rest_api_helpers.APIException):
 
 
 class Missing_Permissions_Token_Exception(rest_api_helpers.APIException):
-    def __init__(self, token, required_access=None, cause=None):
-        details = {'invalid_token': token}
+    def __init__(self, token, required_access=None):
+        details = {'invalid_token': token, 'reason': 'missing_permission'}
         if required_access:
             details['required_access'] = required_access
-        if cause:
-            details['reason'] = cause
         super(Missing_Permissions_Token_Exception, self).__init__(
             status_code=401,
             message='Unauthorized',
@@ -227,12 +223,10 @@ class AuthVerifier(object):
         raise Unauthorized(token, required_access)
 
     def _handle_invalid_token_exception(self, token, required_access=None):
-        raise Invalid_Token_Exception(token, required_access, 'not_found_or_expired')
+        raise Invalid_Token_Exception(token, required_access)
 
     def _handle_missing_permissions_token_exception(self, token, required_access=None):
-        raise Missing_Permissions_Token_Exception(
-            token, required_access, 'missing_permission'
-        )
+        raise Missing_Permissions_Token_Exception(token, required_access)
 
     def client(self):
         if not (self._auth_config or self._auth_client):
