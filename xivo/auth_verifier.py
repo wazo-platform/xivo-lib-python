@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -157,10 +157,11 @@ class AuthVerifier(object):
 
             if token_is_valid:
                 return func(*args, **kwargs)
-
-            return self.handle_unauthorized(
-                request.token_id, required_access=required_acl
-            )
+            else:
+                # NOTE(pc-m): This "should" be unreachable. is_valid can only return True or raise
+                # I've left this logger to avoid debugging for hours if I'm mistaken and a ressource
+                # returns doing nothing silently
+                logger.warning("This is a bug")
 
         return wrapper
 
