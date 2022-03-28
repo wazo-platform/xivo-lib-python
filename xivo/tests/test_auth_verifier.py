@@ -112,7 +112,7 @@ class TestAuthVerifier(unittest.TestCase):
 
         decorated()
 
-        mock_client.token.is_valid.assert_called_once_with(s.token, 'foo')
+        mock_client.token.check.assert_called_once_with(s.token, 'foo')
 
     def test_verify_tenant_calls_auth_client(self):
         mock_client = Mock()
@@ -131,7 +131,7 @@ class TestAuthVerifier(unittest.TestCase):
 
     def test_verify_token_calls_function_when_no_auth(self):
         mock_client = Mock()
-        mock_client.token.is_valid.side_effect = MissingPermissionsTokenException
+        mock_client.token.check.side_effect = MissingPermissionsTokenException
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 
@@ -146,7 +146,7 @@ class TestAuthVerifier(unittest.TestCase):
 
     def test_verify_token_with_no_acl_permission_raises_exception(self):
         mock_client = Mock()
-        mock_client.token.is_valid.side_effect = MissingPermissionsTokenException
+        mock_client.token.check.side_effect = MissingPermissionsTokenException
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 
@@ -161,7 +161,7 @@ class TestAuthVerifier(unittest.TestCase):
 
     def test_verify_token_calls_function_when_valid(self):
         mock_client = Mock()
-        mock_client.token.is_valid.return_value = True
+        mock_client.token.check.return_value = True
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 
@@ -191,7 +191,7 @@ class TestAuthVerifier(unittest.TestCase):
 
     def test_verify_token_calls_handle_unreachable(self):
         mock_client = Mock()
-        mock_client.token.is_valid.side_effect = requests.RequestException
+        mock_client.token.check.side_effect = requests.RequestException
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 
@@ -206,7 +206,7 @@ class TestAuthVerifier(unittest.TestCase):
 
     def test_verify_token_sets_the_token_id_on_the_request(self):
         mock_client = Mock()
-        mock_client.token.is_valid.side_effect = requests.RequestException
+        mock_client.token.check.side_effect = requests.RequestException
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 
@@ -236,7 +236,7 @@ class TestAuthVerifier(unittest.TestCase):
 
     def test_verify_invalid_token_calls_handle_invalid_token(self):
         mock_client = Mock()
-        mock_client.token.is_valid.side_effect = InvalidTokenException
+        mock_client.token.check.side_effect = InvalidTokenException
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 
@@ -318,7 +318,7 @@ class TestAuthVerifier(unittest.TestCase):
     def test_token_content_from_the_request(self):
         original_content = {'metadata': {'foo': 'bar'}}
         mock_client = Mock()
-        mock_client.token.is_valid.return_value = True
+        mock_client.token.check.return_value = True
         mock_client.token.get.return_value = original_content
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
@@ -344,7 +344,7 @@ class TestAuthVerifier(unittest.TestCase):
     def test_user_uuid_to_the_request(self):
         self.request_mock._token_content = {'metadata': {'uuid': s.uuid}}
         mock_client = Mock()
-        mock_client.token.is_valid.return_value = True
+        mock_client.token.check.return_value = True
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 

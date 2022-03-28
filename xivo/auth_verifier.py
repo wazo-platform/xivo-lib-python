@@ -141,7 +141,7 @@ class AuthVerifier(object):
             self._add_request_properties((acl_check.extract_token_id or self.token)())
             required_acl = self._required_acl(acl_check, args, kwargs)
             try:
-                token_is_valid = self.client().token.is_valid(
+                token_is_valid = self.client().token.check(
                     request.token_id, required_acl
                 )
             except exceptions.InvalidTokenException:
