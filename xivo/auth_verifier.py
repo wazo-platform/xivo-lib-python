@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -20,7 +20,7 @@ except ImportError:
 # wazo-auth uses its own version of the client to avoid using its own
 # rest-api to call itself.
 try:
-    from wazo_auth_client import Client
+    from wazo_auth_client import Client, exceptions
 except ImportError as e:
 
     class Client(object):
@@ -63,6 +63,32 @@ class Unauthorized(rest_api_helpers.APIException):
         if required_access:
             details['required_access'] = required_access
         super(Unauthorized, self).__init__(
+            status_code=401,
+            message='Unauthorized',
+            error_id='unauthorized',
+            details=details,
+        )
+
+
+class InvalidTokenAPIException(rest_api_helpers.APIException):
+    def __init__(self, token, required_access=None):
+        details = {'invalid_token': token, 'reason': 'not_found_or_expired'}
+        if required_access:
+            details['required_access'] = required_access
+        super(InvalidTokenAPIException, self).__init__(
+            status_code=401,
+            message='Unauthorized',
+            error_id='unauthorized',
+            details=details,
+        )
+
+
+class MissingPermissionsTokenAPIException(rest_api_helpers.APIException):
+    def __init__(self, token, required_access=None):
+        details = {'invalid_token': token, 'reason': 'missing_permission'}
+        if required_access:
+            details['required_access'] = required_access
+        super(MissingPermissionsTokenAPIException, self).__init__(
             status_code=401,
             message='Unauthorized',
             error_id='unauthorized',
@@ -118,15 +144,24 @@ class AuthVerifier(object):
                 token_is_valid = self.client().token.is_valid(
                     request.token_id, required_acl
                 )
+            except exceptions.InvalidTokenException:
+                return self._handle_invalid_token_exception(
+                    request.token_id, required_access=required_acl
+                )
+            except exceptions.MissingPermissionsTokenException:
+                return self._handle_missing_permissions_token_exception(
+                    request.token_id, required_access=required_acl
+                )
             except requests.RequestException as e:
                 return self.handle_unreachable(e)
 
             if token_is_valid:
                 return func(*args, **kwargs)
-
-            return self.handle_unauthorized(
-                request.token_id, required_access=required_acl
-            )
+            else:
+                # NOTE(pc-m): This "should" be unreachable. is_valid can only return True or raise
+                # I've left this logger to avoid debugging for hours if I'm mistaken and a ressource
+                # returns doing nothing silently
+                logger.warning("This is a bug")
 
         return wrapper
 
@@ -187,6 +222,12 @@ class AuthVerifier(object):
 
     def handle_unauthorized(self, token, required_access=None):
         raise Unauthorized(token, required_access)
+
+    def _handle_invalid_token_exception(self, token, required_access=None):
+        raise InvalidTokenAPIException(token, required_access)
+
+    def _handle_missing_permissions_token_exception(self, token, required_access=None):
+        raise MissingPermissionsTokenAPIException(token, required_access)
 
     def client(self):
         if not (self._auth_config or self._auth_client):

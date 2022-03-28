@@ -19,6 +19,10 @@ from ..auth_verifier import (
     required_acl,
     required_tenant,
 )
+from wazo_auth_client.exceptions import (
+    InvalidTokenException,
+    MissingPermissionsTokenException,
+)
 
 
 def function_with_acl(pattern):
@@ -34,6 +38,12 @@ class StubVerifier(AuthVerifier):
 
     def handle_unauthorized(self, error, required_access=None):
         return s.unauthorized
+
+    def _handle_invalid_token_exception(self, error, required_access=None):
+        return s.invalid_token
+
+    def _handle_missing_permissions_token_exception(self, error, required_access=None):
+        return s.missing_permission
 
 
 class TestAuthVerifier(unittest.TestCase):
@@ -121,7 +131,7 @@ class TestAuthVerifier(unittest.TestCase):
 
     def test_verify_token_calls_function_when_no_auth(self):
         mock_client = Mock()
-        mock_client.token.is_valid.return_value = False
+        mock_client.token.is_valid.side_effect = MissingPermissionsTokenException
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 
@@ -133,7 +143,21 @@ class TestAuthVerifier(unittest.TestCase):
         result = decorated()
 
         assert_that(result, equal_to(s.result))
-        assert_that(mock_client.token.is_valid.called, equal_to(False))
+
+    def test_verify_token_with_no_acl_permission_raises_exception(self):
+        mock_client = Mock()
+        mock_client.token.is_valid.side_effect = MissingPermissionsTokenException
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+
+        @auth_verifier.verify_token
+        @required_acl('confd')
+        def decorated():
+            return s.result
+
+        result = decorated()
+
+        assert_that(result, equal_to(s.missing_permission))
 
     def test_verify_token_calls_function_when_valid(self):
         mock_client = Mock()
@@ -210,9 +234,9 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(result, equal_to(s.unreachable))
 
-    def test_verify_token_calls_handle_unauthorized(self):
+    def test_verify_invalid_token_calls_handle_invalid_token(self):
         mock_client = Mock()
-        mock_client.token.is_valid.return_value = False
+        mock_client.token.is_valid.side_effect = InvalidTokenException
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)
 
@@ -223,7 +247,7 @@ class TestAuthVerifier(unittest.TestCase):
 
         result = decorated()
 
-        assert_that(result, equal_to(s.unauthorized))
+        assert_that(result, equal_to(s.invalid_token))
 
     def test_verify_tenant_calls_handle_unauthorized(self):
         mock_client = Mock()
