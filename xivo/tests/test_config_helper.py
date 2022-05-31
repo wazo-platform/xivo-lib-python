@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2014-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from operator import itemgetter
@@ -13,6 +13,7 @@ from hamcrest import (
     assert_that,
     calling,
     contains_exactly,
+    contains_inanyorder,
     equal_to,
     has_entry,
     is_not,
@@ -290,6 +291,47 @@ class TestReadConfigFileHierarchy(unittest.TestCase):
         self.parser.parse_config_dir.assert_called_once_with('/path/to/extra')
 
         assert_that(config['sentinel'], equal_to('from_extra_config'))
+        assert_that(config['main_file_only'], equal_to(True))
+
+
+class TestReadConfigFileHierarchyAccumulatingList(unittest.TestCase):
+    def setUp(self):
+        self.error_handler = Mock(ErrorHandler)
+        self.parser = ConfigParser(self.error_handler)
+
+    def test_that_list_accumulates_all_values(self):
+        self.parser.parse_config_file = Mock()
+        self.parser.parse_config_file.return_value = {
+            'extra_config_files': '/path/to/extra',
+            'sentinel': ['from_main_file'],
+            'main_file_only': True,
+        }
+        self.parser.parse_config_dir = Mock()
+        self.parser.parse_config_dir.return_value = [
+            {'sentinel': ['from_extra_file1']},
+            {'sentinel': ['from_extra_file2']},
+        ]
+        cli_and_default_config = {
+            'config_file': '/path/to/config.yml',
+            'extra_config_files': '/original/path/to/extra',
+            'sentinel': ['from_default'],
+        }
+
+        config = self.parser.read_config_file_hierarchy_accumulating_list(
+            cli_and_default_config
+        )
+
+        self.parser.parse_config_file.assert_called_once_with('/path/to/config.yml')
+        self.parser.parse_config_dir.assert_called_once_with('/path/to/extra')
+
+        assert_that(
+            config['sentinel'],
+            contains_inanyorder(
+                'from_main_file',
+                'from_extra_file1',
+                'from_extra_file2',
+            ),
+        )
         assert_that(config['main_file_only'], equal_to(True))
 
 

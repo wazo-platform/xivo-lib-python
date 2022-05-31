@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-# Copyright 2014-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import operator
 import unittest
 
-from ..chain_map import ChainMap
+from ..chain_map import AccumulatingListChainMap as ALChainMap, ChainMap
 from hamcrest import assert_that
 from hamcrest import equal_to
 from hamcrest import has_entry
@@ -70,3 +70,28 @@ class TestChainMap(unittest.TestCase):
         m = ChainMap(original, new_dict)
 
         assert_that(m, has_entry('key', None))
+
+
+class TestAccumulatingListChainMap(unittest.TestCase):
+    def test_list_is_accumulated(self):
+        empty = {}
+        empty_list = {'key': []}
+        one_item = {'key': ['item']}
+        two_items = {'key': ['items', 'items']}
+
+        assert ALChainMap(empty_list)['key'] == []
+
+        try:
+            ALChainMap(empty, empty)['key']
+        except KeyError:
+            assert True
+        else:
+            assert False
+
+        assert ALChainMap(empty, empty_list)['key'] == []
+        assert ALChainMap(empty_list, empty_list)['key'] == []
+        assert ALChainMap(empty_list, one_item)['key'] == ['item']
+        assert ALChainMap(one_item, one_item)['key'] == ['item', 'item']
+        assert ALChainMap(empty, two_items)['key'] == ['items', 'items']
+        assert ALChainMap(one_item, two_items)['key'] == ['item', 'items', 'items']
+        assert ALChainMap(two_items, two_items)['key'] == ['items'] * 4
