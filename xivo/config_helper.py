@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2014-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import print_function
@@ -11,7 +11,7 @@ import subprocess
 
 import yaml
 
-from .chain_map import ChainMap
+from .chain_map import AccumulatingListChainMap, ChainMap
 
 
 class _YAMLExecLoader(yaml.SafeLoader):
@@ -130,6 +130,17 @@ class ConfigParser(object):
 
         return ChainMap(*configs)
 
+    def read_config_file_hierarchy_accumulating_list(self, original_config):
+        main_config_filename = original_config['config_file']
+        main_config = self.parse_config_file(main_config_filename)
+        extra_config_file_directory = AccumulatingListChainMap(
+            main_config, original_config
+        )['extra_config_files']
+        configs = self.parse_config_dir(extra_config_file_directory)
+        configs.append(main_config)
+
+        return AccumulatingListChainMap(*configs)
+
 
 class UUIDNotFound(RuntimeError):
     def __init__(self):
@@ -153,3 +164,6 @@ _config_parser = ConfigParser()
 parse_config_file = _config_parser.parse_config_file
 parse_config_dir = _config_parser.parse_config_dir
 read_config_file_hierarchy = _config_parser.read_config_file_hierarchy
+read_config_file_hierarchy_accumulating_list = (
+    _config_parser.read_config_file_hierarchy_accumulating_list
+)
