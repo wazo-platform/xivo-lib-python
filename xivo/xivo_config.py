@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -98,8 +98,8 @@ def txtsubst(lines, variables, target_file=None, charset=None):
     ret = []
     for line in lines:
         linesub = linesubst(line, variables)
-        if isinstance(line, unicode):
-            ret.append(linesub.encode(charset))
-        else:
+        if isinstance(line, str):
             ret.append(linesub)
+        else:
+            ret.append(linesub.decode(charset))
     return ret
