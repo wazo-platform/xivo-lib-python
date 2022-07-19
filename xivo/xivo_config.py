@@ -98,8 +98,5 @@ def txtsubst(lines, variables, target_file=None, charset=None):
     ret = []
     for line in lines:
         linesub = linesubst(line, variables)
-        if isinstance(line, str):
-            ret.append(linesub)
-        else:
-            ret.append(linesub.decode(charset))
+        ret.append(linesub)
     return ret
