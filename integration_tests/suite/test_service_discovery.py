@@ -81,7 +81,7 @@ class _BaseTest(AssetLaunchingTestCase):
         status = self.service_status('myservice')
 
         try:
-            network_name = '{}_default'.format(self.service)
+            network_name = f'{self.service}_{self.asset}_default'
             yield ip or status['NetworkSettings']['Networks'][network_name]['IPAddress']
         finally:
             id_ = status['Id']
