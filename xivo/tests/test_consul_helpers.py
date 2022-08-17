@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -152,7 +152,7 @@ class TestNotifyingRegisterer(unittest.TestCase):
 
     @patch('xivo.consul_helpers.Consul', Mock())
     def test_that_register_sends_a_service_registered_event_when_registered(self):
-        with patch.object(self.registerer, '_send_msg') as send_msg:
+        with patch.object(self.registerer, '_notify') as send_msg:
             self.registerer.register()
 
             expected_message = event.ServiceRegisteredEvent(
@@ -172,7 +172,7 @@ class TestNotifyingRegisterer(unittest.TestCase):
         consul_client = Consul.return_value
         consul_client.agent.service.deregister.return_value = True
 
-        with patch.object(self.registerer, '_send_msg') as send_msg:
+        with patch.object(self.registerer, '_notify') as send_msg:
             self.registerer.deregister()
 
         expected_message = event.ServiceDeregisteredEvent(
@@ -188,7 +188,7 @@ class TestNotifyingRegisterer(unittest.TestCase):
         consul_client = Consul.return_value
         consul_client.agent.service.deregister.return_value = False
 
-        with patch.object(self.registerer, '_send_msg') as send_msg:
+        with patch.object(self.registerer, '_notify') as send_msg:
             self.registerer.deregister()
             assert_that(send_msg.call_count, equal_to(0))
 
