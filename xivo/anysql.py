@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2007-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2007-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """DBAPI Helper using URI to create talk to various DB
@@ -174,7 +174,7 @@ class cursor(object):
         As in DBAPI2.0 (except the fact rows are not tuples but
         lists so if you try to modify them, you will succeed instead of
         the correct behaviour of raising an exception).
-        Additionally every row returned by this class is addressable
+        Additionally, every row returned by this class is addressable
         by column name besides the column position in the query.
         """
         try:
@@ -386,8 +386,8 @@ class connection:
 
 
 def __compare_api_level(als1, als2):
-    lst1 = map(int, als1.split('.'))
-    lst2 = map(int, als2.split('.'))
+    lst1 = [int(n) for n in als1.split('.')]
+    lst2 = [int(n) for n in als2.split('.')]
     if lst1 < lst2:
         return -1 - bool(lst1[0] < lst2[0])
     elif lst1 > lst2:
