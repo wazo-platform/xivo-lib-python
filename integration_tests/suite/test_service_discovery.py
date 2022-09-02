@@ -237,14 +237,14 @@ class TestServiceDiscovery(_BaseTest):
 
     def assert_deregistered_msg_received(self):
         message = self._get_message()
-        assert_that(message['name'], equal_to('service_deregistered_event'))
+        assert_that(message['name'], equal_to('service_deregistered'))
         assert_that(message['origin_uuid'], equal_to('foobar'))
         assert_that(message['data']['service_name'], equal_to('myservice'))
         assert_that(message['data']['tags'], contains_inanyorder('foobar', 'myservice'))
 
     def assert_registered_msg_received(self, ip):
         message = self._get_message()
-        assert_that(message['name'], equal_to('service_registered_event'))
+        assert_that(message['name'], equal_to('service_registered'))
         assert_that(message['origin_uuid'], equal_to('foobar'))
         assert_that(message['data']['service_name'], equal_to('myservice'))
         assert_that(message['data']['address'], equal_to(ip))

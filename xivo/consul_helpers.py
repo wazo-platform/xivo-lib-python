@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
 import threading
-import socket
 
 from uuid import uuid4
 import requests
@@ -13,18 +12,16 @@ from consul import Check, Consul, ConsulException
 from requests.exceptions import ConnectionError
 
 try:
-    from kombu import Connection, Exchange, Producer
-except ImportError:
-    pass
-
-try:
     import netifaces
 except ImportError:
     pass
 
 try:
-    from xivo_bus.resources.services import event
-    from xivo_bus import FailFastPublisher, Marshaler
+    from xivo_bus.publisher import BusPublisher
+    from xivo_bus.resources.services.event import (
+        ServiceRegisteredEvent,
+        ServiceDeregisteredEvent,
+    )
 except ImportError:
     pass
 
@@ -244,26 +241,24 @@ def _find_address(main_iface):
 
 
 class NotifyingRegisterer(Registerer):
-
-    bus_uri_pattern = 'amqp://{username}:{password}@{host}:{port}//'
-
     def __init__(self, name, uuid, consul_config, service_discovery_config, bus_config):
         super(NotifyingRegisterer, self).__init__(
             name, uuid, consul_config, service_discovery_config
         )
-        self._bus_config = bus_config
-        self._marshaler = Marshaler(uuid)
-        try:
-            self._bus_url = bus_config.get('uri') or self.bus_uri_pattern.format(
-                **bus_config
-            )
-        except KeyError as e:
-            raise MissingConfigurationError(str(e))
+        self._publisher = BusPublisher(
+            name='consul-helper', service_uuid=uuid, **bus_config
+        )
 
     def register(self):
         super(NotifyingRegisterer, self).register()
-        msg = self._new_registered_event()
-        self._send_msg(msg)
+        event = ServiceRegisteredEvent(
+            self._service_name,
+            self._service_id,
+            self._advertise_address,
+            self._advertise_port,
+            self._tags,
+        )
+        self._notify(event)
 
     def deregister(self):
         exception = None
@@ -274,39 +269,18 @@ class NotifyingRegisterer(Registerer):
             exception = e
 
         if should_send_msg:
-            msg = self._new_deregistered_event()
-            self._send_msg(msg)
+            event = ServiceDeregisteredEvent(
+                self._service_name, self._service_id, self._tags
+            )
+            self._notify(event)
 
         if exception:
             raise exception
 
         return should_send_msg
 
-    def _send_msg(self, msg):
-        try:
-            with Connection(self._bus_url) as conn:
-                exchange = Exchange(
-                    self._bus_config['exchange_name'], self._bus_config['exchange_type']
-                )
-                producer = Producer(conn, exchange=exchange, auto_declare=True)
-                publisher = FailFastPublisher(producer, self._marshaler)
-                publisher.publish(msg)
-        except socket.error:
-            raise RegistererError('failed to publish on rabbitmq')
-
-    def _new_deregistered_event(self):
-        return event.ServiceDeregisteredEvent(
-            self._service_name, self._service_id, self._tags
-        )
-
-    def _new_registered_event(self):
-        return event.ServiceRegisteredEvent(
-            self._service_name,
-            self._service_id,
-            self._advertise_address,
-            self._advertise_port,
-            self._tags,
-        )
+    def _notify(self, event):
+        self._publisher.publish(event)
 
 
 class ServiceFinder(object):
