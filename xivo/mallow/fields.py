@@ -88,7 +88,7 @@ class DateTime(_DateTime):
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
-                message=_DateTime.default_error_messages['invalid'],
+                message='Not a valid datetime',
                 constraint_id='type',
                 constraint='datetime',
             )
@@ -197,7 +197,7 @@ class TimeDelta(_TimeDelta):
                 constraint='timedelta',
             ),
             'format': _StringifiedDict(
-                message=_TimeDelta.default_error_messages['format'],
+                message='Cannot be formatted as a timedelta',
                 constraint_id='type',
                 constraint='format',
             ),
