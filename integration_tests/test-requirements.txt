@@ -1,4 +1,5 @@
 https://github.com/wazo-platform/wazo-test-helpers/archive/master.zip
+importlib_metadata==1.6.0  # from kombu
 kombu==4.6.11
 pyhamcrest
 pytest
