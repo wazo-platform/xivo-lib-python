@@ -4,8 +4,10 @@ COPY integration_tests/assets/bin /usr/local/bin
 COPY . /tmp/xivo
 
 WORKDIR /tmp/xivo
+
+# importlib_metadata<5.0.0  # from kombu - https://github.com/celery/kombu/issues/1600
 RUN true && \
-    pip install -r requirements.txt kombu && \
+    pip install -r requirements.txt kombu 'importlib_metadata<5.0.0' && \
     python setup.py install && \
     true
 
