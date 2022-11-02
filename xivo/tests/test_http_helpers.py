@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# Copyright 2016-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import unittest
 import json
+import unittest
 
 from hamcrest import assert_that, equal_to
 from mock import patch, ANY, Mock
@@ -23,20 +23,24 @@ def _assert_json_equals(result, expected):
 
 class TestLogRequest(unittest.TestCase):
     @patch('xivo.http_helpers.current_app')
+    @patch('xivo.http_helpers.g')
     @patch('xivo.http_helpers.request')
-    def test_log_request(self, request, current_app):
+    def test_log_request(self, request, g, current_app):
+        del g.request_time
         request.url = '/foo/bar?token=1734768e-caf6'
         response = Mock(data=None, status_code=200)
 
         log_request(response)
 
         current_app.logger.info.assert_called_once_with(
-            ANY, request.remote_addr, request.method, request.url, 200
+            ANY, request.remote_addr, '', request.method, request.url, 200
         )
 
     @patch('xivo.http_helpers.current_app')
+    @patch('xivo.http_helpers.g')
     @patch('xivo.http_helpers.request')
-    def test_log_request_hide_token(self, request, current_app):
+    def test_log_request_hide_token(self, request, g, current_app):
+        del g.request_time
         request.url = '/foo/bar?token=1734768e-caf6'
         response = Mock(data=None, status_code=200)
 
@@ -44,7 +48,21 @@ class TestLogRequest(unittest.TestCase):
 
         expected_url = '/foo/bar?token=<hidden>'
         current_app.logger.info.assert_called_once_with(
-            ANY, request.remote_addr, request.method, expected_url, 200
+            ANY, request.remote_addr, '', request.method, expected_url, 200
+        )
+
+    @patch('xivo.http_helpers.current_app')
+    @patch('xivo.http_helpers.g')
+    @patch('xivo.http_helpers.request')
+    def test_log_with_duration(self, request, g, current_app):
+        g.request_time = 1667410149.0782132
+        request.url = '/foo/bar'
+        response = Mock(data=None, status_code=200)
+
+        log_request(response)
+
+        current_app.logger.info.assert_called_once_with(
+            ANY, request.remote_addr, ANY, request.method, request.url, 200
         )
 
 
