@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-# Copyright 2016-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import re
 import json
+import re
+import time
 
 from cheroot.ssl.builtin import BuiltinSSLAdapter
-from flask import current_app, request
+from flask import current_app, g, request
 from six.moves.urllib.parse import unquote
 
 try:
@@ -120,8 +121,13 @@ class LazyHeaderFormatter(object):
 
 def _log_request(url, response, hidden_fields=None):
     current_app.logger.info(
-        'response: (%s) %s %s %s',
+        'response to %s%s: %s %s %s',
         request.remote_addr,
+        (
+            (' in {:.2f}s'.format(time.time() - g.request_time))
+            if hasattr(g, 'request_time')
+            else ''
+        ),
         request.method,
         url,
         response.status_code,
@@ -152,6 +158,7 @@ def log_before_request(hidden_fields=None):
         fmt = "request: %(method)s %(url)s %(headers)s"
 
     current_app.logger.info(fmt, params)
+    g.request_time = time.time()
 
 
 def log_request(response):
