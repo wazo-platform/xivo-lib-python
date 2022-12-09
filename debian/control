@@ -5,7 +5,7 @@ Maintainer: Wazo Maintainers <dev@wazo.community>
 Build-Depends: debhelper (>= 9), dh-python, python-all (>= 2.7), python-setuptools, python3-all, python3-setuptools
 Standards-Version: 3.9.6
 X-Python-Version: >= 2.7
-X-Python3-Version: >= 3.4
+X-Python3-Version: >= 3.7
 
 Package: xivo-lib-python
 Architecture: all
@@ -14,7 +14,6 @@ Replaces:  pf-xivo-lib-python
 Conflicts: pf-xivo-lib-python
 Depends: ${python:Depends},
          ${misc:Depends},
-         python-psycopg2,
          python-six,
          python-yaml
 Description: Wazo Python libraries - Python 2
@@ -29,7 +28,6 @@ Architecture: all
 Depends: ${python3:Depends},
          ${misc:Depends},
          python3-consul,
-         python3-psycopg2,
          python3-six,
          python3-yaml
 Description: Wazo Python libraries - Python 3

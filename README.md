@@ -11,7 +11,7 @@ Running unit tests
 ```
 apt-get install libpq-dev python-dev libffi-dev libyaml-dev python3.7-dev
 pip install tox
-tox --recreate -e py27,py34
+tox --recreate -e py27,py37
 ```
 
 
