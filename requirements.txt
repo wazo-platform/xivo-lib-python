@@ -4,7 +4,7 @@ https://github.com/wazo-platform/xivo-bus/archive/master.zip
 cheroot==6.5.4
 flask==1.0.2
 itsdangerous==0.24  # from flask
-jinja2==2.10  # from flask
+jinja2==2.11.3  # from flask
 markupsafe==1.1.0 # from flask
 marshmallow==3.0.0b14; python_version <= '2.7'
 marshmallow==3.10.0; python_version >= '3.6'
