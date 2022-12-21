@@ -1,14 +1,8 @@
-# -*- coding: utf-8 -*-
-# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import print_function
-from __future__ import unicode_literals
 
-import six
-
-
-class InputRawCommandLineSource(object):
+class InputRawCommandLineSource:
     def __init__(self, prompt):
         self._prompt = prompt
 
@@ -18,7 +12,7 @@ class InputRawCommandLineSource(object):
     def __next__(self):
         while True:
             try:
-                raw_command_line = six.b(six.moves.input(self._prompt)).decode('UTF-8')
+                raw_command_line = input(self._prompt)
                 return raw_command_line
             except EOFError:
                 print()

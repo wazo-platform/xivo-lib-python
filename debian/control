@@ -2,33 +2,15 @@ Source: xivo-lib-python
 Section: python
 Priority: extra
 Maintainer: Wazo Maintainers <dev@wazo.community>
-Build-Depends: debhelper (>= 9), dh-python, python-all (>= 2.7), python-setuptools, python3-all, python3-setuptools
+Build-Depends: debhelper (>= 9), dh-python, python3-all, python3-setuptools
 Standards-Version: 3.9.6
-X-Python-Version: >= 2.7
 X-Python3-Version: >= 3.7
-
-Package: xivo-lib-python
-Architecture: all
-Provides: ${python:Provides}, pf-xivo-lib-python
-Replaces:  pf-xivo-lib-python
-Conflicts: pf-xivo-lib-python
-Depends: ${python:Depends},
-         ${misc:Depends},
-         python-six,
-         python-yaml
-Description: Wazo Python libraries - Python 2
- Wazo is a system based on a powerful IPBX, to bring an easy to
- install solution for telephony and related services.
- .
- These are useful python libraries to be used with Wazo code.
- .
 
 Package: xivo-lib-python-python3
 Architecture: all
 Depends: ${python3:Depends},
          ${misc:Depends},
          python3-consul,
-         python3-six,
          python3-yaml
 Description: Wazo Python libraries - Python 3
  Wazo is a system based on a powerful IPBX, to bring an easy to

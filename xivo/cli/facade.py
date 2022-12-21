@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import unicode_literals
 
 import os.path
 import sys
@@ -19,7 +17,7 @@ from xivo.cli.registry import CommandRegistry
 from xivo.cli.source.input import InputRawCommandLineSource
 
 
-class FacadeInterpreter(object):
+class FacadeInterpreter:
     def __init__(self, prompt=None, history_file=None, error_handler=None):
         if prompt is None:
             prompt = '{0}> '.format(os.path.basename(sys.argv[0]))

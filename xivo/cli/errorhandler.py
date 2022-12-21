@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
-# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import traceback
 
 
-class ReRaiseErrorHandler(object):
+class ReRaiseErrorHandler:
     def on_exception(self, e):
         raise
 
 
-class PrintTracebackErrorHandler(object):
+class PrintTracebackErrorHandler:
     def on_exception(self, e):
         traceback.print_exc()

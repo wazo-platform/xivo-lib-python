@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2016-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from unittest import TestCase
@@ -13,7 +12,7 @@ from hamcrest import (
     is_,
     raises,
 )
-from mock import patch, sentinel as s
+from unittest.mock import patch, sentinel as s
 
 from ..rest_api_helpers import APIException, handle_api_exception
 

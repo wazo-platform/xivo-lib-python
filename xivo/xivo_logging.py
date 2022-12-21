@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2014-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -9,7 +8,7 @@ DEFAULT_LOG_FORMAT = '%(asctime)s [%(process)d] (%(levelname)s) (%(name)s): %(me
 DEFAULT_LOG_LEVEL = logging.INFO
 
 
-class _StreamToLogger(object):
+class _StreamToLogger:
     """
     Fake file-like stream object that redirects writes to a logger instance.
 

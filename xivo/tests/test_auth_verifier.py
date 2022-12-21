@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-# Copyright 2015-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
-import six
 import pytest
 import unittest
 
 from hamcrest import assert_that, calling, equal_to, is_, raises
-from mock import Mock, patch, sentinel as s
+from unittest.mock import Mock, patch, sentinel as s
 from ..auth_verifier import (
     AccessCheck,
     AuthServerUnreachable,
@@ -358,7 +356,7 @@ class TestAuthVerifier(unittest.TestCase):
         assert_that(user_uuid, equal_to(s.uuid))
 
 
-class TestAccessCheck(object):
+class TestAccessCheck:
 
     scenarios = [
         {
@@ -544,7 +542,6 @@ class TestAccessCheck(object):
         assert_that(check.may_add_access('!foo.bar'), is_(True))
         assert_that(check.may_add_access('!anything'), is_(True))
 
-    @unittest.skipIf(six.PY2, "not compatible with Python <3.3 (_ is re.escaped)")
     def test_matches_my_session(self):
         check = AccessCheck('123', 'session-uuid', ['foo.my_session'])
 

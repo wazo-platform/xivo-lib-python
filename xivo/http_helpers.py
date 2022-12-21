@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
 # Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
 import re
 import time
+from urllib.parse import unquote
 
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 from flask import current_app, g, request
-from six.moves.urllib.parse import unquote
 
 try:
     from json.decoder import JSONDecodeError
@@ -20,7 +19,7 @@ PRINTABLE_CONTENT_TYPES = [
 ]
 
 
-class ReverseProxied(object):
+class ReverseProxied:
     """
     From http://flask.pocoo.org/snippets/35/
     """
@@ -49,7 +48,7 @@ def add_logger(app, logger):
     app.logger.propagate = True
 
 
-class BodyFormatter(object):
+class BodyFormatter:
 
     _HIDDEN_VALUE = '<hidden>'
 
@@ -81,7 +80,7 @@ class BodyFormatter(object):
         return json.dumps(serialized_body)
 
 
-class LazyHeaderFormatter(object):
+class LazyHeaderFormatter:
 
     VISIBLE_TOKEN_SIZE = 8
 

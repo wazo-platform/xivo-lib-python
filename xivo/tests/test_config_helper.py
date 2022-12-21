@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -19,9 +18,7 @@ from hamcrest import (
     is_not,
     raises,
 )
-from mock import patch
-from mock import Mock
-from mock import ANY
+from unittest.mock import patch, Mock, ANY
 from yaml.parser import ParserError
 
 from ..config_helper import ConfigParser
@@ -61,14 +58,14 @@ class TestPrintErrorHandler(unittest.TestCase):
         self.name = 'foobar'
         self.e = EnvironmentError((42, 'Bah'))
 
-    @patch('six.moves.builtins.print')
+    @patch('builtins.print')
     def test_on_parse_config_file_env_error(self, mocked_print):
         self.error_handler.on_parse_config_file_env_error(self.name, self.e)
 
         printed_message = mocked_print.call_args_list[0]
         assert_that(printed_message.startswith('Could not read config file'))
 
-    @patch('six.moves.builtins.print')
+    @patch('builtins.print')
     def test_on_parse_config_dir_env_error(self, mocked_print):
         self.error_handler.on_parse_config_dir_env_error(self.name, self.e)
 

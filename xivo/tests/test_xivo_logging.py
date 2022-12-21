@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
-# Copyright 2014-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
 import sys
 import tempfile
+from io import StringIO
 from unittest import TestCase
 
 from hamcrest import assert_that
@@ -14,8 +14,7 @@ from hamcrest import equal_to
 from hamcrest import has_length
 from hamcrest import is_
 from hamcrest import is_not
-from mock import Mock, patch
-from six import StringIO
+from unittest.mock import Mock, patch
 
 from xivo.xivo_logging import DEFAULT_LOG_FORMAT
 from xivo.xivo_logging import DEFAULT_LOG_LEVEL

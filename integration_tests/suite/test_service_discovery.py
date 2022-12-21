@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
+import queue
+
 import kombu
 import threading
 import requests
@@ -9,7 +11,6 @@ import requests
 from consul import Consul
 from contextlib import contextmanager
 from hamcrest import assert_that, contains_inanyorder, contains_string, equal_to
-from six.moves import queue
 from kombu.mixins import ConsumerMixin
 from wazo_test_helpers import until
 from wazo_test_helpers.asset_launching_test_case import (

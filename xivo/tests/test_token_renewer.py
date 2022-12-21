@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-# Copyright 2015-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
 
 from hamcrest import assert_that
 from hamcrest import equal_to
-from mock import Mock
+from unittest.mock import Mock
 
 from ..token_renewer import TokenRenewer
 

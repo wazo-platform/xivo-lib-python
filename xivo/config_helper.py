@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 # Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import print_function
 
 from functools import partial
 import os
@@ -33,7 +31,7 @@ class _YAMLExecTag(yaml.YAMLObject):
                     )
 
 
-class ErrorHandler(object):
+class ErrorHandler:
     def on_parse_config_file_env_error(self, config_file_name, e):
         pass
 
@@ -61,7 +59,7 @@ class PrintErrorHandler(ErrorHandler):
         print('Could not read config file {}: {}'.format(filename, e), file=sys.stderr)
 
 
-class ConfigParser(object):
+class ConfigParser:
     def __init__(self, error_handler=PrintErrorHandler()):
         self._error_handler = error_handler
 

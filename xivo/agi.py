@@ -1,4 +1,3 @@
-# -*- coding: utf8 -*-
 """
 To use this library please see the example :
 
@@ -33,7 +32,7 @@ To use this library please see the example :
 
 __version__ = "$Revision$ $Date$"
 __license__ = """
-    Copyright 2007-2019 The Wazo Authors  (see the AUTHORS file)
+    Copyright 2007-2022 The Wazo Authors  (see the AUTHORS file)
     Copyright (C) 2004 Karl Putland
     Upstream Original Author: Karl Putland <kputland@users.sourceforge.net>
 

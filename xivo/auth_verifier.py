@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -8,7 +7,6 @@ import requests
 
 from collections import namedtuple
 from functools import wraps
-from six import iteritems, text_type
 
 # Necessary to avoid a dependency in provd
 try:
@@ -23,7 +21,7 @@ try:
     from wazo_auth_client import Client, exceptions
 except ImportError as e:
 
-    class Client(object):
+    class Client:
         _exc = e
 
         def __init__(self, *args, **kwargs):
@@ -110,7 +108,7 @@ class AuthServerUnreachable(rest_api_helpers.APIException):
         )
 
 
-class AuthVerifier(object):
+class AuthVerifier:
     def __init__(self, auth_config=None, extract_token_id=None):
         if extract_token_id is None:
             extract_token_id = extract_token_id_from_header
@@ -210,10 +208,9 @@ class AuthVerifier(object):
 
     def _required_acl(self, acl_check, args, kwargs):
         escaped_kwargs = {
-            key: text_type(value).replace(u'.', u'_')
-            for key, value in iteritems(kwargs)
+            key: str(value).replace('.', '_') for key, value in kwargs.items()
         }
-        return text_type(acl_check.pattern).format(**escaped_kwargs)
+        return str(acl_check.pattern).format(**escaped_kwargs)
 
     def handle_unreachable(self, error):
         raise AuthServerUnreachable(

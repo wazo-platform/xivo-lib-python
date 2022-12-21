@@ -1,14 +1,10 @@
-# -*- coding: utf-8 -*-
-# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import readline
 
 
-class ReadlineCompletionHelper(object):
+class ReadlineCompletionHelper:
     def __init__(self, raw_command_line_parser, command_line_completer):
         self._raw_command_line_parser = raw_command_line_parser
         self._command_line_completer = command_line_completer

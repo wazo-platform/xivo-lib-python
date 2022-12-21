@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2018-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
@@ -52,7 +51,7 @@ class UnauthorizedTenant(rest_api_helpers.APIException):
         )
 
 
-class Tenant(object):
+class Tenant:
     @classmethod
     def autodetect(cls, tokens):
         token = tokens.from_headers()
@@ -106,7 +105,7 @@ class Tenant(object):
         return result
 
 
-class Tokens(object):
+class Tokens:
     def __init__(self, auth):
         self._auth = auth
 
@@ -125,7 +124,7 @@ class Tokens(object):
         return self.get(token_id)
 
 
-class Token(object):
+class Token:
     def __init__(self, token_dict, auth):
         self._auth = auth
         self._token_dict = token_dict
@@ -174,7 +173,7 @@ class Token(object):
         return tenants
 
 
-class Users(object):
+class Users:
     def __init__(self, auth):
         self._auth = auth
 
@@ -182,7 +181,7 @@ class Users(object):
         return User(self._auth, user_uuid)
 
 
-class User(object):
+class User:
     def __init__(self, auth, uuid, **kwargs):
         self._auth = auth
         self._uuid = uuid

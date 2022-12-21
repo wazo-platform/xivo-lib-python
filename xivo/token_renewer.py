@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2015-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import itertools
@@ -10,7 +9,7 @@ import threading
 logger = logging.getLogger(__name__)
 
 
-class TokenRenewer(object):
+class TokenRenewer:
 
     DEFAULT_EXPIRATION = 6 * 3600
     _RENEW_TIME_COEFFICIENT = 0.8

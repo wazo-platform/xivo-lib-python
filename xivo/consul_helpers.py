@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -42,7 +41,7 @@ class MissingConfigurationError(RegistererError):
     pass
 
 
-class ServiceCatalogRegistration(object):
+class ServiceCatalogRegistration:
     def __init__(
         self,
         service_name,
@@ -131,7 +130,7 @@ class ServiceCatalogRegistration(object):
         return True
 
 
-class Registerer(object):
+class Registerer:
     def __init__(self, name, uuid, consul_config, service_discovery_config):
         self._service_id = str(uuid4())
         self._service_name = name
@@ -283,7 +282,7 @@ class NotifyingRegisterer(Registerer):
         self._publisher.publish(event)
 
 
-class ServiceFinder(object):
+class ServiceFinder:
     def __init__(self, consul_config):
         self._dc_url = '{scheme}://{host}:{port}/v1/catalog/datacenters'.format(
             **consul_config
