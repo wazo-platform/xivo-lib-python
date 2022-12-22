@@ -1,14 +1,6 @@
 # Copyright 2017-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import sys
-
-python_major_version = sys.version_info.major
-if python_major_version < 3:
-    raise ImportError(
-        f'Marshamallow library is incompatible with Python version {sys.version}'
-    )
-
 from marshmallow import ValidationError  # noqa: E402
 from marshmallow.validate import (  # noqa: E402
     ContainsOnly as _ContainsOnly,
