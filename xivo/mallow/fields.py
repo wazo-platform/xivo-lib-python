@@ -1,6 +1,8 @@
 # Copyright 2017-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import ipaddress
+
 from marshmallow.fields import (  # noqa: E402
     Boolean as _Boolean,
     Constant as _Constant,
@@ -18,12 +20,6 @@ from marshmallow.fields import (  # noqa: E402
     URL as _URL,
     UUID as _UUID,
 )
-
-ipaddress_available = True
-try:
-    import ipaddress  # stdlib in python3, needs to be installed in python2
-except ImportError:
-    ipaddress_available = False
 
 
 class _StringifiedDict(dict):
@@ -237,11 +233,6 @@ class IP(_String):
             }
         }
     )
-
-    def __init__(self, *args, **kwargs):
-        if not ipaddress_available:
-            raise RuntimeError('IP field requires the python ipaddress library')
-        super().__init__(*args, **kwargs)
 
     def _deserialize(self, value, attr, data, **kwargs):
         deserialized = super()._deserialize(value, attr, data, **kwargs)
