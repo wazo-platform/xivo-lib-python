@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2018-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
@@ -13,7 +12,7 @@ from hamcrest import (
     has_property,
     instance_of,
 )
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 from requests import HTTPError, RequestException
 from unittest import TestCase
 from xivo.auth_verifier import AuthServerUnreachable

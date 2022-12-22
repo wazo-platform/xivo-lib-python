@@ -1,16 +1,6 @@
 # Copyright 2017-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import sys
-
-python_major_version = sys.version_info.major
-if python_major_version < 3:
-    raise ImportError(
-        'Marshamallow library is incompatible with Python version {version}'.format(
-            version=sys.version
-        )
-    )
-
 from marshmallow import ValidationError  # noqa: E402
 from marshmallow.validate import (  # noqa: E402
     ContainsOnly as _ContainsOnly,
@@ -54,7 +44,7 @@ class ContainsOnly(_ContainsOnly):
     constraint_id = 'enum'
 
     def _format_error(self, value):
-        msg = super(ContainsOnly, self)._format_error(value)
+        msg = super()._format_error(value)
 
         return {
             'constraint_id': self.constraint_id,
@@ -68,7 +58,7 @@ class Email(_Email):
     constraint_id = 'email'
 
     def _format_error(self, value):
-        msg = super(Email, self)._format_error(value)
+        msg = super()._format_error(value)
 
         return {
             'constraint_id': self.constraint_id,
@@ -82,7 +72,7 @@ class Equal(_Equal):
     constraint_id = 'equal'
 
     def _format_error(self, value):
-        msg = super(Equal, self)._format_error(value)
+        msg = super()._format_error(value)
 
         return {
             'constraint_id': self.constraint_id,
@@ -96,7 +86,7 @@ class Length(_Length):
     constraint_id = 'length'
 
     def _format_error(self, value, message):
-        msg = super(Length, self)._format_error(value, message)
+        msg = super()._format_error(value, message)
         if self.equal:
             constraint = {'equal': self.equal}
         else:
@@ -114,7 +104,7 @@ class OneOf(_OneOf):
     constraint_id = 'enum'
 
     def _format_error(self, value):
-        msg = super(OneOf, self)._format_error(value)
+        msg = super()._format_error(value)
 
         return {
             'constraint_id': self.constraint_id,
@@ -128,7 +118,7 @@ class NoneOf(_NoneOf):
     constraint_id = 'ban'
 
     def _format_error(self, value):
-        msg = super(NoneOf, self)._format_error(value)
+        msg = super()._format_error(value)
 
         return {
             'constraint_id': self.constraint_id,
@@ -142,7 +132,7 @@ class Predicate(_Predicate):
     constraint_id = 'predicate'
 
     def _format_error(self, value):
-        msg = super(Predicate, self)._format_error(value)
+        msg = super()._format_error(value)
 
         return {
             'constraint_id': self.constraint_id,
@@ -156,7 +146,7 @@ class Range(_Range):
     constraint_id = 'range'
 
     def _format_error(self, value, *args):
-        msg = super(Range, self)._format_error(value, *args)
+        msg = super()._format_error(value, *args)
         constraint = {}
         if self.min is not None:
             constraint['min'] = self.min
@@ -175,7 +165,7 @@ class Regexp(_Regexp):
     constraint_id = 'regex'
 
     def _format_error(self, value):
-        msg = super(Regexp, self)._format_error(value)
+        msg = super()._format_error(value)
 
         return {
             'constraint_id': self.constraint_id,
@@ -189,7 +179,7 @@ class URL(_URL):
     constraint_id = 'url'
 
     def _format_error(self, value):
-        msg = super(URL, self)._format_error(value)
+        msg = super()._format_error(value)
 
         return {
             'constraint_id': self.constraint_id,

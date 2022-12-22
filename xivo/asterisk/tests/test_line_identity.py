@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -19,8 +18,8 @@ class TestLineIdentity(unittest.TestCase):
         assert_that(result, equal_to(expected_line_identity))
 
     def test_line_identity_from_channel_local_channels(self):
-        local_chan = u'Local/id-292@agentcallback-0000000f;1'
-        expected = u'Local/id-292@agentcallback;1'.lower()
+        local_chan = 'Local/id-292@agentcallback-0000000f;1'
+        expected = 'Local/id-292@agentcallback;1'.lower()
 
         result = line_identity.identity_from_channel(local_chan)
 

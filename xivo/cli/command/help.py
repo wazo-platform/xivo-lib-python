@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-# Copyright (C) 2013-2014 Avencall
+# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import print_function
-from __future__ import unicode_literals
 
 from operator import attrgetter
 from xivo.cli.command.base import BaseCommand
@@ -43,6 +40,6 @@ class HelpCommand(BaseCommand):
         try:
             command = self._command_registry.get_command(words)
         except NoMatchingCommandError:
-            print('error: no such command "{0}"'.format(' '.join(words)))
+            print(f'error: no such command "{" ".join(words)}"')
         else:
             print(command.format_usage())

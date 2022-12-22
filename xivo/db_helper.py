@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
@@ -10,7 +9,7 @@ def db_user_exists(cursor, user):
 
 
 def create_db_user(cursor, user, password):
-    sql = 'CREATE ROLE "{}" WITH LOGIN PASSWORD %s'.format(user)
+    sql = f'CREATE ROLE "{user}" WITH LOGIN PASSWORD %s'
     cursor.execute(sql, (password,))
 
 
@@ -24,9 +23,7 @@ def db_exists(cursor, name):
 
 
 def create_db(cursor, db_name, owner):
-    sql = """CREATE DATABASE "{}" WITH OWNER "{}" ENCODING 'UTF8'""".format(
-        db_name, owner
-    )
+    sql = f"""CREATE DATABASE "{db_name}" WITH OWNER "{owner}" ENCODING 'UTF8'"""
     cursor.execute(sql)
 
 

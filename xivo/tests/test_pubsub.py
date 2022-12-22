@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2013-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -8,8 +7,7 @@ from hamcrest import (
     assert_that,
     is_,
 )
-from mock import Mock
-from mock import patch
+from unittest.mock import Mock, patch
 
 from ..pubsub import Pubsub, CallbackCollector
 

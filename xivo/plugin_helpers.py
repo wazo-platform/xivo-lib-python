@@ -1,18 +1,17 @@
-# Copyright 2017-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
 
 from collections import OrderedDict
 from functools import partial
-from six import iteritems
 from stevedore.named import NamedExtensionManager
 
 logger = logging.getLogger(__name__)
 
 
 def enabled_names(plugins_dict):
-    return [name for name, enabled in iteritems(plugins_dict) if enabled]
+    return [name for name, enabled in plugins_dict.items() if enabled]
 
 
 def on_load_failure(manager, entrypoint, exception):

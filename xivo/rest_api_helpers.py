@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -46,7 +45,7 @@ def load_all_api_specs(entry_point_group, spec_filename):
         try:
             spec = yaml.safe_load(resource_string(module.module_name, spec_filename))
             yield spec
-        except IOError:
+        except OSError:
             logger.debug('API spec for module "%s" does not exist', module.module_name)
         except ImportError:
             logger.warning('Could not load module %s', module.module_name)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -42,7 +41,7 @@ class MissingConfigurationError(RegistererError):
     pass
 
 
-class ServiceCatalogRegistration(object):
+class ServiceCatalogRegistration:
     def __init__(
         self,
         service_name,
@@ -131,7 +130,7 @@ class ServiceCatalogRegistration(object):
         return True
 
 
-class Registerer(object):
+class Registerer:
     def __init__(self, name, uuid, consul_config, service_discovery_config):
         self._service_id = str(uuid4())
         self._service_name = name
@@ -140,11 +139,11 @@ class Registerer(object):
             self._advertise_port = service_discovery_config['advertise_port']
             self._tags = [uuid, name] + service_discovery_config.get('extra_tags', [])
 
-            self._ttl_interval = '{}s'.format(service_discovery_config['ttl_interval'])
+            self._ttl_interval = f'{service_discovery_config["ttl_interval"]}s'
         except KeyError as e:
             raise MissingConfigurationError(str(e))
         self._consul_config = consul_config
-        self._check_id = 'service:{}'.format(self._service_id)
+        self._check_id = f'service:{self._service_id}'
 
     @property
     def _client(self):
@@ -171,7 +170,7 @@ class Registerer(object):
             )
             if not registered:
                 raise RegistererError(
-                    '{} registration on Consul failed'.format(self._service_name)
+                    f'{self._service_name} registration on Consul failed'
                 )
 
         except (ConnectionError, ConsulException) as e:
@@ -242,15 +241,13 @@ def _find_address(main_iface):
 
 class NotifyingRegisterer(Registerer):
     def __init__(self, name, uuid, consul_config, service_discovery_config, bus_config):
-        super(NotifyingRegisterer, self).__init__(
-            name, uuid, consul_config, service_discovery_config
-        )
+        super().__init__(name, uuid, consul_config, service_discovery_config)
         self._publisher = BusPublisher(
             name='consul-helper', service_uuid=uuid, **bus_config
         )
 
     def register(self):
-        super(NotifyingRegisterer, self).register()
+        super().register()
         event = ServiceRegisteredEvent(
             self._service_name,
             self._service_id,
@@ -263,7 +260,7 @@ class NotifyingRegisterer(Registerer):
     def deregister(self):
         exception = None
         try:
-            should_send_msg = super(NotifyingRegisterer, self).deregister()
+            should_send_msg = super().deregister()
         except RegistererError as e:
             should_send_msg = True
             exception = e
@@ -283,7 +280,7 @@ class NotifyingRegisterer(Registerer):
         self._publisher.publish(event)
 
 
-class ServiceFinder(object):
+class ServiceFinder:
     def __init__(self, consul_config):
         self._dc_url = '{scheme}://{host}:{port}/v1/catalog/datacenters'.format(
             **consul_config
@@ -310,7 +307,7 @@ class ServiceFinder(object):
         return response.json()
 
     def _list_running_services(self, service_name, datacenter, tag):
-        url = '{}/{}'.format(self._health_url, service_name)
+        url = f'{self._health_url}/{service_name}'
         params = {'dc': datacenter, 'passing': True}
         if tag:
             params['tag'] = tag

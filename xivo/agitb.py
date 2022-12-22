@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """More comprehensive traceback formatting for AGI in Python.
@@ -107,7 +106,7 @@ def text(value, context=5):
     pyver = 'Python ' + sys.version.split()[0] + ': ' + sys.executable
     date = time.ctime(time.time())
     head = (
-        "%s\n%s\n%s\n" % (str(etype), pyver, date)
+        f"{str(etype)}\n{pyver}\n{date}\n"
         + '''
 A problem occurred in a Python script.  Here is the sequence of
 function calls leading up to the error, in the order they occurred.
@@ -144,7 +143,7 @@ function calls leading up to the error, in the order they occurred.
 
         xvars = scanvars(reader, frame, lcals)
 
-        rows = [' %s %s' % (filen, call)]
+        rows = [f' {filen} {call}']
         if index is not None:
             i = lnum - index
             for line in lines:
@@ -164,18 +163,18 @@ function calls leading up to the error, in the order they occurred.
                     name = name
                 else:
                     name = where + name.split('.')[-1]
-                dump.append('%s = %s' % (name, pydoc.text.repr(value)))
+                dump.append(f'{name} = {pydoc.text.repr(value)}')
             else:
                 dump.append(name + ' undefined')
 
         rows.append('\n'.join(dump))
         frames.append('\n%s\n' % '\n'.join(rows))
 
-    exception = ['%s: %s' % (str(etype), str(evalue))]
+    exception = [f'{str(etype)}: {str(evalue)}']
     if isinstance(evalue, types.InstanceType):
         for name in dir(evalue):
             value = pydoc.text.repr(getattr(evalue, name))
-            exception.append('\n%s%s = %s' % (" " * 4, name, value))
+            exception.append(f'\n{" " * 4}{name} = {value}')
 
     return (
         head

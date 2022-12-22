@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-# Copyright 2014-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
 
-from mock import patch
-from mock import sentinel
+from unittest.mock import patch, sentinel
 from xivo import daemonize
 
 

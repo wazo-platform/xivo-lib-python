@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -53,7 +52,7 @@ class TestCallerID(unittest.TestCase):
 
         result = caller_id.assemble_caller_id(fullname, number)
 
-        assert_that(result, equal_to('"%s" <%s>' % (fullname, number)))
+        assert_that(result, equal_to(f'"{fullname}" <{number}>'))
 
     def test_assemble_caller_id_without_extension(self):
         fullname = 'User 1'

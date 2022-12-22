@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2018-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
@@ -18,33 +17,27 @@ except ImportError:
 class InvalidTenant(Exception):
     def __init__(self, tenant_uuid=None):
         if tenant_uuid:
-            super(InvalidTenant, self).__init__(
-                'Invalid tenant "{uuid}"'.format(uuid=tenant_uuid)
-            )
+            super().__init__(f'Invalid tenant "{tenant_uuid}"')
         else:
-            super(InvalidTenant, self).__init__('Invalid tenant')
+            super().__init__('Invalid tenant')
 
 
 class InvalidToken(Exception):
     def __init__(self, token_id=None):
         if token_id:
-            super(InvalidToken, self).__init__(
-                'Invalid token "{id}"'.format(id=token_id)
-            )
+            super().__init__(f'Invalid token "{token_id}"')
         else:
-            super(InvalidToken, self).__init__('Invalid token')
+            super().__init__('Invalid token')
 
 
 class InvalidUser(Exception):
     def __init__(self, user_uuid):
-        super(InvalidUser, self).__init__(
-            'Invalid user "{uuid}"'.format(uuid=user_uuid)
-        )
+        super().__init__(f'Invalid user "{user_uuid}"')
 
 
 class UnauthorizedTenant(rest_api_helpers.APIException):
     def __init__(self, tenant_uuid):
-        super(UnauthorizedTenant, self).__init__(
+        super().__init__(
             status_code=401,
             message='Unauthorized tenant',
             error_id='unauthorized-tenant',
@@ -52,7 +45,7 @@ class UnauthorizedTenant(rest_api_helpers.APIException):
         )
 
 
-class Tenant(object):
+class Tenant:
     @classmethod
     def autodetect(cls, tokens):
         token = tokens.from_headers()
@@ -100,13 +93,13 @@ class Tenant(object):
         return self
 
     def __repr__(self):
-        result = '<Tenant: {uuid}>'.format(uuid=self.uuid)
+        result = f'<Tenant: {self.uuid}>'
         if self.name:
-            result = '<Tenant: {uuid} "{name}">'.format(uuid=self.uuid, name=self.name)
+            result = f'<Tenant: {self.uuid} "{self.name}">'
         return result
 
 
-class Tokens(object):
+class Tokens:
     def __init__(self, auth):
         self._auth = auth
 
@@ -125,7 +118,7 @@ class Tokens(object):
         return self.get(token_id)
 
 
-class Token(object):
+class Token:
     def __init__(self, token_dict, auth):
         self._auth = auth
         self._token_dict = token_dict
@@ -174,7 +167,7 @@ class Token(object):
         return tenants
 
 
-class Users(object):
+class Users:
     def __init__(self, auth):
         self._auth = auth
 
@@ -182,7 +175,7 @@ class Users(object):
         return User(self._auth, user_uuid)
 
 
-class User(object):
+class User:
     def __init__(self, auth, uuid, **kwargs):
         self._auth = auth
         self._uuid = uuid

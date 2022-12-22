@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -19,9 +18,7 @@ from hamcrest import (
     is_not,
     raises,
 )
-from mock import patch
-from mock import Mock
-from mock import ANY
+from unittest.mock import patch, Mock, ANY
 from yaml.parser import ParserError
 
 from ..config_helper import ConfigParser
@@ -36,10 +33,8 @@ XIVO_UUID = '08c56466-8f29-45c7-9856-92bf1ba89b82'
 
 def _none_existent_filename():
     while True:
-        filename = '{}-{}'.format(
-            os.path.dirname(__file__),
-            ''.join(random.choice(string.ascii_lowercase) for _ in range(3)),
-        )
+        random_suffix = "".join(random.choice(string.ascii_lowercase) for _ in range(3))
+        filename = f'{os.path.dirname(__file__)}-{random_suffix}'
         if not os.path.exists(filename):
             return filename
 
@@ -61,14 +56,14 @@ class TestPrintErrorHandler(unittest.TestCase):
         self.name = 'foobar'
         self.e = EnvironmentError((42, 'Bah'))
 
-    @patch('six.moves.builtins.print')
+    @patch('builtins.print')
     def test_on_parse_config_file_env_error(self, mocked_print):
         self.error_handler.on_parse_config_file_env_error(self.name, self.e)
 
         printed_message = mocked_print.call_args_list[0]
         assert_that(printed_message.startswith('Could not read config file'))
 
-    @patch('six.moves.builtins.print')
+    @patch('builtins.print')
     def test_on_parse_config_dir_env_error(self, mocked_print):
         self.error_handler.on_parse_config_dir_env_error(self.name, self.e)
 

@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
-# Copyright 2013-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import unicode_literals
 
 from xivo.cli.exception import CommandAlreadyRegisteredError, NoMatchingCommandError
 
 
-class CommandRegistry(object):
+class CommandRegistry:
     def __init__(self):
         self._commands = []
 
@@ -51,7 +49,7 @@ class CommandRegistry(object):
         return None
 
 
-class _NamedCommandDecorator(object):
+class _NamedCommandDecorator:
     def __init__(self, command, name, words):
         self._command = command
         self.name = name
@@ -61,9 +59,9 @@ class _NamedCommandDecorator(object):
     def format_usage(self):
         usage = self._command.usage
         if usage:
-            return 'usage: {0} {1}'.format(self.name, usage)
+            return f'usage: {self.name} {usage}'
         else:
-            return 'usage: {0}'.format(self.name)
+            return f'usage: {self.name}'
 
     def __getattr__(self, name):
         return getattr(self._command, name)

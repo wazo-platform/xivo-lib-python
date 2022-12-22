@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2007-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2007-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -12,7 +11,7 @@ from functools import partial
 logger = logging.getLogger(__name__)
 
 
-class Pubsub(object):
+class Pubsub:
     def __init__(self):
         self._subscribers = defaultdict(list)
         self._exception_handler = self.default_exception_handler
@@ -55,7 +54,7 @@ class Pubsub(object):
             self._subscribers.pop(topic, None)
 
 
-class CallbackCollector(object):
+class CallbackCollector:
 
     _TOPIC = 'callback-collector'
 

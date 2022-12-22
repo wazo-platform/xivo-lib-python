@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright 2012-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2012-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import re
@@ -29,5 +28,5 @@ def extract_displayname(caller_id):
 
 def assemble_caller_id(fullname, number):
     if number:
-        return '"%s" <%s>' % (fullname, number)
-    return '"%s"' % fullname
+        return f'"{fullname}" <{number}>'
+    return f'"{fullname}"'
