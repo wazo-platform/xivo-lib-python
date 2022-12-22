@@ -52,7 +52,7 @@ class TestCallerID(unittest.TestCase):
 
         result = caller_id.assemble_caller_id(fullname, number)
 
-        assert_that(result, equal_to('"%s" <%s>' % (fullname, number)))
+        assert_that(result, equal_to(f'"{fullname}" <{number}>'))
 
     def test_assemble_caller_id_without_extension(self):
         fullname = 'User 1'

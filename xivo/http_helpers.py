@@ -40,7 +40,7 @@ def reverse_proxy_fix_api_spec(api_spec):
     if prefix:
         api_spec['schemes'] = ['https']
         base_path = api_spec.get('basePath', '')
-        api_spec['basePath'] = '{}{}'.format(prefix, base_path)
+        api_spec['basePath'] = f'{prefix}{base_path}'
 
 
 def add_logger(app, logger):
@@ -90,7 +90,7 @@ class LazyHeaderFormatter:
     def __str__(self):
         headers_dict = self._to_dict(self._raw_headers)
         filtered_headers = self._filter_sensible_fields(headers_dict)
-        return '{}'.format(filtered_headers)
+        return f'{filtered_headers}'
 
     def _filter_sensible_fields(self, headers):
         if 'Authorization' in headers:
@@ -123,7 +123,7 @@ def _log_request(url, response, hidden_fields=None):
         'response to %s%s: %s %s %s',
         request.remote_addr,
         (
-            (' in {:.2f}s'.format(time.time() - g.request_time))
+            (f' in {time.time() - g.request_time:.2f}s')
             if hasattr(g, 'request_time')
             else ''
         ),
@@ -184,7 +184,7 @@ def ssl_adapter(certificate, private_key):
 
 
 def _check_file_readable(file_path):
-    with open(file_path, 'r'):
+    with open(file_path):
         pass
 
 
@@ -192,7 +192,7 @@ def list_routes(app):
     output = []
     for rule in app.url_map.iter_rules():
         methods = ','.join(rule.methods)
-        line = "{:50s} {:20s} {}".format(rule.endpoint, methods, rule)
+        line = f"{rule.endpoint:50s} {methods:20s} {rule}"
         output.append(line)
 
     return output

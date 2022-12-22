@@ -34,7 +34,7 @@ def remove_if_stale_pidfile(pidfile):
     try:
         try:
             pid_maydaemon = int(open(pidfile).readline().strip())
-        except IOError as e:
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 return  # nothing to suppress, so do nothing...
             raise
@@ -48,7 +48,7 @@ def remove_if_stale_pidfile(pidfile):
             )
             if len(other_cmdline) and other_cmdline[-1] == "":
                 other_cmdline.pop()
-        except IOError as e:
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 # no process with the PID extracted from the
                 # pidfile, so no problem to remove the latter
@@ -193,7 +193,7 @@ def unlock_pidfile(pidfile):
             os.unlink(pidfile)
         else:
             log.error("can not force unlock the pidfile of others")
-    except (IOError, OSError) as e:
+    except OSError as e:
         log.error("%s: %s", type(e).__name__, e)
 
 

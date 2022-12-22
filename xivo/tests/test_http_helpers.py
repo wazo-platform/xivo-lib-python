@@ -70,33 +70,29 @@ class TestBodyFormatter(unittest.TestCase):
         body = b'{"one": 1, "two": 2, "three": 3}'
 
         formatter = BodyFormatter(body, hidden_fields=None)
-        result = '{}'.format(formatter)
 
-        _assert_json_equals(result, {'one': 1, 'two': 2, 'three': 3})
+        _assert_json_equals(f'{formatter}', {'one': 1, 'two': 2, 'three': 3})
 
     def test_valid_json_body_with_hidden_field(self):
         body = b'{"one": 1, "two": 2, "three": 3}'
 
         formatter = BodyFormatter(body, hidden_fields=['two'])
-        result = '{}'.format(formatter)
 
-        _assert_json_equals(result, {'one': 1, 'two': '<hidden>', 'three': 3})
+        _assert_json_equals(f'{formatter}', {'one': 1, 'two': '<hidden>', 'three': 3})
 
     def test_invalid_json_body_with_hidden_field(self):
         body = b'{"one": 1, "two": 2, "three": 3,}'  # See that trialing coma
 
         formatter = BodyFormatter(body, hidden_fields=['two'])
-        result = '{}'.format(formatter)
 
-        assert_that(result, equal_to('<hidden>'))
+        assert_that(f'{formatter}', equal_to('<hidden>'))
 
     def test_invalid_json_body_with_hidden_field_no_match(self):
         body = b'{"one": 1, "two": 2, "three": 3,}'  # See that trialing coma
 
         formatter = BodyFormatter(body, hidden_fields=['four'])
-        result = '{}'.format(formatter)
 
-        assert_that(result, equal_to('{"one": 1, "two": 2, "three": 3,}'))
+        assert_that(f'{formatter}', equal_to('{"one": 1, "two": 2, "three": 3,}'))
 
 
 class TestHeaderFormatter(unittest.TestCase):
@@ -104,24 +100,19 @@ class TestHeaderFormatter(unittest.TestCase):
         raw = {'X-Auth-Token': '87916129-1897-408c-a12f-bc629ca6c480'}
         formatter = LazyHeaderFormatter(raw)
 
-        result = '{}'.format(formatter)
-
         assert_that(
-            result, equal_to("{'X-Auth-Token': 'XXXXXXXX-XXXX-XXXX-XXXX-XXXX9ca6c480'}")
+            f'{formatter}',
+            equal_to("{'X-Auth-Token': 'XXXXXXXX-XXXX-XXXX-XXXX-XXXX9ca6c480'}"),
         )
 
     def test_that_basic_authorization_is_masked(self):
         raw = {'Authorization': 'Basic cm9vdDpzdXBlcn1233M='}
         formatter = LazyHeaderFormatter(raw)
 
-        result = '{}'.format(formatter)
-
-        assert_that(result, equal_to("{'Authorization': 'Basic <hidden>'}"))
+        assert_that(f'{formatter}', equal_to("{'Authorization': 'Basic <hidden>'}"))
 
     def test_that_all_other_authorization_are_completely_masked(self):
         raw = {'Authorization': 'unknown'}
         formatter = LazyHeaderFormatter(raw)
 
-        result = '{}'.format(formatter)
-
-        assert_that(result, equal_to("{'Authorization': '<hidden>'}"))
+        assert_that(f'{formatter}', equal_to("{'Authorization': '<hidden>'}"))

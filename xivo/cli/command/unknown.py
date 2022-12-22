@@ -12,7 +12,7 @@ class _BaseUnknownCommand(BaseCommand):
     _error_msg = None
 
     def __init__(self, words):
-        self._error_msg = 'no such command: {}'.format(words[0])
+        self._error_msg = f'no such command: {words[0]}'
 
 
 class PrintingUnknownCommand(_BaseUnknownCommand):

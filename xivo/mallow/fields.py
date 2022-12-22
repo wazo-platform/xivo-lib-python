@@ -6,9 +6,7 @@ import sys
 python_major_version = sys.version_info.major
 if python_major_version < 3:
     raise ImportError(
-        'Marshamallow library is incompatible with Python version {version}'.format(
-            version=sys.version
-        )
+        f'Marshamallow library is incompatible with Python version {sys.version}'
     )
 
 from marshmallow.fields import (  # noqa: E402
@@ -251,10 +249,10 @@ class IP(_String):
     def __init__(self, *args, **kwargs):
         if not ipaddress_available:
             raise RuntimeError('IP field requires the python ipaddress library')
-        super(IP, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _deserialize(self, value, attr, data, **kwargs):
-        deserialized = super(IP, self)._deserialize(value, attr, data, **kwargs)
+        deserialized = super()._deserialize(value, attr, data, **kwargs)
         return self._validated(deserialized)
 
     def _validated(self, value):

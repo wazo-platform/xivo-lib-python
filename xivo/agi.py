@@ -182,7 +182,7 @@ class AGI:
         try:
             self.send_command(command, *args)
             return self.get_result()
-        except IOError as e:
+        except OSError as e:
             if e.errno == 32:
                 # Broken Pipe * let us go
                 raise AGISIGPIPEHangup("Received SIGPIPE")
@@ -659,9 +659,7 @@ class AGI:
         result = self.execute('DATABASE GET', self._quote(family), self._quote(key))
         res, value = result['result']
         if res == '0':
-            raise AGIDBError(
-                'Key not found in database: family=%s, key=%s' % (family, key)
-            )
+            raise AGIDBError(f'Key not found in database: family={family}, key={key}')
         elif res == '1':
             return value
         else:
@@ -695,7 +693,7 @@ class AGI:
         res, _ = result['result']  # pylint: disable-msg=W0612
         if res == '0':
             raise AGIDBError(
-                'Unable to delete from database: family=%s, key=%s' % (family, key)
+                f'Unable to delete from database: family={family}, key={key}'
             )
 
     def database_deltree(self, family, key=''):
@@ -708,7 +706,7 @@ class AGI:
         res, _ = result['result']  # pylint: disable-msg=W0612
         if res == '0':
             raise AGIDBError(
-                'Unable to delete tree from database: family=%s, key=%s' % (family, key)
+                f'Unable to delete tree from database: family={family}, key={key}'
             )
 
     def noop(self):

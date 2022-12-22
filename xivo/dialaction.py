@@ -4,8 +4,8 @@
 
 def action(type_, subtype=None):
     type_ = type_ or ''
-    subtype = ':{}'.format(subtype) if subtype else ''
-    return '{}{}'.format(type_, subtype)
+    subtype = f':{subtype}' if subtype else ''
+    return f'{type_}{subtype}'
 
 
 def action_type(action):

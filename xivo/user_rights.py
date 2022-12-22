@@ -21,6 +21,4 @@ def change_user(user):
         os.initgroups(user.pw_name, gid)
         os.setuid(uid)
     except OSError as e:
-        abort(
-            'Could not change owner to user {user}: {error}'.format(user=user, error=e)
-        )
+        abort(f'Could not change owner to user {user}: {e}')

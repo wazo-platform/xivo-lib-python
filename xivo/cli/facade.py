@@ -20,7 +20,7 @@ from xivo.cli.source.input import InputRawCommandLineSource
 class FacadeInterpreter:
     def __init__(self, prompt=None, history_file=None, error_handler=None):
         if prompt is None:
-            prompt = '{0}> '.format(os.path.basename(sys.argv[0]))
+            prompt = f'{os.path.basename(sys.argv[0])}> '
         if history_file:
             history_file = os.path.expanduser(history_file)
         self._prompt = prompt

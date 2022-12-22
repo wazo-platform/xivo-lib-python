@@ -40,11 +40,11 @@ class ServiceConsumer(ConsumerMixin):
         return [Consumer(self._queue, callbacks=[self.on_message])]
 
     def on_connection_error(self, exc, interval):
-        super(ServiceConsumer, self).on_connection_error(exc, interval)
+        super().on_connection_error(exc, interval)
         self._is_running = False
 
     def on_connection_revived(self):
-        super(ServiceConsumer, self).on_connection_revived()
+        super().on_connection_revived()
         self._is_running = True
 
     def on_message(self, body, message):
@@ -76,7 +76,7 @@ class _BaseTest(AssetLaunchingTestCase):
             self._run_docker_compose_cmd(['run', '-d', self.service])
         else:
             self._run_docker_compose_cmd(
-                ['run', '-d', '-e', 'ADVERTISE_ADDR={}'.format(ip), self.service]
+                ['run', '-d', '-e', f'ADVERTISE_ADDR={ip}', self.service]
             )
 
         status = self.service_status('myservice')
@@ -86,13 +86,11 @@ class _BaseTest(AssetLaunchingTestCase):
             yield ip or status['NetworkSettings']['Networks'][network_name]['IPAddress']
         finally:
             id_ = status['Id']
-            self._run_cmd('docker stop --time 20 {}'.format(id_))
+            self._run_cmd(f'docker stop --time 20 {id_}')
 
     def _run_docker_compose_cmd(self, cmd):
         self._run_cmd(
-            'docker-compose {} {}'.format(
-                ' '.join(self._docker_compose_options()), ' '.join(cmd)
-            )
+            f'docker-compose {" ".join(self._docker_compose_options())} {" ".join(cmd)}'
         )
 
     # NOTE(fblackburn): override to include containers started with run command
@@ -123,7 +121,7 @@ class TestServiceDiscoveryDisabled(_BaseTest):
 
     def test_that_my_service_can_start_when_service_disc_is_disabled(self):
         def logs_says_disabled():
-            url = 'http://{}:{}/0.1/infos'.format(ip, 6262)
+            url = f'http://{ip}:{6262}/0.1/infos'
             try:
                 r = requests.get(url)
             except Exception:

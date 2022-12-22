@@ -18,7 +18,7 @@ class _YAMLExecLoader(yaml.SafeLoader):
 
 class _YAMLExecTag(yaml.YAMLObject):
 
-    yaml_tag = u'!exec'
+    yaml_tag = '!exec'
     yaml_loader = _YAMLExecLoader
 
     @classmethod
@@ -45,18 +45,18 @@ class ErrorHandler:
 class PrintErrorHandler(ErrorHandler):
     def on_parse_config_file_env_error(self, config_file_name, e):
         print(
-            'Could not read config file {}: {}'.format(config_file_name, e),
+            f'Could not read config file {config_file_name}: {e}',
             file=sys.stderr,
         )
 
     def on_parse_config_dir_env_error(self, directory_name, e):
         print(
-            'Could not read config dir {}: {}'.format(directory_name, e),
+            f'Could not read config dir {directory_name}: {e}',
             file=sys.stderr,
         )
 
     def on_parse_config_dir_parse_exception(self, filename, e):
-        print('Could not read config file {}: {}'.format(filename, e), file=sys.stderr)
+        print(f'Could not read config file {filename}: {e}', file=sys.stderr)
 
 
 class ConfigParser:
@@ -68,7 +68,7 @@ class ConfigParser:
             with open(config_file_name) as config_file:
                 data = yaml.load(config_file, Loader=_YAMLExecLoader)
             return data if data else {}
-        except EnvironmentError as e:
+        except OSError as e:
             self._error_handler.on_parse_config_file_env_error(config_file_name, e)
             return {}
 
@@ -82,7 +82,7 @@ class ConfigParser:
         full_path = partial(os.path.join, directory_name)
         try:
             extra_config_filenames = os.listdir(directory_name)
-        except EnvironmentError as e:
+        except OSError as e:
             self._error_handler.on_parse_config_dir_env_error(directory_name, e)
             return []
 
@@ -142,7 +142,7 @@ class ConfigParser:
 
 class UUIDNotFound(RuntimeError):
     def __init__(self):
-        super(UUIDNotFound, self).__init__('XIVO_UUID environment variable is not set')
+        super().__init__('XIVO_UUID environment variable is not set')
 
 
 def get_xivo_uuid(logger):

@@ -59,9 +59,9 @@ class _NamedCommandDecorator:
     def format_usage(self):
         usage = self._command.usage
         if usage:
-            return 'usage: {0} {1}'.format(self.name, usage)
+            return f'usage: {self.name} {usage}'
         else:
-            return 'usage: {0}'.format(self.name)
+            return f'usage: {self.name}'
 
     def __getattr__(self, name):
         return getattr(self._command, name)

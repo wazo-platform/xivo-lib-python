@@ -33,10 +33,8 @@ XIVO_UUID = '08c56466-8f29-45c7-9856-92bf1ba89b82'
 
 def _none_existent_filename():
     while True:
-        filename = '{}-{}'.format(
-            os.path.dirname(__file__),
-            ''.join(random.choice(string.ascii_lowercase) for _ in range(3)),
-        )
+        random_suffix = "".join(random.choice(string.ascii_lowercase) for _ in range(3))
+        filename = f'{os.path.dirname(__file__)}-{random_suffix}'
         if not os.path.exists(filename):
             return filename
 

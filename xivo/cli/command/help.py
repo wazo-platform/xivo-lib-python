@@ -40,6 +40,6 @@ class HelpCommand(BaseCommand):
         try:
             command = self._command_registry.get_command(words)
         except NoMatchingCommandError:
-            print('error: no such command "{0}"'.format(' '.join(words)))
+            print(f'error: no such command "{" ".join(words)}"')
         else:
             print(command.format_usage())

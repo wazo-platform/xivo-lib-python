@@ -28,5 +28,5 @@ def extract_displayname(caller_id):
 
 def assemble_caller_id(fullname, number):
     if number:
-        return '"%s" <%s>' % (fullname, number)
-    return '"%s"' % fullname
+        return f'"{fullname}" <{number}>'
+    return f'"{fullname}"'

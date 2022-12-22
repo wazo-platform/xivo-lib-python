@@ -6,9 +6,7 @@ import sys
 python_major_version = sys.version_info.major
 if python_major_version < 3:
     raise ImportError(
-        'Marshamallow library is incompatible with Python version {version}'.format(
-            version=sys.version
-        )
+        f'Marshamallow library is incompatible with Python version {sys.version}'
     )
 
 
@@ -21,7 +19,7 @@ from .rest_api_helpers import APIException  # noqa: E402
 
 class ValidationError(APIException):
     def __init__(self, errors):
-        super(ValidationError, self).__init__(
+        super().__init__(
             status_code=400,
             message='Sent data is invalid',
             error_id='invalid-data',

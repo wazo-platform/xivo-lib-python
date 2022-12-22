@@ -60,7 +60,7 @@ class Unauthorized(rest_api_helpers.APIException):
         details = {'invalid_token': token}
         if required_access:
             details['required_access'] = required_access
-        super(Unauthorized, self).__init__(
+        super().__init__(
             status_code=401,
             message='Unauthorized',
             error_id='unauthorized',
@@ -73,7 +73,7 @@ class InvalidTokenAPIException(rest_api_helpers.APIException):
         details = {'invalid_token': token, 'reason': 'not_found_or_expired'}
         if required_access:
             details['required_access'] = required_access
-        super(InvalidTokenAPIException, self).__init__(
+        super().__init__(
             status_code=401,
             message='Unauthorized',
             error_id='unauthorized',
@@ -86,7 +86,7 @@ class MissingPermissionsTokenAPIException(rest_api_helpers.APIException):
         details = {'invalid_token': token, 'reason': 'missing_permission'}
         if required_access:
             details['required_access'] = required_access
-        super(MissingPermissionsTokenAPIException, self).__init__(
+        super().__init__(
             status_code=401,
             message='Unauthorized',
             error_id='unauthorized',
@@ -96,7 +96,7 @@ class MissingPermissionsTokenAPIException(rest_api_helpers.APIException):
 
 class AuthServerUnreachable(rest_api_helpers.APIException):
     def __init__(self, host, port, error):
-        super(AuthServerUnreachable, self).__init__(
+        super().__init__(
             status_code=503,
             message='Authentication server unreachable',
             error_id='authentication-server-unreachable',
@@ -285,7 +285,7 @@ class AccessCheck:
             ReservedWord('me', auth_id),
             ReservedWord('my_session', session_id),
         )
-        return re.compile('^{}$'.format(access_regex))
+        return re.compile(f'^{access_regex}$')
 
     @staticmethod
     def _replace_reserved_words(access_regex, *reserved_words):
@@ -298,7 +298,7 @@ class AccessCheck:
 class ReservedWord:
     def __init__(self, word, value):
         self._reserved_word = word
-        self._replacement = '({word}|{value})'.format(word=word, value=value)
+        self._replacement = f'({word}|{value})'
 
     def replace(self, word):
         return self._replacement if word == self._reserved_word else word

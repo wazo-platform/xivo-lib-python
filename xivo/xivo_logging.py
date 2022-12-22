@@ -106,6 +106,6 @@ def get_log_level_by_name(log_level_name):
     log_level_name = log_level_name.upper()
 
     if log_level_name not in levels:
-        raise ValueError('Unknown log level {}'.format(log_level_name))
+        raise ValueError(f'Unknown log level {log_level_name}')
 
     return levels[log_level_name]
