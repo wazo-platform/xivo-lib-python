@@ -1,5 +1,6 @@
 # Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 from functools import wraps  # noqa: E402
 import marshmallow  # noqa: E402
@@ -30,9 +31,9 @@ def handle_validation_exception(func):
 
 
 class ListSchema(marshmallow.Schema):
-    default_sort_column = None
-    sort_columns = []
-    searchable_columns = []
+    default_sort_column: str | None = None
+    sort_columns: list[str] = []
+    searchable_columns: list[str] = []
     default_direction = 'asc'
 
     direction = fields.String(validate=validate.OneOf(['asc', 'desc']))

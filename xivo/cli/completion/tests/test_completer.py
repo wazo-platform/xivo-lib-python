@@ -1,6 +1,6 @@
 # Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
-
+from __future__ import annotations
 
 import unittest
 from unittest.mock import Mock
@@ -16,7 +16,7 @@ class TestCompleter(unittest.TestCase):
         self.completer = CommandLineCompleter(self.command_registry)
 
     def test_complete_next_word_empty_line(self):
-        words = []
+        words: list[str] = []
 
         candidates = self.completer.complete_next_word(words)
 

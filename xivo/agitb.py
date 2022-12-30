@@ -33,10 +33,13 @@ This script was adapted from Ka-Ping Yee's cgitb.
 Modification by Proformatique:
         PyDoc of enable() corrected. (it was the same as in cgitb)
 """
+from __future__ import annotations
 
 __author__ = 'Matthew Nicholson'
 # original __version__ = '0.1.0'
 __version__ = "$Revision$ $Date$"
+
+from typing import Any, NewType
 
 import keyword
 import inspect
@@ -50,11 +53,14 @@ import traceback
 import tokenize
 import types
 
+Undefined = NewType('Undefined', list[str])
 
-__UNDEF__ = []  # a special sentinel object
+__UNDEF__ = Undefined([])  # a special sentinel object
 
 
-def lookup(name, frame, lcals):
+def lookup(
+    name: str, frame: types.FrameType, lcals: dict[str, Any]
+) -> tuple[str | None, list[str] | Undefined]:
     """Find the value for a given name in the given environment."""
     if name in lcals:
         return 'local', lcals[name]
@@ -74,10 +80,13 @@ def lookup(name, frame, lcals):
 def scanvars(reader, frame, lcals):
     """Scan one logical line of Python and look up values of variables used."""
 
-    xvars, lasttoken, parent, prefix, value = [], None, None, '', __UNDEF__
-    for ttype, token, start, end, line in tokenize.generate_tokens(
-        reader
-    ):  # pylint: disable-msg=W0612
+    xvars: list[tuple[str, str | None, list[str] | Undefined]] = []
+    lasttoken: str | None = None
+    parent: list[str] | Undefined | None = None
+    prefix = ''
+    value: list[str] | Undefined = __UNDEF__
+
+    for ttype, token, start, end, line in tokenize.generate_tokens(reader):
         if ttype == tokenize.NEWLINE:
             break
         if ttype == tokenize.NAME and token not in keyword.kwlist:
@@ -89,7 +98,7 @@ def scanvars(reader, frame, lcals):
                 where, value = lookup(token, frame, lcals)
                 xvars.append((token, where, value))
         elif token == '.':
-            prefix += lasttoken + '.'
+            prefix += (lasttoken or '') + '.'
             parent = value
         else:
             parent, prefix = None, ''
@@ -101,9 +110,9 @@ def text(value, context=5):
     """Return a plain text document describing a given traceback."""
 
     etype, evalue, etb = value
-    if isinstance(etype, types.ClassType):
+    if isinstance(etype, type):
         etype = etype.__name__
-    pyver = 'Python ' + sys.version.split()[0] + ': ' + sys.executable
+    pyver = f'Python {sys.version.split()[0]}: {sys.executable}'
     date = time.ctime(time.time())
     head = (
         f"{str(etype)}\n{pyver}\n{date}\n"
@@ -128,7 +137,7 @@ function calls leading up to the error, in the order they occurred.
                     varargs,
                     varkw,
                     lcals,
-                    formatvalue=lambda value: '=' + pydoc.text.repr(value),
+                    formatvalue=lambda v: '=' + pydoc.text.repr(v),  # type: ignore[call-arg]
                 )
             )
 
@@ -146,9 +155,8 @@ function calls leading up to the error, in the order they occurred.
         rows = [f' {filen} {call}']
         if index is not None:
             i = lnum - index
-            for line in lines:
-                num = '%5d ' % i
-                rows.append(num + line.rstrip())
+            for line in lines or []:
+                rows.append(f'{i:5d} {line.rstrip()}')
                 i += 1
 
         done, dump = {}, []
@@ -163,7 +171,7 @@ function calls leading up to the error, in the order they occurred.
                     name = name
                 else:
                     name = where + name.split('.')[-1]
-                dump.append(f'{name} = {pydoc.text.repr(value)}')
+                dump.append(f'{name} = {pydoc.text.repr(value)}')  # type: ignore[call-arg]
             else:
                 dump.append(name + ' undefined')
 
@@ -171,9 +179,9 @@ function calls leading up to the error, in the order they occurred.
         frames.append('\n%s\n' % '\n'.join(rows))
 
     exception = [f'{str(etype)}: {str(evalue)}']
-    if isinstance(evalue, types.InstanceType):
+    if isinstance(evalue, type):
         for name in dir(evalue):
-            value = pydoc.text.repr(getattr(evalue, name))
+            value = pydoc.text.repr(getattr(evalue, name))  # type: ignore[call-arg]
             exception.append(f'\n{" " * 4}{name} = {value}')
 
     return (

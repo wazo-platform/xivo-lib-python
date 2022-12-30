@@ -12,12 +12,12 @@ class _StreamToLogger:
     """
     Fake file-like stream object that redirects writes to a logger instance.
 
-    Source: http://www.electricmonk.nl/log/2011/08/14/redirect-stdout-and-stderr-to-a-logger-in-python/
+    Source: http://www.electricmonk.nl/log/2011/08/14/redirect-stdout-and-stderr-to-a-logger-in-python/  # noqa: E501
     Copyright 2011 by Ferry Boender
     SPDX-License-Identifier: GPL-2.0+
     """
 
-    def __init__(self, logger, log_level=logging.INFO):
+    def __init__(self, logger: logging.Logger, log_level: int = logging.INFO):
         self.logger = logger
         self.log_level = log_level
         self.linebuf = ''
@@ -77,8 +77,12 @@ def setup_logging(
         log_level = logging.DEBUG
     root_logger.setLevel(log_level)
 
-    sys.stdout = _StreamToLogger(logging.getLogger('STDOUT'), logging.INFO)
-    sys.stderr = _StreamToLogger(logging.getLogger('STDERR'), logging.ERROR)
+    sys.stdout = _StreamToLogger(  # type: ignore[assignment]
+        logging.getLogger('STDOUT'), logging.INFO
+    )
+    sys.stderr = _StreamToLogger(  # type: ignore[assignment]
+        logging.getLogger('STDERR'), logging.ERROR
+    )
 
     sys.excepthook = excepthook
 

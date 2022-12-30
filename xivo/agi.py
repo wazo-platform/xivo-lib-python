@@ -30,6 +30,8 @@ To use this library please see the example :
     agi.hangup()
 """
 
+from __future__ import annotations
+
 __version__ = "$Revision$ $Date$"
 __license__ = """
     Copyright 2007-2023 The Wazo Authors  (see the AUTHORS file)
@@ -63,7 +65,8 @@ import sys
 import pprint
 import re
 import signal
-
+from types import FrameType
+from typing import TextIO
 
 DEFAULT_TIMEOUT = 2000  # 2sec timeout used as default for functions that take timeouts
 DEFAULT_RECORD = 20000  # 20sec record time
@@ -103,8 +106,8 @@ class AGIAppError(AGIError):
     pass
 
 
-# there are several different types of hangups we can detect
-# they all are derrived from AGIHangup
+# there are several types of hangups we can detect
+# they all are derived from AGIHangup
 class AGIHangup(AGIAppError):
     pass
 
@@ -140,14 +143,14 @@ class AGI:
     Asterisk.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._got_sighup = False
         signal.signal(signal.SIGHUP, self._handle_sighup)  # handle SIGHUP
-        self.env = {}
+        self.env: dict[str, str] = {}
         self._get_agi_env()
         self.DEBUG_PASSTHROUGH = 0
 
-    def _get_agi_env(self):
+    def _get_agi_env(self) -> None:
         while 1:
             line = sys.stdin.readline().strip()
             if line == '':
@@ -162,22 +165,22 @@ class AGI:
                     self.env[key] = ""
 
     @staticmethod
-    def _quote(string):
+    def _quote(string: str | int) -> str:
         return '"%s"' % (
             str(string).replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ')
         )
 
-    def _handle_sighup(self, _signum, _frame):
+    def _handle_sighup(self, _signum: int, _frame: FrameType | None) -> None:
         """Handle the SIGHUP signal"""
         # pylint: disable-msg=W0613
         self._got_sighup = True
 
-    def test_hangup(self):
-        """This function throws AGIHangup if we have recieved a SIGHUP"""
+    def test_hangup(self) -> None:
+        """This function throws AGIHangup if we have received a SIGHUP"""
         if self._got_sighup:
             raise AGISIGHUPHangup("Received SIGHUP from Asterisk")
 
-    def execute(self, command, *args):
+    def execute(self, command: str, *args: str | int):
         self.test_hangup()
         try:
             self.send_command(command, *args)
@@ -190,27 +193,28 @@ class AGI:
                 raise
 
     @staticmethod
-    def send_command(command, *args):
+    def send_command(command: str, *args: str | int):
         """Send a command to Asterisk"""
-        command = ' '.join([command.strip()] + list(map(str, args))).strip() + "\n"
+        command = ' '.join([command.strip()] + [str(a) for a in args]).strip() + "\n"
         sys.stdout.write(command)
         sys.stdout.flush()
 
-    def get_result(self, stdin=sys.stdin):
+    def get_result(self, stdin: TextIO = sys.stdin) -> dict[str, tuple[str, str]]:
         """Read the result of a command from Asterisk"""
         code = 0
+        response = ''
         result = {'result': ('', '')}
         line = stdin.readline().strip()
         m = re_code.search(line)
         if m:
-            code, response = m.groups()
+            raw_code, response = m.groups()
             if self.DEBUG_PASSTHROUGH:
                 try:
-                    code = int(code)
+                    code = int(raw_code)
                 except ValueError:
                     code = 200
             else:
-                code = int(code)
+                code = int(raw_code)
 
         if code == 200:
             for key, value, data in re_kv.findall(response):
@@ -218,7 +222,7 @@ class AGI:
 
                 # If user hangs up... we get 'hangup' in the data
                 if data == 'hangup':
-                    raise AGIResultHangup("User hungup during execution")
+                    raise AGIResultHangup("User hung up during execution")
 
                 if key == 'result' and value == '-1':
                     raise AGIAppError("Error executing application, or hangup")
@@ -232,8 +236,7 @@ class AGI:
                 usage.append(line)
                 line = stdin.readline().strip()
             usage.append(line)
-            usage = '%s\n' % '\n'.join(usage)
-            raise AGIUsageError(usage)
+            raise AGIUsageError('%s\n' % '\n'.join(usage))
         else:
             raise AGIUnknownError(code, 'Unhandled code or undefined response')
 
@@ -250,7 +253,7 @@ class AGI:
         self.execute('ANSWER')['result'][0]  # pylint: disable-msg=W0104
 
     @staticmethod
-    def code_to_char(code):
+    def code_to_char(code: str) -> str:
         """
         Return chr(int(code))
         Raise FastAGIError on error
@@ -517,7 +520,6 @@ class AGI:
         beep='beep',
     ):
         """
-        agi.record_file(filename, file_format, escape_digits, timeout=DEFAULT_TIMEOUT, offset=0, beep='beep') --> None
         Record to a file until a given dtmf digit in the sequence is received.
         The file_format will specify what kind of file will be recorded.  The
         timeout is the maximum record time in milliseconds, or -1 for no
@@ -536,16 +538,15 @@ class AGI:
         )['result'][0]
         return self.code_to_char(res)
 
-    def set_autohangup(self, secs):
+    def set_autohangup(self, secs) -> None:
         """
-        agi.set_autohangup(secs) --> None
         Cause the channel to automatically hangup at <time> seconds in the
-        future.  Of course it can be hungup before then as well.   Setting to
-        0 will cause the autohangup feature to be disabled on this channel.
+        future.  Of course, it can be hung up before then as well. Setting to
+        0 will cause the auto-hangup feature to be disabled on this channel.
         """
         self.execute('SET AUTOHANGUP', secs)
 
-    def hangup(self, channel=''):
+    def hangup(self, channel: str = '') -> None:
         """
         agi.hangup(channel='')
         Hang up the specified channel.
@@ -566,14 +567,13 @@ class AGI:
             raise AGIAppError('Unable to find application: %s' % application)
         return res
 
-    def set_callerid(self, number):
+    def set_callerid(self, number) -> None:
         """
-        agi.set_callerid(number) --> None
         Change the callerid of the current channel.
         """
         self.execute('SET CALLERID', number)
 
-    def channel_status(self, channel=''):
+    def channel_status(self, channel: str = '') -> int:
         """
         agi.channel_status(channel='') --> int
         Return the status of the specified channel.  If no channel name is
@@ -598,13 +598,13 @@ class AGI:
 
         return int(result['result'][0])
 
-    def set_variable(self, name, value):
+    def set_variable(self, name: str, value):
         """
         Set a channel variable.
         """
         self.execute('SET VARIABLE', self._quote(name), self._quote(value))
 
-    def get_variable(self, name):
+    def get_variable(self, name: str):
         """
         Get a channel variable.
 
@@ -616,8 +616,7 @@ class AGI:
         except AGIResultHangup:
             result = {'result': ('1', 'hangup')}
 
-        _, value = result['result']  # pylint: disable-msg=W0612
-        return value
+        return result['result'][1]
 
     def get_full_variable(self, name, channel=None):
         """
@@ -637,8 +636,7 @@ class AGI:
         except AGIResultHangup:
             result = {'result': ('1', 'hangup')}
 
-        _, value = result['result']  # pylint: disable-msg=W0612
-        return value
+        return result['result'][1]
 
     def verbose(self, message, level=1):
         """
@@ -648,29 +646,25 @@ class AGI:
         """
         self.execute('VERBOSE', self._quote(message), level)
 
-    def database_get(self, family, key):
+    def database_get(self, family, key) -> str:
         """
-        agi.database_get(family, key) --> str
         Retrieve an entry in the Asterisk database for a given family and key.
         Return 0 if <key> is not set.  Return 1 if <key> is set and return the
-        variable in parenthesis
+        variable in parentheses
         example return code: 200 result=1 (testvariable)
         """
         result = self.execute('DATABASE GET', self._quote(family), self._quote(key))
         res, value = result['result']
         if res == '0':
             raise AGIDBError(f'Key not found in database: family={family}, key={key}')
-        elif res == '1':
+        if res == '1':
             return value
-        else:
-            raise AGIError(
-                'Unknown exception for : family=%s, key=%s, result=%s'
-                % (family, key, pprint.pformat(result))
-            )
+        raise AGIError(
+            f'Unknown exception for : family={family}, key={key}, result={pprint.pformat(result)}'
+        )
 
-    def database_put(self, family, key, value):
+    def database_put(self, family, key, value) -> None:
         """
-        agi.database_put(family, key, value) --> None
         Add or update an entry in the Asterisk database for a given family,
         key, and value.
         """
@@ -680,13 +674,11 @@ class AGI:
         res, value = result['result']
         if res == '0':
             raise AGIDBError(
-                'Unable to put value in database: family=%s, key=%s, value=%s'
-                % (family, key, value)
+                f'Unable to put value in database: family={family}, key={key}, value={value}'
             )
 
-    def database_del(self, family, key):
+    def database_del(self, family, key) -> None:
         """
-        agi.database_del(family, key) --> None
         Delete an entry in the Asterisk database for a given family and key.
         """
         result = self.execute('DATABASE DEL', self._quote(family), self._quote(key))
@@ -696,9 +688,8 @@ class AGI:
                 f'Unable to delete from database: family={family}, key={key}'
             )
 
-    def database_deltree(self, family, key=''):
+    def database_deltree(self, family, key='') -> None:
         """
-        agi.database_deltree(family, key='') --> None
         Delete a family or specific keytree with in a family in the Asterisk
         database.
         """
@@ -709,9 +700,8 @@ class AGI:
                 f'Unable to delete tree from database: family={family}, key={key}'
             )
 
-    def noop(self):
+    def noop(self) -> None:
         """
-        agi.noop() --> None
         Do nothing
         """
         self.execute('NOOP')

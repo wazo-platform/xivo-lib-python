@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-# Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
+
+from typing import Any
 
 import requests
 import sys
@@ -43,7 +46,7 @@ def main():
     logger.debug('advertise addr: %s', advertise_address)
     logger.debug('enabled: %s', enabled)
 
-    config = {
+    config: dict[str, Any] = {
         'consul': {'host': 'consul', 'port': 8500, 'token': 'the_one_ring'},
         'service_discovery': {
             'advertise_address': advertise_address,

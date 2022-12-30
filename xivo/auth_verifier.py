@@ -21,7 +21,7 @@ try:
     from wazo_auth_client import Client, exceptions
 except ImportError as e:
 
-    class Client:
+    class Client:  # type: ignore[no-redef]
         _exc = e
 
         def __init__(self, *args, **kwargs):
@@ -157,7 +157,7 @@ class AuthVerifier:
                 return func(*args, **kwargs)
             else:
                 # NOTE(pc-m): This "should" be unreachable. is_valid can only return True or raise
-                # I've left this logger to avoid debugging for hours if I'm mistaken and a ressource
+                # I've left this logger to avoid debugging for hours if I'm mistaken and a resource
                 # returns doing nothing silently
                 logger.warning("This is a bug")
 

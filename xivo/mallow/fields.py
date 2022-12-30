@@ -1,5 +1,7 @@
 # Copyright 2017-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
+from typing import Dict as DictType, Union
 
 import ipaddress
 
@@ -21,6 +23,8 @@ from marshmallow.fields import (  # noqa: E402
     UUID as _UUID,
 )
 
+DefaultErrorMessages = DictType[str, Union[str, DictType[str, str]]]
+
 
 class _StringifiedDict(dict):
     def format(self, *args, **kwargs):
@@ -29,7 +33,7 @@ class _StringifiedDict(dict):
 
 
 class Field(_Field):
-    default_error_messages = {
+    default_error_messages: DefaultErrorMessages = {
         'null': _StringifiedDict(
             message=_Field.default_error_messages['null'],
             constraint_id='not_null',
@@ -44,7 +48,7 @@ class Field(_Field):
 
 
 class Boolean(_Boolean):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -57,7 +61,7 @@ class Boolean(_Boolean):
 
 
 class Date(_Date):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -70,7 +74,7 @@ class Date(_Date):
 
 
 class DateTime(_DateTime):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -83,7 +87,7 @@ class DateTime(_DateTime):
 
 
 class Dict(_Dict):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -96,7 +100,7 @@ class Dict(_Dict):
 
 
 class Email(_Email):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -109,7 +113,7 @@ class Email(_Email):
 
 
 class Integer(_Integer):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -122,7 +126,7 @@ class Integer(_Integer):
 
 
 class Float(_Float):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'special': _StringifiedDict(
@@ -135,7 +139,7 @@ class Float(_Float):
 
 
 class List(_List):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -148,7 +152,7 @@ class List(_List):
 
 
 class Nested(_Nested):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'type': _StringifiedDict(
@@ -161,7 +165,7 @@ class Nested(_Nested):
 
 
 class String(_String):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -174,7 +178,7 @@ class String(_String):
 
 
 class TimeDelta(_TimeDelta):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -192,7 +196,7 @@ class TimeDelta(_TimeDelta):
 
 
 class URL(_URL):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid_url': _StringifiedDict(
@@ -205,7 +209,7 @@ class URL(_URL):
 
 
 class UUID(_UUID):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid_uuid': _StringifiedDict(
@@ -218,12 +222,12 @@ class UUID(_UUID):
 
 
 class Constant(_Constant):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
 
 
 class IP(_String):
 
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': {

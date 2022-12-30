@@ -1,5 +1,6 @@
 # Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 import json
 import re
@@ -9,10 +10,7 @@ from urllib.parse import unquote
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 from flask import current_app, g, request
 
-try:
-    from json.decoder import JSONDecodeError
-except ImportError:
-    JSONDecodeError = ValueError
+from json.decoder import JSONDecodeError
 
 PRINTABLE_CONTENT_TYPES = [
     'application/json',
@@ -92,19 +90,20 @@ class LazyHeaderFormatter:
         filtered_headers = self._filter_sensible_fields(headers_dict)
         return f'{filtered_headers}'
 
-    def _filter_sensible_fields(self, headers):
+    def _filter_sensible_fields(self, headers: dict[str, str]) -> dict[str, str]:
+        # should be "sensitive"
         if 'Authorization' in headers:
             if headers['Authorization'].startswith('Basic '):
-                new_value = 'Basic <hidden>'
+                new_header = 'Basic <hidden>'
             else:
-                new_value = '<hidden>'
+                new_header = '<hidden>'
 
-            headers['Authorization'] = new_value
+            headers['Authorization'] = new_header
 
         if 'X-Auth-Token' in headers:
             value = headers['X-Auth-Token']
             visible_pos = len(value) - self.VISIBLE_TOKEN_SIZE
-            new_value = []
+            new_value: list[str] = []
             for i, c in enumerate(value):
                 if i >= visible_pos or c == '-':
                     new_value.append(c)

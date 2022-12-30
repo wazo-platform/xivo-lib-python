@@ -168,11 +168,10 @@ class TestParseConfigFile(unittest.TestCase):
         assert_that(res, equal_to({'test': 'value'}))
 
     def test_empty_yaml_file(self):
-        f = tempfile.NamedTemporaryFile()
-        f.writelines('')
-        f.seek(0)
-
-        res = self.parser.parse_config_file(f.name)
+        with tempfile.NamedTemporaryFile() as f:
+            f.writelines([b''])
+            f.seek(0)
+            res = self.parser.parse_config_file(f.name)
 
         assert_that(res, equal_to({}))
 
@@ -266,13 +265,13 @@ class TestReadConfigFileHierarchy(unittest.TestCase):
         self.parser = ConfigParser(self.error_handler)
 
     def test_that_the_main_config_file_is_read(self):
-        self.parser.parse_config_file = Mock()
+        self.parser.parse_config_file = Mock()  # type: ignore[assignment]
         self.parser.parse_config_file.return_value = {
             'extra_config_files': '/path/to/extra',
             'sentinel': 'from_main_file',
             'main_file_only': True,
         }
-        self.parser.parse_config_dir = Mock()
+        self.parser.parse_config_dir = Mock()  # type: ignore[assignment]
         self.parser.parse_config_dir.return_value = [{'sentinel': 'from_extra_config'}]
         cli_and_default_config = {
             'config_file': '/path/to/config.yml',
@@ -295,13 +294,13 @@ class TestReadConfigFileHierarchyAccumulatingList(unittest.TestCase):
         self.parser = ConfigParser(self.error_handler)
 
     def test_that_list_accumulates_all_values(self):
-        self.parser.parse_config_file = Mock()
+        self.parser.parse_config_file = Mock()  # type: ignore[assignment]
         self.parser.parse_config_file.return_value = {
             'extra_config_files': '/path/to/extra',
             'sentinel': ['from_main_file'],
             'main_file_only': True,
         }
-        self.parser.parse_config_dir = Mock()
+        self.parser.parse_config_dir = Mock()  # type: ignore[assignment]
         self.parser.parse_config_dir.return_value = [
             {'sentinel': ['from_extra_file1']},
             {'sentinel': ['from_extra_file2']},
@@ -349,7 +348,7 @@ class TestSetXiVOUUID(unittest.TestCase):
 
     @patch('xivo.config_helper.os.getenv', return_value=XIVO_UUID)
     def test_given_uuid_then_set_uuid(self, getenv):
-        config = {}
+        config: dict[str, str] = {}
         set_xivo_uuid(config, Mock())
 
         assert_that(config, has_entry('uuid', XIVO_UUID))
