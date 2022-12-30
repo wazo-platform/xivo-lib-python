@@ -1,5 +1,6 @@
 # Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 import logging
 import re
@@ -235,20 +236,20 @@ class AuthVerifier:
         return self._auth_client
 
 
-def extract_token_id_from_header():
+def extract_token_id_from_header() -> str:
     return request.headers.get('X-Auth-Token', '')
 
 
-def extract_token_id_from_query_string():
+def extract_token_id_from_query_string() -> str:
     return request.args.get('token', '')
 
 
-def extract_token_id_from_query_or_header():
+def extract_token_id_from_query_or_header() -> str:
     return extract_token_id_from_query_string() or extract_token_id_from_header()
 
 
 class AccessCheck:
-    def __init__(self, auth_id, session_id, acl):
+    def __init__(self, auth_id: str, session_id: str, acl: list[str]) -> None:
         self.auth_id = auth_id
         self._positive_access_regexes = [
             self._transform_access_to_regex(auth_id, session_id, access)
@@ -261,7 +262,7 @@ class AccessCheck:
             if access.startswith('!')
         ]
 
-    def matches_required_access(self, required_access):
+    def matches_required_access(self, required_access: str | None) -> bool:
         if required_access is None:
             return True
 
@@ -274,11 +275,13 @@ class AccessCheck:
                 return True
         return False
 
-    def may_add_access(self, new_access):
+    def may_add_access(self, new_access: str) -> bool:
         return new_access.startswith('!') or self.matches_required_access(new_access)
 
     @staticmethod
-    def _transform_access_to_regex(auth_id, session_id, access):
+    def _transform_access_to_regex(
+        auth_id: str, session_id: str, access: str
+    ) -> re.Pattern:
         access_regex = re.escape(access).replace('\\*', '[^.#]*?').replace('\\#', '.*?')
         access_regex = AccessCheck._replace_reserved_words(
             access_regex,
@@ -288,17 +291,17 @@ class AccessCheck:
         return re.compile(f'^{access_regex}$')
 
     @staticmethod
-    def _replace_reserved_words(access_regex, *reserved_words):
+    def _replace_reserved_words(access_regex: str, *reserved_words: ReservedWord):
         words = access_regex.split('\\.')
         for reserved_word in reserved_words:
-            words = tuple(reserved_word.replace(word) for word in words)
+            words = [reserved_word.replace(word) for word in words]
         return '\\.'.join(words)
 
 
 class ReservedWord:
-    def __init__(self, word, value):
+    def __init__(self, word: str, value: str) -> None:
         self._reserved_word = word
         self._replacement = f'({word}|{value})'
 
-    def replace(self, word):
+    def replace(self, word: str) -> str:
         return self._replacement if word == self._reserved_word else word
