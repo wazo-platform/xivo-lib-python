@@ -266,11 +266,10 @@ class AGI:
         """
         if code == '0':
             return ''
-        else:
-            try:
-                return chr(int(code))
-            except (TypeError, ValueError):
-                raise AGIError('Unable to convert result to char: %s' % code)
+        try:
+            return chr(int(code))
+        except (TypeError, ValueError):
+            raise AGIError('Unable to convert result to char: %s' % code)
 
     def wait_for_digit(self, timeout: int = DEFAULT_TIMEOUT) -> str:
         """
@@ -330,7 +329,7 @@ class AGI:
         fwd: str = '',
         rew: str = '',
         pause: str = '',
-    ):
+    ) -> str:
         """
         Send the given file, allowing playback to be interrupted by the given digits, if any.
         If sample offset is provided then the audio will seek to sample
@@ -603,7 +602,7 @@ class AGI:
 
         return int(result['result'][0])
 
-    def set_variable(self, name: str, value: str | int):
+    def set_variable(self, name: str, value: str | int) -> None:
         """
         Set a channel variable.
         """

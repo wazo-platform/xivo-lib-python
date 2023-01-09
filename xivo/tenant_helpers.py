@@ -1,5 +1,8 @@
-# Copyright 2018-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
+
+from typing import Any, TYPE_CHECKING
 
 import requests
 
@@ -13,30 +16,33 @@ try:
 except ImportError:
     pass
 
+if TYPE_CHECKING:
+    from .auth_verifier import Client
+
 
 class InvalidTenant(Exception):
-    def __init__(self, tenant_uuid=None):
+    def __init__(self, tenant_uuid: str | None = None) -> None:
+        message = "Invalid tenant"
         if tenant_uuid:
-            super().__init__(f'Invalid tenant "{tenant_uuid}"')
-        else:
-            super().__init__('Invalid tenant')
+            message = f'{message} "{tenant_uuid}"'
+        super().__init__(message)
 
 
 class InvalidToken(Exception):
-    def __init__(self, token_id=None):
+    def __init__(self, token_id: str | None = None) -> None:
+        message = "Invalid token"
         if token_id:
-            super().__init__(f'Invalid token "{token_id}"')
-        else:
-            super().__init__('Invalid token')
+            message = f'{message} "{token_id}"'
+        super().__init__(message)
 
 
 class InvalidUser(Exception):
-    def __init__(self, user_uuid):
+    def __init__(self, user_uuid: str) -> None:
         super().__init__(f'Invalid user "{user_uuid}"')
 
 
 class UnauthorizedTenant(rest_api_helpers.APIException):
-    def __init__(self, tenant_uuid):
+    def __init__(self, tenant_uuid: str) -> None:
         super().__init__(
             status_code=401,
             message='Unauthorized tenant',
@@ -47,7 +53,7 @@ class UnauthorizedTenant(rest_api_helpers.APIException):
 
 class Tenant:
     @classmethod
-    def autodetect(cls, tokens):
+    def autodetect(cls, tokens: Tokens) -> Tenant:
         token = tokens.from_headers()
         try:
             tenant = cls.from_headers()
@@ -60,7 +66,7 @@ class Tenant:
             raise UnauthorizedTenant(tenant.uuid)
 
     @classmethod
-    def from_query(cls):
+    def from_query(cls) -> Tenant:
         try:
             tenant_uuid = request.args['tenant']
         except KeyError:
@@ -68,7 +74,7 @@ class Tenant:
         return cls(uuid=tenant_uuid)
 
     @classmethod
-    def from_headers(cls):
+    def from_headers(cls) -> Tenant:
         try:
             tenant_uuid = request.headers['Wazo-Tenant']
         except KeyError:
@@ -76,23 +82,23 @@ class Tenant:
         return cls(uuid=tenant_uuid)
 
     @classmethod
-    def from_token(cls, token):
+    def from_token(cls, token: Token) -> Tenant:
         if not token.tenant_uuid:
             raise InvalidTenant()
         return cls(uuid=token.tenant_uuid)
 
-    def __init__(self, uuid, name=None):
+    def __init__(self, uuid: str, name: str | None = None) -> None:
         self.uuid = uuid
         self.name = name
 
-    def check_against_token(self, token):
+    def check_against_token(self, token: Token) -> Tenant:
         if self.uuid == token.tenant_uuid:
             return self
         if not token.visible_tenants(tenant_uuid=self.uuid):
             raise InvalidTenant(self.uuid)
         return self
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         result = f'<Tenant: {self.uuid}>'
         if self.name:
             result = f'<Tenant: {self.uuid} "{self.name}">'
@@ -100,10 +106,10 @@ class Tenant:
 
 
 class Tokens:
-    def __init__(self, auth):
+    def __init__(self, auth: Client):
         self._auth = auth
 
-    def get(self, token_id):
+    def get(self, token_id: str) -> Token:
         try:
             return Token(self._auth.token.get(token_id), self._auth)
         except requests.HTTPError:
@@ -111,7 +117,7 @@ class Tokens:
         except requests.RequestException as e:
             raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
 
-    def from_headers(self):
+    def from_headers(self) -> Token:
         token_id = extract_token_id_from_header()
         if not token_id:
             raise InvalidToken()
@@ -119,36 +125,37 @@ class Tokens:
 
 
 class Token:
-    def __init__(self, token_dict, auth):
+    def __init__(self, token_dict: dict[str, Any], auth: Client) -> None:
         self._auth = auth
         self._token_dict = token_dict
-        self._cache_tenants = {}
+        self._cache_tenants: dict[str, list[Tenant]] = {}
 
     @property
-    def uuid(self):
+    def uuid(self) -> str:
         return self._token_dict['token']
 
     @property
-    def infos(self):
+    def infos(self) -> dict[str, Any]:
         return dict(self._token_dict)
 
     @property
-    def tenant_uuid(self):
+    def tenant_uuid(self) -> str | None:
         return self._token_dict['metadata'].get('tenant_uuid')
 
     @property
-    def user_uuid(self):
+    def user_uuid(self) -> str | None:
         return self._token_dict['metadata'].get('uuid')
 
-    def visible_tenants(self, tenant_uuid=None):
+    def visible_tenants(self, tenant_uuid: str | None = None) -> list[Tenant]:
         if not tenant_uuid:
             tenant_uuid = self.tenant_uuid
 
         if not tenant_uuid:
             return []
 
-        if self._cache_tenants.get(tenant_uuid):
-            return self._cache_tenants[tenant_uuid]
+        cached_tenant = self._cache_tenants.get(tenant_uuid)
+        if cached_tenant:
+            return cached_tenant
 
         try:
             tenants_list = self._auth.tenants.list(tenant_uuid)['items']
@@ -168,15 +175,15 @@ class Token:
 
 
 class Users:
-    def __init__(self, auth):
+    def __init__(self, auth: Client) -> None:
         self._auth = auth
 
-    def get(self, user_uuid):
+    def get(self, user_uuid: str) -> User:
         return User(self._auth, user_uuid)
 
 
 class User:
-    def __init__(self, auth, uuid, **kwargs):
+    def __init__(self, auth: Client, uuid: str, **kwargs: Any) -> None:
         self._auth = auth
         self._uuid = uuid
         self._tenants = None

@@ -1,4 +1,4 @@
-# Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ import logging
 import re
 import requests
 
-from collections import namedtuple
 from functools import wraps
+from typing import NamedTuple, Callable, Any, TypeVar
 
 # Necessary to avoid a dependency in provd
 try:
@@ -31,36 +31,47 @@ except ImportError as e:
 
 from xivo import rest_api_helpers
 
-_ACLCheck = namedtuple('_ACLCheck', ['pattern', 'extract_token_id'])
+
 logger = logging.getLogger(__name__)
 
+F = TypeVar('F', bound=Callable[..., Any])
+R = TypeVar("R")
 
-def required_acl(acl_pattern, extract_token_id=None):
-    def wrapper(func):
-        func.acl = _ACLCheck(acl_pattern, extract_token_id)
+
+class _ACLCheck(NamedTuple):
+    pattern: str
+    extract_token_id: Callable[[], str] | None
+
+
+def required_acl(
+    acl_pattern: str, extract_token_id: Callable[[], str] | None = None
+) -> Callable[[F], F]:
+    def wrapper(func: F) -> F:
+        func.acl = _ACLCheck(acl_pattern, extract_token_id)  # type: ignore[attr-defined]
         return func
 
     return wrapper
 
 
-def no_auth(func):
-    func.no_auth = True
+def no_auth(func: F) -> F:
+    func.no_auth = True  # type: ignore[attr-defined]
     return func
 
 
-def required_tenant(tenant_uuid):
-    def wrapper(func):
-        func.tenant_uuid = tenant_uuid
+def required_tenant(tenant_uuid: str) -> Callable[[F], F]:
+    def wrapper(func: F) -> F:
+        func.tenant_uuid = tenant_uuid  # type: ignore[attr-defined]
         return func
 
     return wrapper
 
 
 class Unauthorized(rest_api_helpers.APIException):
-    def __init__(self, token, required_access=None):
+    def __init__(self, token: str, required_access: str | None = None) -> None:
         details = {'invalid_token': token}
         if required_access:
             details['required_access'] = required_access
+
         super().__init__(
             status_code=401,
             message='Unauthorized',
@@ -70,7 +81,7 @@ class Unauthorized(rest_api_helpers.APIException):
 
 
 class InvalidTokenAPIException(rest_api_helpers.APIException):
-    def __init__(self, token, required_access=None):
+    def __init__(self, token: str, required_access: str | None = None) -> None:
         details = {'invalid_token': token, 'reason': 'not_found_or_expired'}
         if required_access:
             details['required_access'] = required_access
@@ -83,7 +94,7 @@ class InvalidTokenAPIException(rest_api_helpers.APIException):
 
 
 class MissingPermissionsTokenAPIException(rest_api_helpers.APIException):
-    def __init__(self, token, required_access=None):
+    def __init__(self, token: str, required_access: str | None = None) -> None:
         details = {'invalid_token': token, 'reason': 'missing_permission'}
         if required_access:
             details['required_access'] = required_access
@@ -96,7 +107,9 @@ class MissingPermissionsTokenAPIException(rest_api_helpers.APIException):
 
 
 class AuthServerUnreachable(rest_api_helpers.APIException):
-    def __init__(self, host, port, error):
+    def __init__(
+        self, host: str | None, port: int | None, error: requests.RequestException
+    ) -> None:
         super().__init__(
             status_code=503,
             message='Authentication server unreachable',
@@ -110,27 +123,31 @@ class AuthServerUnreachable(rest_api_helpers.APIException):
 
 
 class AuthVerifier:
-    def __init__(self, auth_config=None, extract_token_id=None):
+    def __init__(
+        self,
+        auth_config: dict[str, Any] | None = None,
+        extract_token_id: Callable[[], str] | None = None,
+    ) -> None:
         if extract_token_id is None:
             extract_token_id = extract_token_id_from_header
-        self._auth_client = None
+        self._auth_client: Client | None = None
         self._auth_config = auth_config
         self._extract_token_id = extract_token_id
         self._fallback_acl_check = _ACLCheck('', None)
 
-    def set_config(self, auth_config):
+    def set_config(self, auth_config: dict[str, Any]) -> None:
         self._auth_config = dict(auth_config)
         self._auth_config.pop('username', None)
         self._auth_config.pop('password', None)
         self._auth_config.pop('key_file', None)
 
-    def set_client(self, auth_client):
+    def set_client(self, auth_client: Client) -> None:
         self._auth_client = auth_client
 
-    def verify_token(self, func):
+    def verify_token(self, func: Callable[..., R]) -> Callable[..., R]:
         @wraps(func)
-        def wrapper(*args, **kwargs):
-            no_auth = getattr(func, 'no_auth', False)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            no_auth: bool = getattr(func, 'no_auth', False)
             if no_auth:
                 return func(*args, **kwargs)
 
@@ -164,7 +181,7 @@ class AuthVerifier:
 
         return wrapper
 
-    def _add_request_properties(self, token_id):
+    def _add_request_properties(self, token_id: str) -> None:
         request.token_id = token_id
         request._get_token_content = self._get_token_content
         request._get_user_uuid = self._get_user_uuid
@@ -173,17 +190,17 @@ class AuthVerifier:
         )
         request.__class__.user_uuid = property(lambda this: this._get_user_uuid())
 
-    def _get_token_content(self):
+    def _get_token_content(self) -> str:
         if not hasattr(request, '_token_content'):
             request._token_content = self.client().token.get(request.token_id)
         return request._token_content
 
-    def _get_user_uuid(self):
+    def _get_user_uuid(self) -> str | None:
         return request.token_content.get('metadata', {}).get('uuid')
 
-    def verify_tenant(self, func):
+    def verify_tenant(self, func: Callable[..., R]) -> Callable[..., R]:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             required_tenant = getattr(func, 'tenant_uuid', None)
             if not required_tenant:
                 return func(*args, **kwargs)
@@ -204,30 +221,37 @@ class AuthVerifier:
 
         return wrapper
 
-    def token(self):
+    def token(self) -> str:
         return self._extract_token_id()
 
-    def _required_acl(self, acl_check, args, kwargs):
+    def _required_acl(self, acl_check: _ACLCheck, args: Any, kwargs: dict[str, str]):
         escaped_kwargs = {
             key: str(value).replace('.', '_') for key, value in kwargs.items()
         }
         return str(acl_check.pattern).format(**escaped_kwargs)
 
-    def handle_unreachable(self, error):
-        raise AuthServerUnreachable(
-            self._auth_config['host'], self._auth_config['port'], error
-        )
+    def handle_unreachable(self, error: requests.RequestException):
+        host: str | None = None
+        port: int | None = None
 
-    def handle_unauthorized(self, token, required_access=None):
+        if self._auth_config:
+            host, port = self._auth_config['host'], self._auth_config['port']
+        raise AuthServerUnreachable(host, port, error)
+
+    def handle_unauthorized(self, token: str, required_access: str | None = None):
         raise Unauthorized(token, required_access)
 
-    def _handle_invalid_token_exception(self, token, required_access=None):
+    def _handle_invalid_token_exception(
+        self, token: str, required_access: str | None = None
+    ):
         raise InvalidTokenAPIException(token, required_access)
 
-    def _handle_missing_permissions_token_exception(self, token, required_access=None):
+    def _handle_missing_permissions_token_exception(
+        self, token: str, required_access: str | None = None
+    ):
         raise MissingPermissionsTokenAPIException(token, required_access)
 
-    def client(self):
+    def client(self) -> Client:
         if not (self._auth_config or self._auth_client):
             raise RuntimeError('AuthVerifier is not configured')
 
@@ -291,7 +315,9 @@ class AccessCheck:
         return re.compile(f'^{access_regex}$')
 
     @staticmethod
-    def _replace_reserved_words(access_regex: str, *reserved_words: ReservedWord):
+    def _replace_reserved_words(
+        access_regex: str, *reserved_words: ReservedWord
+    ) -> str:
         words = access_regex.split('\\.')
         for reserved_word in reserved_words:
             words = [reserved_word.replace(word) for word in words]

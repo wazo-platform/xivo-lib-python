@@ -1,4 +1,4 @@
-# Copyright 2018-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
@@ -101,7 +101,7 @@ class TestTenantAutodetect(TestCase):
 
     def test_given_visible_tenants_called_twice_with_same_tenant(self):
         base_tenant = 'base-tenant-uuid'
-        tenant = 'tenant'
+        tenant = Tenant('tenant-uuid')
         token = Token(Mock(), Mock())
         token._cache_tenants = {base_tenant: [tenant]}
 
