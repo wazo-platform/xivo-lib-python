@@ -7,13 +7,7 @@ import re
 import requests
 
 from functools import wraps
-from typing import NamedTuple, Callable, Any, TypeVar
-
-# Necessary to avoid a dependency in provd
-try:
-    from flask import request
-except ImportError:
-    pass
+from typing import Any, Callable, NamedTuple, NoReturn, TypeVar, TYPE_CHECKING
 
 # Postpone the raise to the first use of the Client constructor.
 # wazo-auth uses its own version of the client to avoid using its own
@@ -23,11 +17,32 @@ try:
 except ImportError as e:
 
     class Client:  # type: ignore[no-redef]
-        _exc = e
+        _exc: Exception = e
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
             raise self._exc
 
+
+if TYPE_CHECKING:
+    # Workaround to attempt to type `request` until we have Protocols to type properly.
+    from flask import Request as _Request, request as _request
+
+    class Request(_Request):
+        token_id: str
+        token_content: dict[str, Any]
+        _token_content: dict[str, Any]
+        user_uuid: str
+        _get_token_content: Callable[[], dict[str, Any]]
+        _get_user_uuid: Callable[[], str | None]
+
+    request: Request = _request  # type: ignore[assignment]
+
+else:
+    # Necessary to avoid a dependency in provd
+    try:
+        from flask import request
+    except ImportError:
+        pass
 
 from xivo import rest_api_helpers
 
@@ -35,7 +50,7 @@ from xivo import rest_api_helpers
 logger = logging.getLogger(__name__)
 
 F = TypeVar('F', bound=Callable[..., Any])
-R = TypeVar("R")
+R = TypeVar('R')
 
 
 class _ACLCheck(NamedTuple):
@@ -144,9 +159,9 @@ class AuthVerifier:
     def set_client(self, auth_client: Client) -> None:
         self._auth_client = auth_client
 
-    def verify_token(self, func: Callable[..., R]) -> Callable[..., R]:
+    def verify_token(self, func: Callable[..., R]) -> Callable[..., R | None]:
         @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: Any, **kwargs: Any) -> R | None:
             no_auth: bool = getattr(func, 'no_auth', False)
             if no_auth:
                 return func(*args, **kwargs)
@@ -173,11 +188,12 @@ class AuthVerifier:
 
             if token_is_valid:
                 return func(*args, **kwargs)
-            else:
-                # NOTE(pc-m): This "should" be unreachable. is_valid can only return True or raise
-                # I've left this logger to avoid debugging for hours if I'm mistaken and a resource
-                # returns doing nothing silently
-                logger.warning("This is a bug")
+
+            # NOTE(pc-m): This "should" be unreachable. is_valid can only return True or raise
+            # I've left this logger to avoid debugging for hours if I'm mistaken and a resource
+            # returns doing nothing silently
+            logger.warning("This is a bug")
+            return None
 
         return wrapper
 
@@ -185,14 +201,17 @@ class AuthVerifier:
         request.token_id = token_id
         request._get_token_content = self._get_token_content
         request._get_user_uuid = self._get_user_uuid
-        request.__class__.token_content = property(
+        request.__class__.token_content = property(  # type: ignore[assignment]
             lambda this: this._get_token_content()
         )
-        request.__class__.user_uuid = property(lambda this: this._get_user_uuid())
+        request.__class__.user_uuid = property(  # type: ignore[assignment]
+            lambda this: this._get_user_uuid()
+        )
 
-    def _get_token_content(self) -> str:
+    def _get_token_content(self) -> dict[str, Any]:
         if not hasattr(request, '_token_content'):
-            request._token_content = self.client().token.get(request.token_id)
+            token_content = self.client().token.get(request.token_id)
+            request._token_content = token_content
         return request._token_content
 
     def _get_user_uuid(self) -> str | None:
@@ -224,13 +243,15 @@ class AuthVerifier:
     def token(self) -> str:
         return self._extract_token_id()
 
-    def _required_acl(self, acl_check: _ACLCheck, args: Any, kwargs: dict[str, str]):
+    def _required_acl(
+        self, acl_check: _ACLCheck, args: Any, kwargs: dict[str, str]
+    ) -> str:
         escaped_kwargs = {
             key: str(value).replace('.', '_') for key, value in kwargs.items()
         }
         return str(acl_check.pattern).format(**escaped_kwargs)
 
-    def handle_unreachable(self, error: requests.RequestException):
+    def handle_unreachable(self, error: requests.RequestException) -> NoReturn:
         host: str | None = None
         port: int | None = None
 
@@ -238,17 +259,19 @@ class AuthVerifier:
             host, port = self._auth_config['host'], self._auth_config['port']
         raise AuthServerUnreachable(host, port, error)
 
-    def handle_unauthorized(self, token: str, required_access: str | None = None):
+    def handle_unauthorized(
+        self, token: str, required_access: str | None = None
+    ) -> NoReturn:
         raise Unauthorized(token, required_access)
 
     def _handle_invalid_token_exception(
         self, token: str, required_access: str | None = None
-    ):
+    ) -> NoReturn:
         raise InvalidTokenAPIException(token, required_access)
 
     def _handle_missing_permissions_token_exception(
         self, token: str, required_access: str | None = None
-    ):
+    ) -> NoReturn:
         raise MissingPermissionsTokenAPIException(token, required_access)
 
     def client(self) -> Client:

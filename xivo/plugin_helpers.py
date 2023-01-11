@@ -1,20 +1,26 @@
-# Copyright 2017-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 import logging
 
 from collections import OrderedDict
 from functools import partial
+from typing import Sequence, Any
+
+from stevedore.extension import Extension
 from stevedore.named import NamedExtensionManager
 
 logger = logging.getLogger(__name__)
 
 
-def enabled_names(plugins_dict):
+def enabled_names(plugins_dict: OrderedDict[str, bool]) -> list[str]:
     return [name for name, enabled in plugins_dict.items() if enabled]
 
 
-def on_load_failure(manager, entrypoint, exception):
+def on_load_failure(
+    manager: NamedExtensionManager, entrypoint: str, exception: Exception
+) -> None:
     logger.exception(
         'Error in plugin namespace "%s" when loading module: "%s"',
         manager.namespace,
@@ -22,7 +28,7 @@ def on_load_failure(manager, entrypoint, exception):
     )
 
 
-def on_missing_entrypoints(namespace, missing_names):
+def on_missing_entrypoints(namespace: str, missing_names: set[str]) -> None:
     logger.error(
         'Error in plugin namespace "%s": the entrypoint is missing for plugins: %s',
         namespace,
@@ -30,21 +36,23 @@ def on_missing_entrypoints(namespace, missing_names):
     )
 
 
-def load_plugin(ext, *load_args, **load_kwargs):
+def load_plugin(ext: Extension, *load_args: Any, **load_kwargs: Any):
     logger.debug('Loading dynamic plugin: %s', ext.name)
     return ext.obj.load(*load_args, **load_kwargs)
 
 
-def load(namespace, names, dependencies):
-    names = enabled_names(names)
-    logger.debug('Enabled plugins for namespace "%s": %s', namespace, names)
-    if not names:
+def load(
+    namespace: str, names: OrderedDict[str, bool], dependencies: dict[str, Any]
+) -> NamedExtensionManager | None:
+    enabled_plugins = enabled_names(names)
+    logger.debug('Enabled plugins for namespace "%s": %s', namespace, enabled_plugins)
+    if not enabled_plugins:
         logger.info('no enabled plugins')
-        return
+        return None
 
     manager = NamedExtensionManager(
         namespace,
-        names,
+        enabled_plugins,
         name_order=True,
         on_load_failure_callback=on_load_failure,
         on_missing_entrypoints_callback=partial(on_missing_entrypoints, namespace),
@@ -56,5 +64,5 @@ def load(namespace, names, dependencies):
     return manager
 
 
-def from_list(enabled_names):
+def from_list(enabled_names: Sequence[str]) -> OrderedDict[str, bool]:
     return OrderedDict((name, True) for name in enabled_names)

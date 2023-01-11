@@ -1,12 +1,16 @@
-# Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
 from functools import wraps  # noqa: E402
 import marshmallow  # noqa: E402
 
 from .mallow import fields, validate  # noqa: E402
 from .rest_api_helpers import APIException  # noqa: E402
+
+if TYPE_CHECKING:
+    from typing import Literal
 
 
 class ValidationError(APIException):
@@ -34,7 +38,7 @@ class ListSchema(marshmallow.Schema):
     default_sort_column: str | None = None
     sort_columns: list[str] = []
     searchable_columns: list[str] = []
-    default_direction = 'asc'
+    default_direction: Literal['asc', 'desc'] = 'asc'
 
     direction = fields.String(validate=validate.OneOf(['asc', 'desc']))
     order = fields.String()
@@ -45,16 +49,16 @@ class ListSchema(marshmallow.Schema):
     class Meta:
         unknown = marshmallow.EXCLUDE
 
-    def on_bind_field(self, field_name, field_obj):
+    def on_bind_field(self, field_name: str, field_obj: fields.Field) -> None:
         if field_name == 'order':
             self._set_order_parameters(field_obj)
         elif field_name == 'direction':
             self._set_direction_parameters(field_obj)
 
-    def _set_direction_parameters(self, field_obj):
+    def _set_direction_parameters(self, field_obj: fields.Field) -> None:
         field_obj.missing = self.default_direction
 
-    def _set_order_parameters(self, field_obj):
+    def _set_order_parameters(self, field_obj: fields.Field) -> None:
         field_obj.validators = [validate.OneOf(self.sort_columns)]
         field_obj.missing = self.default_sort_column
         if self.default_sort_column is None:
@@ -63,7 +67,9 @@ class ListSchema(marshmallow.Schema):
             field_obj.allow_none = False
 
     @marshmallow.post_load(pass_original=True)
-    def add_searchable_fields(self, data, original_data, **kwargs):
+    def add_searchable_fields(
+        self, data: dict[str, Any], original_data: dict[str, Any], **kwargs: Any
+    ) -> dict[str, Any]:
         for key, value in original_data.items():
             if key in self.searchable_columns:
                 data.setdefault(key, value)
@@ -77,5 +83,5 @@ class Schema(marshmallow.Schema):
         unknown = marshmallow.EXCLUDE
 
     @marshmallow.pre_load
-    def ensure_dict(self, data, **kwargs):
+    def ensure_dict(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
         return data or {}

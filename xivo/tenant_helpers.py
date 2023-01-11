@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING, TypeVar
 
 import requests
 
@@ -51,9 +51,12 @@ class UnauthorizedTenant(rest_api_helpers.APIException):
         )
 
 
+T = TypeVar('T', bound='Tenant')
+
+
 class Tenant:
     @classmethod
-    def autodetect(cls, tokens: Tokens) -> Tenant:
+    def autodetect(cls: type[T], tokens: Tokens) -> T:
         token = tokens.from_headers()
         try:
             tenant = cls.from_headers()
@@ -66,7 +69,7 @@ class Tenant:
             raise UnauthorizedTenant(tenant.uuid)
 
     @classmethod
-    def from_query(cls) -> Tenant:
+    def from_query(cls: type[T]) -> T:
         try:
             tenant_uuid = request.args['tenant']
         except KeyError:
@@ -74,7 +77,7 @@ class Tenant:
         return cls(uuid=tenant_uuid)
 
     @classmethod
-    def from_headers(cls) -> Tenant:
+    def from_headers(cls: type[T]) -> T:
         try:
             tenant_uuid = request.headers['Wazo-Tenant']
         except KeyError:
@@ -82,7 +85,7 @@ class Tenant:
         return cls(uuid=tenant_uuid)
 
     @classmethod
-    def from_token(cls, token: Token) -> Tenant:
+    def from_token(cls: type[T], token: Token) -> T:
         if not token.tenant_uuid:
             raise InvalidTenant()
         return cls(uuid=token.tenant_uuid)
@@ -91,7 +94,7 @@ class Tenant:
         self.uuid = uuid
         self.name = name
 
-    def check_against_token(self, token: Token) -> Tenant:
+    def check_against_token(self: T, token: Token) -> T:
         if self.uuid == token.tenant_uuid:
             return self
         if not token.visible_tenants(tenant_uuid=self.uuid):
@@ -178,12 +181,12 @@ class Users:
     def __init__(self, auth: Client) -> None:
         self._auth = auth
 
-    def get(self, user_uuid: str) -> User:
+    def get(self, user_uuid: str | None) -> User:
         return User(self._auth, user_uuid)
 
 
 class User:
-    def __init__(self, auth: Client, uuid: str, **kwargs: Any) -> None:
+    def __init__(self, auth: Client, uuid: str | None, **kwargs: Any) -> None:
         self._auth = auth
         self._uuid = uuid
         self._tenants = None

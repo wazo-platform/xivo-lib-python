@@ -1,8 +1,11 @@
-# Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 import logging
 import time
+from typing import Any, Callable, TypeVar, Generator
+
 import yaml
 
 from functools import wraps
@@ -10,9 +13,13 @@ from pkg_resources import resource_string, iter_entry_points
 
 logger = logging.getLogger(__name__)
 
+R = TypeVar('R')
+
 
 class APIException(Exception):
-    def __init__(self, status_code, message, error_id, details=None, resource=None):
+    def __init__(
+        self, status_code: int, message: str, error_id: str, details=None, resource=None
+    ):
         self.status_code = status_code
         self.message = message
         self.id_ = error_id
@@ -20,9 +27,11 @@ class APIException(Exception):
         self.resource = resource
 
 
-def handle_api_exception(func):
+def handle_api_exception(
+    func: Callable[..., R]
+) -> Callable[..., R | tuple[dict[str, Any], int]]:
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> R | tuple[dict[str, Any], int]:
         try:
             return func(*args, **kwargs)
         except APIException as error:
@@ -40,7 +49,9 @@ def handle_api_exception(func):
     return wrapper
 
 
-def load_all_api_specs(entry_point_group, spec_filename):
+def load_all_api_specs(
+    entry_point_group: str, spec_filename: str
+) -> Generator[dict[str, Any], None, None]:
     for module in iter_entry_points(group=entry_point_group):
         try:
             spec = yaml.safe_load(resource_string(module.module_name, spec_filename))

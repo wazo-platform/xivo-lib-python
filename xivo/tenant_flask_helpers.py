@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import TypeVar
 
 from flask import current_app, g
 from wazo_auth_client import Client as AuthClient
@@ -21,7 +22,8 @@ def get_auth_client() -> AuthClient:
     return auth_client
 
 
-auth_client = LocalProxy(get_auth_client)
+# TODO: When werkzeug is updated it the ignore can be removed.
+auth_client: AuthClient = LocalProxy(get_auth_client)  # type: ignore[assignment]
 
 
 def get_token() -> Token:
@@ -32,7 +34,7 @@ def get_token() -> Token:
     return token
 
 
-token = LocalProxy(get_token)
+token: Token = LocalProxy(get_token)  # type: ignore[assignment]
 
 
 def get_current_user() -> User:
@@ -43,13 +45,16 @@ def get_current_user() -> User:
     return current_user
 
 
-current_user = LocalProxy(get_current_user)
+current_user: User = LocalProxy(get_current_user)  # type: ignore[assignment]
+
+
+T = TypeVar('T', bound='Tenant')
 
 
 class Tenant(tenant_helpers.Tenant):
     # It's true we shouldn't be changing the signature here...
     @classmethod
-    def autodetect(cls, include_query: bool = False) -> tenant_helpers.Tenant:  # type: ignore
+    def autodetect(cls: type[T], include_query: bool = False) -> T:  # type: ignore[override]
         tenant = None
         if include_query:
             try:

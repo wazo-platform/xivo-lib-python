@@ -1,4 +1,4 @@
-# Copyright 2008-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2008-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """System functions
@@ -7,6 +7,7 @@ Copyright (C) 2008-2010  Avencall
 
 WARNING: Linux specific module - and maybe even Debian specific module
 """
+from __future__ import annotations
 
 __version__ = "$Revision$ $Date$"
 
@@ -14,12 +15,12 @@ import os
 import shutil
 import subprocess
 import logging
-
+from typing import Sequence, TextIO
 
 log = logging.getLogger("xivo.system")
 
 
-def sync_no_oserror():
+def sync_no_oserror() -> None:
     """
     Call /bin/sync.
     Catch and log OSError exceptions.
@@ -30,7 +31,7 @@ def sync_no_oserror():
         log.warning("sync_no_oserror: call of /bin/sync failed", exc_info=True)
 
 
-def rm_rf(path):
+def rm_rf(path: str) -> None:
     """
     Recursively (if needed) delete path.
     """
@@ -40,7 +41,7 @@ def rm_rf(path):
         os.remove(path)
 
 
-def flush_sync_file_object(fo):
+def flush_sync_file_object(fo: TextIO) -> None:
     """
     Flush internal buffers of @fo, then ask the OS to flush its own buffers.
     """
@@ -48,20 +49,17 @@ def flush_sync_file_object(fo):
     os.fsync(fo.fileno())
 
 
-def file_writelines_flush_sync(path, lines):
+def file_writelines_flush_sync(path: str, lines: Sequence[str]):
     """
     Fill file at @path with @lines then flush all buffers
     (Python and system buffers)
     """
-    fp = open(path, "w")
-    try:
+    with open(path, "w") as fp:
         fp.writelines(lines)
         flush_sync_file_object(fp)
-    finally:
-        fp.close()
 
 
-def file_w_create_directories(filepath):
+def file_w_create_directories(filepath: str) -> TextIO:
     """
     Recursively create some directories if needed so that the directory where
     @filepath must be written exists, then open it in "w" mode and return the

@@ -1,5 +1,6 @@
-# Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 import logging
 import threading
@@ -44,8 +45,8 @@ class MissingConfigurationError(RegistererError):
 class ServiceCatalogRegistration:
     def __init__(
         self,
-        service_name,
-        uuid,
+        service_name: str,
+        uuid: str,
         consul_config,
         service_discovery_config,
         bus_config,

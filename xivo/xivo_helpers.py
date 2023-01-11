@@ -1,10 +1,11 @@
-# Copyright 2008-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2008-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import re
 import sys
 import logging
+from typing import NoReturn, Sequence
 
 log = logging.getLogger("xivo.xivo_helpers")
 
@@ -12,14 +13,14 @@ log = logging.getLogger("xivo.xivo_helpers")
 find_asterisk_pattern_char = re.compile(r'[\[NXZ!.]').search
 
 
-def position_of_asterisk_pattern_char(ast_pattern):
+def position_of_asterisk_pattern_char(ast_pattern: str) -> int | None:
     mo = find_asterisk_pattern_char(ast_pattern)
     if not mo:
         return None
     return mo.start()
 
 
-def clean_extension(exten):
+def clean_extension(exten: str | None) -> str:
     """
     Return an extension from an Asterisk extension pattern.
     """
@@ -83,7 +84,7 @@ def split_extension(exten: str) -> tuple[str, ...]:
     return tuple(ret)
 
 
-def unsplit_extension(xlist):
+def unsplit_extension(xlist: list[str] | tuple[str, ...]) -> str:
     """
     Compute and return an extension from multi extensions.
 
@@ -110,19 +111,19 @@ def unsplit_extension(xlist):
     return '*'.join(ret)
 
 
-def fkey_extension(funckey_prefix, funckey_args):
+def fkey_extension(funckey_prefix: str, funckey_args: Sequence[str]) -> str:
     components = []
 
     for x in funckey_args:
-        x = clean_extension(x)
+        cleaned = clean_extension(x)
 
-        if x:
-            components.append(x)
+        if cleaned:
+            components.append(cleaned)
 
     return clean_extension(funckey_prefix) + unsplit_extension(components)
 
 
-def abort(message, show_tb=False):
+def abort(message: str, show_tb: bool = False) -> NoReturn:
     """
     Log @message at critical level (including a backtrace
     if @show_tb is true) then exit.

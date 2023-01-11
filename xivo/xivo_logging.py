@@ -1,8 +1,11 @@
-# Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 import logging
 import sys
+import types
+from typing import Callable, Sequence
 
 DEFAULT_LOG_FORMAT = '%(asctime)s [%(process)d] (%(levelname)s) (%(name)s): %(message)s'
 DEFAULT_LOG_LEVEL = logging.INFO
@@ -17,38 +20,38 @@ class _StreamToLogger:
     SPDX-License-Identifier: GPL-2.0+
     """
 
-    def __init__(self, logger: logging.Logger, log_level: int = logging.INFO):
+    def __init__(self, logger: logging.Logger, log_level: int = logging.INFO) -> None:
         self.logger = logger
         self.log_level = log_level
         self.linebuf = ''
 
-    def write(self, buf):
+    def write(self, buf) -> None:
         for line in buf.rstrip().splitlines():
             self.logger.log(self.log_level, line.rstrip())
 
-    def flush(self):
+    def flush(self) -> None:
         for handler in self.logger.handlers:
             handler.flush()
 
-    def close(self):
+    def close(self) -> None:
         for handler in self.logger.handlers:
             handler.close()
 
 
 class _LogLevelFilter(logging.Filter):
-    def __init__(self, level_filter):
+    def __init__(self, level_filter: Callable[[int], bool]) -> None:
         self._level_filter = level_filter
 
-    def filter(self, record):
+    def filter(self, record: logging.LogRecord) -> bool:
         return self._level_filter(record.levelno)
 
 
 def setup_logging(
-    log_file,
-    debug=False,
-    log_level=DEFAULT_LOG_LEVEL,
-    log_format=DEFAULT_LOG_FORMAT,
-):
+    log_file: str,
+    debug: bool = False,
+    log_level: int = DEFAULT_LOG_LEVEL,
+    log_format: str = DEFAULT_LOG_FORMAT,
+) -> None:
     """
     logger.*  ------------------------ v
     sys.stdout > streamtologger(INFO)  > logger > streamhandler(level<ERROR) > sys.stdout
@@ -87,19 +90,23 @@ def setup_logging(
     sys.excepthook = excepthook
 
 
-def silence_loggers(logger_names, level):
+def silence_loggers(logger_names: Sequence[str], level: int) -> None:
     for name in logger_names:
         logger = logging.getLogger(name)
         logger.setLevel(level)
 
 
-def excepthook(exception_class, exception_instance, traceback):
+def excepthook(
+    exception_class: type[BaseException],
+    exception_instance: BaseException,
+    traceback: types.TracebackType | None,
+) -> None:
     logging.getLogger().critical(
         exception_instance, exc_info=(exception_class, exception_instance, traceback)
     )
 
 
-def get_log_level_by_name(log_level_name):
+def get_log_level_by_name(log_level_name: str) -> int:
     levels = {
         'CRITICAL': logging.CRITICAL,
         'ERROR': logging.ERROR,

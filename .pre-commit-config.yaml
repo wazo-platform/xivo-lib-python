@@ -15,4 +15,12 @@ repos:
     hooks:
       - id: mypy
         language_version: "3.10"
-        additional_dependencies: ["types-pytz", "types-requests", "types-pyyaml", "types-setuptools"]
+        additional_dependencies:
+          - "types-flask"
+          - "types-psycopg2"
+          - "types-pytz"
+          - "types-pyyaml"
+          - "types-requests"
+          - "types-setuptools"
+          - "types-werkzeug"
+

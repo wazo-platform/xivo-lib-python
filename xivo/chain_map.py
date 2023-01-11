@@ -7,7 +7,7 @@ from copy import copy
 
 
 class ChainMap(UserDict):
-    def __init__(self, *dicts):
+    def __init__(self, *dicts: dict) -> None:
         self.data = {}
         for d in dicts:
             self.data = self._deep_update(self.data, d)
