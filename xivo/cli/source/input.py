@@ -1,15 +1,21 @@
-# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
+
+from typing import TypeVar
+
+
+T = TypeVar('T', bound='InputRawCommandLineSource')
 
 
 class InputRawCommandLineSource:
-    def __init__(self, prompt):
+    def __init__(self, prompt: str) -> None:
         self._prompt = prompt
 
-    def __iter__(self):
+    def __iter__(self: T) -> T:
         return self
 
-    def __next__(self):
+    def __next__(self) -> str:
         while True:
             try:
                 raw_command_line = input(self._prompt)

@@ -1,25 +1,27 @@
-# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
-import collections
 import re
+
+from typing import NamedTuple, Generator
 
 channel_regexp = re.compile(r'(pjsip|sip|sccp|local|dahdi|iax2)/([*\w@/-]+)-', re.I)
 agent_channel_regex = re.compile(r'Local/id-(\d+)@agentcallback')
 device_regexp = re.compile(r'(sip|sccp|local|dahdi|iax2)/([\w@/-]+)', re.I)
 
 
-ProtocolInterface = collections.namedtuple(
-    'ProtocolInterface', ['protocol', 'interface']
-)
+class ProtocolInterface(NamedTuple):
+    protocol: str
+    interface: str
 
 
 class InvalidChannelError(ValueError):
-    def __init__(self, invalid_channel=None):
-        ValueError.__init__(self, 'the channel %s is invalid' % invalid_channel)
+    def __init__(self, invalid_channel: str | None = None) -> None:
+        super().__init__(self, f'the channel {invalid_channel} is invalid')
 
 
-def protocol_interface_from_channel(channel):
+def protocol_interface_from_channel(channel: str) -> ProtocolInterface:
     matches = channel_regexp.search(channel)
     if matches is None:
         raise InvalidChannelError(channel)
@@ -35,7 +37,9 @@ def protocol_interface_from_channel(channel):
     return ProtocolInterface(protocol, interface)
 
 
-def protocol_interfaces_from_hint(hint, ignore_invalid=True):
+def protocol_interfaces_from_hint(
+    hint: str, ignore_invalid: bool = True
+) -> Generator[ProtocolInterface, None, None]:
     for device in hint.split('&'):
         protocol_interface = _protocol_interface_from_device(device)
         if protocol_interface:
@@ -44,7 +48,7 @@ def protocol_interfaces_from_hint(hint, ignore_invalid=True):
             raise InvalidChannelError(device)
 
 
-def _protocol_interface_from_device(device):
+def _protocol_interface_from_device(device: str) -> ProtocolInterface | None:
     matches = device_regexp.match(device)
     if matches is None:
         return None
@@ -55,7 +59,7 @@ def _protocol_interface_from_device(device):
     return ProtocolInterface(protocol, interface)
 
 
-def agent_id_from_channel(channel):
+def agent_id_from_channel(channel: str) -> int:
     matches = agent_channel_regex.match(channel)
     if matches is None:
         raise InvalidChannelError(channel)

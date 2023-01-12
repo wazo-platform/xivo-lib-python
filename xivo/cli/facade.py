@@ -1,13 +1,13 @@
-# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
-
+from __future__ import annotations
 
 import os.path
 import sys
 from xivo.cli import history
 from xivo.cli.command.help import HelpCommand
 from xivo.cli.command.exit import ExitCommand
-from xivo.cli.command.unknown import PrintingUnknownCommand
+from xivo.cli.command.unknown import PrintingUnknownCommand, _BaseUnknownCommand
 from xivo.cli.completion.completer import CommandLineCompleter
 from xivo.cli.completion.readline import ReadlineCompletionHelper
 from xivo.cli.errorhandler import PrintTracebackErrorHandler
@@ -18,7 +18,9 @@ from xivo.cli.source.input import InputRawCommandLineSource
 
 
 class FacadeInterpreter:
-    def __init__(self, prompt=None, history_file=None, error_handler=None):
+    def __init__(
+        self, prompt: str | None = None, history_file=None, error_handler=None
+    ):
         if prompt is None:
             prompt = f'{os.path.basename(sys.argv[0])}> '
         if history_file:
@@ -29,7 +31,7 @@ class FacadeInterpreter:
         self._command_line_completer = CommandLineCompleter(self._command_registry)
         self._raw_command_line_parser = RawCommandLineParser(self._command_registry)
         self._error_handler = error_handler or PrintTracebackErrorHandler()
-        self._unknown_command_class = PrintingUnknownCommand
+        self._unknown_command_class: type[_BaseUnknownCommand] = PrintingUnknownCommand
 
         self._add_std_commands()
         self._setup_completion()

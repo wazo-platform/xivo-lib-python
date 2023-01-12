@@ -1,7 +1,8 @@
-# Copyright 2017-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
-from typing import Dict as DictType, Union
+
+from typing import TYPE_CHECKING, Any, Union
 
 import ipaddress
 
@@ -23,11 +24,22 @@ from marshmallow.fields import (  # noqa: E402
     UUID as _UUID,
 )
 
-DefaultErrorMessages = DictType[str, Union[str, DictType[str, str]]]
+if TYPE_CHECKING:
+    from typing import Dict as DictType, TypedDict
+
+    ErrorMessages = TypedDict(
+        'ErrorMessages',
+        {
+            'message': str,
+            'constraint_id': str,
+            'constraint': str,
+        },
+    )
+    DefaultErrorMessages = DictType[str, Union[ErrorMessages, "_StringifiedDict"]]
 
 
 class _StringifiedDict(dict):
-    def format(self, *args, **kwargs):
+    def format(self, *args: Any, **kwargs: Any) -> _StringifiedDict:
         self['message'] = self.get('message', '').format(*args, **kwargs)
         return self
 

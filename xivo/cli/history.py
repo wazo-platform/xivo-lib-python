@@ -1,13 +1,14 @@
-# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 import errno
 import readline
 
-_HISTORY_LENGTH = 1000
+_HISTORY_LENGTH = 1_000
 
 
-def load(history_file):
+def load(history_file: str) -> None:
     try:
         readline.read_history_file(history_file)
     except OSError as e:
@@ -15,7 +16,7 @@ def load(history_file):
             raise
 
 
-def save(history_file):
+def save(history_file: str) -> None:
     readline.set_history_length(_HISTORY_LENGTH)
     try:
         readline.write_history_file(history_file)
@@ -26,6 +27,6 @@ def save(history_file):
             raise
 
 
-def _create_file(filename):
+def _create_file(filename: str) -> None:
     with open(filename, 'w'):
         pass

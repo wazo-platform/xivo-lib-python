@@ -16,9 +16,8 @@ if TYPE_CHECKING:
     from typing import TypedDict, Collection
     from wazo_auth_client.client import AuthClient
 
-    Callback = TypedDict(
-        'Callback', {'method': Callable[[Collection[str]], None], 'details': bool}
-    )
+    Callback = Callable[[Collection[str]], None]
+    CallbackDict = TypedDict('CallbackDict', {'method': Callback, 'details': bool})
 
 
 T = TypeVar('T', bound='TokenRenewer')
@@ -26,14 +25,16 @@ T = TypeVar('T', bound='TokenRenewer')
 
 class TokenRenewer:
 
-    DEFAULT_EXPIRATION = 6 * 3600
+    DEFAULT_EXPIRATION = 6 * 3_600
     _RENEW_TIME_COEFFICIENT = 0.8
 
-    def __init__(self, auth_client: AuthClient, expiration: int = DEFAULT_EXPIRATION):
+    def __init__(
+        self, auth_client: AuthClient, expiration: int = DEFAULT_EXPIRATION
+    ) -> None:
         self._auth_client = auth_client
         self._expiration = expiration
-        self._callbacks: list[Callback] = []
-        self._callbacks_tmp: list[Callback] = []
+        self._callbacks: list[CallbackDict] = []
+        self._callbacks_tmp: list[CallbackDict] = []
         self._started = False
         self._stopped = threading.Event()
         self._renew_time: float = 0
@@ -42,15 +43,15 @@ class TokenRenewer:
             (1, 2, 4, 8, 16), itertools.repeat(32)
         )
 
-    def subscribe_to_token_change(self, callback) -> None:
+    def subscribe_to_token_change(self, callback: Callback) -> None:
         with self._callback_lock:
             self._callbacks.append({'method': callback, 'details': False})
 
-    def subscribe_to_next_token_change(self, callback) -> None:
+    def subscribe_to_next_token_change(self, callback: Callback) -> None:
         with self._callback_lock:
             self._callbacks_tmp.append({'method': callback, 'details': False})
 
-    def subscribe_to_next_token_details_change(self, callback) -> None:
+    def subscribe_to_next_token_details_change(self, callback: Callback) -> None:
         with self._callback_lock:
             self._callbacks_tmp.append({'method': callback, 'details': True})
 

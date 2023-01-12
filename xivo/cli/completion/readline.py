@@ -1,22 +1,31 @@
-# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import readline
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .completer import CommandLineCompleter
+    from ..parser import RawCommandLineParser
 
 
 class ReadlineCompletionHelper:
-    def __init__(self, raw_command_line_parser, command_line_completer):
+    def __init__(
+        self,
+        raw_command_line_parser: RawCommandLineParser,
+        command_line_completer: CommandLineCompleter,
+    ) -> None:
         self._raw_command_line_parser = raw_command_line_parser
         self._command_line_completer = command_line_completer
-        self._candidates = []
+        self._candidates: list[str] = []
 
     def setup(self) -> None:
         readline.parse_and_bind('tab: complete')
         readline.set_completer_delims(self._raw_command_line_parser.word_delimiter)
         readline.set_completer(self.on_readline_complete)
 
-    def on_readline_complete(self, text: str, state):
+    def on_readline_complete(self, text: str, state: int) -> str | None:
         if state == 0:
             self._refresh_candidates(text)
 
@@ -26,7 +35,7 @@ class ReadlineCompletionHelper:
             response = None
         return response
 
-    def _refresh_candidates(self, text: str):
+    def _refresh_candidates(self, text: str) -> None:
         raw_command_line = self._get_raw_command_line()
         words = self._raw_command_line_parser.split(raw_command_line)
         if text:
