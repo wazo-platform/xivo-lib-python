@@ -51,12 +51,12 @@ class UnauthorizedTenant(rest_api_helpers.APIException):
         )
 
 
-T = TypeVar('T', bound='Tenant')
+Self = TypeVar('Self', bound='Tenant')
 
 
 class Tenant:
     @classmethod
-    def autodetect(cls: type[T], tokens: Tokens) -> T:
+    def autodetect(cls: type[Self], tokens: Tokens) -> Self:
         token = tokens.from_headers()
         try:
             tenant = cls.from_headers()
@@ -69,7 +69,7 @@ class Tenant:
             raise UnauthorizedTenant(tenant.uuid)
 
     @classmethod
-    def from_query(cls: type[T]) -> T:
+    def from_query(cls: type[Self]) -> Self:
         try:
             tenant_uuid = request.args['tenant']
         except KeyError:
@@ -77,7 +77,7 @@ class Tenant:
         return cls(uuid=tenant_uuid)
 
     @classmethod
-    def from_headers(cls: type[T]) -> T:
+    def from_headers(cls: type[Self]) -> Self:
         try:
             tenant_uuid = request.headers['Wazo-Tenant']
         except KeyError:
@@ -85,7 +85,7 @@ class Tenant:
         return cls(uuid=tenant_uuid)
 
     @classmethod
-    def from_token(cls: type[T], token: Token) -> T:
+    def from_token(cls: type[Self], token: Token) -> Self:
         if not token.tenant_uuid:
             raise InvalidTenant()
         return cls(uuid=token.tenant_uuid)
@@ -94,7 +94,7 @@ class Tenant:
         self.uuid = uuid
         self.name = name
 
-    def check_against_token(self: T, token: Token) -> T:
+    def check_against_token(self: Self, token: Token) -> Self:
         if self.uuid == token.tenant_uuid:
             return self
         if not token.visible_tenants(tenant_uuid=self.uuid):

@@ -21,7 +21,7 @@ class HelpCommand(BaseCommand):
         super().__init__()
         self._command_registry = command_registry
 
-    def prepare(self, command_args: list[str]) -> tuple[list[str] | None, ...]:
+    def prepare(self, command_args: list[str] | None) -> tuple[list[str] | None, ...]:
         if command_args:
             words = command_args
         else:

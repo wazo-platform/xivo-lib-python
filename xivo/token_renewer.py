@@ -19,8 +19,7 @@ if TYPE_CHECKING:
     Callback = Callable[[Collection[str]], None]
     CallbackDict = TypedDict('CallbackDict', {'method': Callback, 'details': bool})
 
-
-T = TypeVar('T', bound='TokenRenewer')
+Self = TypeVar('Self', bound='TokenRenewer')
 
 
 class TokenRenewer:
@@ -123,7 +122,7 @@ class TokenRenewer:
                     'unexpected exception from token change callback', exc_info=True
                 )
 
-    def __enter__(self: T) -> T:
+    def __enter__(self: Self) -> Self:
         self.start()
         return self
 

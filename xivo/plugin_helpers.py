@@ -3,15 +3,26 @@
 from __future__ import annotations
 
 import logging
+from abc import abstractmethod
 
 from collections import OrderedDict
 from functools import partial
-from typing import Sequence, Any
+from typing import Sequence, Any, TYPE_CHECKING
 
 from stevedore.extension import Extension
 from stevedore.named import NamedExtensionManager
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from typing import Protocol, TypeVar
+
+    Self = TypeVar('Self', bound="Plugin")
+
+    class Plugin(Protocol):
+        @abstractmethod
+        def load(self: Self, dependencies: dict[str, Any]) -> Self:
+            ...
 
 
 def enabled_names(plugins_dict: OrderedDict[str, bool]) -> list[str]:
@@ -36,7 +47,7 @@ def on_missing_entrypoints(namespace: str, missing_names: set[str]) -> None:
     )
 
 
-def load_plugin(ext: Extension, *load_args: Any, **load_kwargs: Any):
+def load_plugin(ext: Extension, *load_args: Any, **load_kwargs: Any) -> Plugin:
     logger.debug('Loading dynamic plugin: %s', ext.name)
     return ext.obj.load(*load_args, **load_kwargs)
 

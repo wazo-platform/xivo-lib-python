@@ -39,7 +39,7 @@ __author__ = 'Matthew Nicholson'
 # original __version__ = '0.1.0'
 __version__ = "$Revision$ $Date$"
 
-from typing import Any, NamedTuple, NewType, TextIO, TYPE_CHECKING, Type
+from typing import Any, NamedTuple, NewType, TextIO, TYPE_CHECKING, Type, Callable
 
 import keyword
 import inspect
@@ -86,7 +86,9 @@ def lookup(
     return None, __UNDEF__
 
 
-def scanvars(reader, frame, lcals):
+def scanvars(
+    reader: Callable[[], str], frame: types.FrameType, lcals: dict[str, Any]
+) -> list[tuple[str, str | None, list[str] | Undefined]]:
     """Scan one logical line of Python and look up values of variables used."""
 
     xvars: list[tuple[str, str | None, list[str] | Undefined]] = []
@@ -142,7 +144,7 @@ def get_frames_from_traceback(
 
         highlight = {}
 
-        def reader(lnum=[lnum]):
+        def reader(lnum: list[int] = [lnum]) -> str:
             highlight[lnum[0]] = 1
             try:
                 return linecache.getline(filen, lnum[0])
@@ -169,7 +171,7 @@ def get_frames_from_traceback(
                 elif where == 'local':
                     name = name
                 else:
-                    name = where + name.split('.')[-1]
+                    name = (where or '') + name.split('.')[-1]
                 dump.append(f'{name} = {pydoc.text.repr(value)}')  # type: ignore[call-arg]
             else:
                 dump.append(name + ' undefined')

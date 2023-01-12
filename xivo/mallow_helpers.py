@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar, Callable
 from functools import wraps  # noqa: E402
 import marshmallow  # noqa: E402
 
@@ -13,8 +13,11 @@ if TYPE_CHECKING:
     from typing import Literal
 
 
+R = TypeVar('R')
+
+
 class ValidationError(APIException):
-    def __init__(self, errors):
+    def __init__(self, errors: dict[str, Any]) -> None:
         super().__init__(
             status_code=400,
             message='Sent data is invalid',
@@ -23,9 +26,9 @@ class ValidationError(APIException):
         )
 
 
-def handle_validation_exception(func):
+def handle_validation_exception(func: Callable[..., R]) -> Callable[..., R]:
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> R:
         try:
             return func(*args, **kwargs)
         except marshmallow.ValidationError as e:

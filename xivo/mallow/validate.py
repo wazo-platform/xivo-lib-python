@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 from marshmallow import ValidationError  # noqa: E402
 from marshmallow.validate import (  # noqa: E402
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 
 def validate_string_dict(
-    dict_: dict, max_key_length: int = 128, max_value_length: int = 2_048
+    dict_: dict[str, Any], max_key_length: int = 128, max_value_length: int = 2_048
 ) -> None:
     for key, value in dict_.items():
         if not (isinstance(key, str) and isinstance(value, str)):
@@ -60,7 +60,7 @@ class ContainsOnly(_ContainsOnly):
 
     constraint_id = 'enum'
 
-    def _format_error(self, value) -> ErrorDict:
+    def _format_error(self, value: Sequence[Any]) -> ErrorDict:
         msg = super()._format_error(value)
 
         return {
@@ -74,7 +74,7 @@ class Email(_Email):
 
     constraint_id = 'email'
 
-    def _format_error(self, value) -> ErrorDict:
+    def _format_error(self, value: str | None) -> ErrorDict:
         msg = super()._format_error(value)
 
         return {
@@ -88,7 +88,7 @@ class Equal(_Equal):
 
     constraint_id = 'equal'
 
-    def _format_error(self, value) -> ErrorDict:
+    def _format_error(self, value: Any) -> ErrorDict:
         msg = super()._format_error(value)
 
         return {
@@ -102,7 +102,7 @@ class Length(_Length):
 
     constraint_id = 'length'
 
-    def _format_error(self, value, message) -> ErrorDict:
+    def _format_error(self, value: str | None, message: str) -> ErrorDict:
         msg = super()._format_error(value, message)
         if self.equal:
             constraint = {'equal': self.equal}
@@ -120,7 +120,7 @@ class OneOf(_OneOf):
 
     constraint_id = 'enum'
 
-    def _format_error(self, value) -> ErrorDict:
+    def _format_error(self, value: str | None) -> ErrorDict:
         msg = super()._format_error(value)
 
         return {
@@ -134,7 +134,7 @@ class NoneOf(_NoneOf):
 
     constraint_id = 'ban'
 
-    def _format_error(self, value) -> ErrorDict:
+    def _format_error(self, value: str | None) -> ErrorDict:
         msg = super()._format_error(value)
 
         return {
@@ -148,7 +148,7 @@ class Predicate(_Predicate):
 
     constraint_id = 'predicate'
 
-    def _format_error(self, value) -> ErrorDict:
+    def _format_error(self, value: str | None) -> ErrorDict:
         msg = super()._format_error(value)
 
         return {
@@ -162,7 +162,7 @@ class Range(_Range):
 
     constraint_id = 'range'
 
-    def _format_error(self, value, *args) -> ErrorDict:
+    def _format_error(self, value: str | None, *args: str | None) -> ErrorDict:
         msg = super()._format_error(value, *args)
         constraint = {}
         if self.min is not None:
@@ -181,7 +181,7 @@ class Regexp(_Regexp):
 
     constraint_id = 'regex'
 
-    def _format_error(self, value) -> ErrorDict:
+    def _format_error(self, value: str | None) -> ErrorDict:
         msg = super()._format_error(value)
 
         return {
@@ -195,7 +195,7 @@ class URL(_URL):
 
     constraint_id = 'url'
 
-    def _format_error(self, value) -> ErrorDict:
+    def _format_error(self, value: str | None) -> ErrorDict:
         msg = super()._format_error(value)
 
         return {

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-# Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from typing import Any
+from types import FrameType
+from typing import Any, NoReturn
 
 import requests
 import sys
@@ -11,7 +12,7 @@ import signal
 import logging
 import os
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, Response
 
 from xivo.consul_helpers import ServiceCatalogRegistration
 
@@ -23,11 +24,11 @@ logger = logging.getLogger(__name__)
 
 
 @app.route('/0.1/infos')
-def infos():
+def infos() -> Response:
     return jsonify({'uuid': UUID})
 
 
-def self_check():
+def self_check() -> bool:
     try:
         return requests.get('http://localhost:6262/0.1/infos').status_code == 200
     except Exception:
@@ -35,12 +36,12 @@ def self_check():
     return False
 
 
-def handler(signum, frame):
+def handler(signum: int, frame: FrameType | None) -> NoReturn:
     logger.debug('SIGTERM %s', signum)
     sys.exit(0)
 
 
-def main():
+def main() -> None:
     advertise_address = os.getenv('ADVERTISE_ADDR', 'auto')
     enabled = os.getenv('DISABLED', '0') == '0'
     logger.debug('advertise addr: %s', advertise_address)

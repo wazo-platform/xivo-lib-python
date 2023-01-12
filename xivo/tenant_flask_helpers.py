@@ -23,7 +23,7 @@ def get_auth_client() -> AuthClient:
 
 
 # TODO: When werkzeug is updated it the ignore can be removed.
-auth_client: AuthClient = LocalProxy(get_auth_client)  # type: ignore[assignment]
+auth_client: AuthClient = LocalProxy(get_auth_client)
 
 
 def get_token() -> Token:
@@ -47,14 +47,13 @@ def get_current_user() -> User:
 
 current_user: User = LocalProxy(get_current_user)  # type: ignore[assignment]
 
-
-T = TypeVar('T', bound='Tenant')
+Self = TypeVar('Self', bound='Tenant')
 
 
 class Tenant(tenant_helpers.Tenant):
     # It's true we shouldn't be changing the signature here...
     @classmethod
-    def autodetect(cls: type[T], include_query: bool = False) -> T:  # type: ignore[override]
+    def autodetect(cls: type[Self], include_query: bool = False) -> Self:  # type: ignore[override]
         tenant = None
         if include_query:
             try:

@@ -5,14 +5,14 @@ from __future__ import annotations
 from typing import TypeVar
 
 
-T = TypeVar('T', bound='InputRawCommandLineSource')
+Self = TypeVar('Self', bound='InputRawCommandLineSource')
 
 
 class InputRawCommandLineSource:
     def __init__(self, prompt: str) -> None:
         self._prompt = prompt
 
-    def __iter__(self: T) -> T:
+    def __iter__(self: Self) -> Self:
         return self
 
     def __next__(self) -> str:

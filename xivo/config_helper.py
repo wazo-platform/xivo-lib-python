@@ -7,7 +7,7 @@ import os
 import sys
 import subprocess
 from logging import Logger
-from typing import Any
+from typing import Any, Generator
 
 import yaml
 
@@ -26,7 +26,7 @@ class _YAMLExecTag(yaml.YAMLObject):
     @classmethod
     def from_yaml(
         cls, loader: yaml.SafeLoader | yaml.Loader | yaml.BaseLoader, node: yaml.Node
-    ):
+    ) -> dict[str, Any] | None:
         with open(os.devnull) as devnull:
             for key, value in node.value:
                 if key.value == 'command':
@@ -94,7 +94,7 @@ class ConfigParser:
             self._error_handler.on_parse_config_dir_env_error(directory_name, e)
             return []
 
-        def _config_generator():
+        def _config_generator() -> Generator[dict[str, Any], None, None]:
             for filename in sorted(extra_config_filenames):
                 if filename.startswith('.'):
                     continue

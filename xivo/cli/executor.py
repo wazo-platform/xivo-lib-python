@@ -7,9 +7,11 @@ from typing import TYPE_CHECKING, Iterable
 from xivo.cli.exception import UsageError
 
 if TYPE_CHECKING:
+    from .command.base import BaseCommand
+    from .command.unknown import _BaseUnknownCommand
     from .errorhandler import PrintTracebackErrorHandler, ReRaiseErrorHandler
     from .parser import RawCommandLineParser
-    from .command.unknown import _BaseUnknownCommand
+    from .registry import _NamedCommandDecorator
 
 
 class Executor:
@@ -34,6 +36,7 @@ class Executor:
         if command_line.is_blank():
             return
 
+        command: BaseCommand | _NamedCommandDecorator
         if command_line.command is None:
             command = self._unknown_command_class(command_line.words)
         else:
@@ -43,6 +46,6 @@ class Executor:
             execute_args = command.prepare(command_line.command_args)
             command.execute(*execute_args)
         except UsageError:
-            print(command.format_usage())  # type: ignore[attr-defined]
+            print(command.format_usage())  # type: ignore[union-attr]
         except Exception as e:
             self._error_handler.on_exception(e)

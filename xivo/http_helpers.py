@@ -6,7 +6,7 @@ import json
 import re
 import time
 from logging import Logger
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterable
 from urllib.parse import unquote
 
 from cheroot.ssl.builtin import BuiltinSSLAdapter
@@ -31,7 +31,9 @@ class ReverseProxied:
     def __init__(self, application: WSGIApplication) -> None:
         self.app = application
 
-    def __call__(self, environ: WSGIEnvironment, start_response: StartResponse):
+    def __call__(
+        self, environ: WSGIEnvironment, start_response: StartResponse
+    ) -> Iterable[bytes]:
         script_name = environ.get('HTTP_X_SCRIPT_NAME', '')
         if script_name:
             environ['SCRIPT_NAME'] = script_name
@@ -47,7 +49,7 @@ def reverse_proxy_fix_api_spec(api_spec: dict[str, Any]) -> None:
         api_spec['basePath'] = f'{prefix}{base_path}'
 
 
-def add_logger(app, logger: Logger) -> None:
+def add_logger(app: Flask, logger: Logger) -> None:
     app.config['LOGGER_HANDLER_POLICY'] = 'never'
     app.logger.propagate = True
 
@@ -124,7 +126,7 @@ class LazyHeaderFormatter:
 
 
 def _log_request(
-    url, response: Response, hidden_fields: list[str] | None = None
+    url: str, response: Response, hidden_fields: list[str] | None = None
 ) -> None:
     current_app.logger.info(
         'response to %s%s: %s %s %s',

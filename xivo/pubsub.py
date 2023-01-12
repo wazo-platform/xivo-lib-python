@@ -65,7 +65,7 @@ class CallbackCollector:
 
     _TOPIC = 'callback-collector'
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._pubsub = Pubsub()
         self._sources: set[uuid.UUID] = set()
         self._lock = threading.Lock()
@@ -91,5 +91,5 @@ class CallbackCollector:
         self._sources.add(source_id)
         return partial(self._collect, source_id)
 
-    def subscribe(self, callback: Callable[[], None]):
+    def subscribe(self, callback: Callable[[], None]) -> None:
         self._pubsub.subscribe(self._TOPIC, lambda arg: callback())

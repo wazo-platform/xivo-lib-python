@@ -4,13 +4,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
-    from .command.base import BaseCommand
+    from .registry import _NamedCommandDecorator
 
 
 class CommandLine:
     def __init__(
-        self, words: list[str], command: BaseCommand, command_args: list[str]
+        self,
+        words: list[str],
+        command: _NamedCommandDecorator | None,
+        command_args: list[str] | None,
     ) -> None:
         self.words = words
         self.command = command

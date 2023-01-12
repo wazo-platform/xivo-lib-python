@@ -1,8 +1,9 @@
 # Copyright 2016-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 from collections import defaultdict
-from typing import Callable, DefaultDict
+from typing import Callable, DefaultDict, Collection
 
 StatusDict = DefaultDict[str, DefaultDict[str, str]]
 StatusProvider = Callable[[StatusDict], None]
@@ -27,7 +28,7 @@ class StatusAggregator:
         return status
 
 
-def _default_dict() -> DefaultDict[str, DefaultDict]:
+def _default_dict() -> DefaultDict[str, defaultdict]:
     return defaultdict(_default_dict)
 
 
@@ -35,7 +36,7 @@ class TokenStatus:
     def __init__(self) -> None:
         self.has_token = False
 
-    def token_change_callback(self, token):
+    def token_change_callback(self, token: Collection[str]) -> None:
         self.has_token = True
 
     def provide_status(self, status: StatusDict) -> None:

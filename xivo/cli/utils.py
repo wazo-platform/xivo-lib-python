@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import functools
-from typing import TypeVar, Callable
+from typing import TypeVar, Callable, Any
 
 from xivo.cli.exception import UsageError
 
@@ -24,7 +24,7 @@ def compute_ids(command_arg: str) -> list[int]:
 
 def wraps_error_as_usage_error(fun: Callable[..., R]) -> Callable[..., R]:
     @functools.wraps(fun)
-    def aux(*args, **kwargs) -> R:
+    def aux(*args: Any, **kwargs: Any) -> R:
         try:
             return fun(*args, **kwargs)
         except UsageError:

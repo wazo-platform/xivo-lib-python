@@ -250,11 +250,13 @@ class IP(_String):
         }
     )
 
-    def _deserialize(self, value, attr, data, **kwargs):
+    def _deserialize(
+        self, value: Any, attr: str | None, data: dict[str, Any], **kwargs: Any
+    ) -> str | None:
         deserialized = super()._deserialize(value, attr, data, **kwargs)
         return self._validated(deserialized)
 
-    def _validated(self, value):
+    def _validated(self, value: str | None) -> str | None:
         if value is None:
             return None
         try:

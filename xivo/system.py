@@ -49,7 +49,7 @@ def flush_sync_file_object(fo: TextIO) -> None:
     os.fsync(fo.fileno())
 
 
-def file_writelines_flush_sync(path: str, lines: Sequence[str]):
+def file_writelines_flush_sync(path: str, lines: Sequence[str]) -> None:
     """
     Fill file at @path with @lines then flush all buffers
     (Python and system buffers)

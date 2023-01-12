@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Sequence, Any
 
 from xivo.cli.exception import CommandAlreadyRegisteredError, NoMatchingCommandError
 
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class CommandRegistry:
-    def __init__(self):
+    def __init__(self) -> None:
         self._commands: list[_NamedCommandDecorator] = []
 
     def complete_next_word(self, words: list[str]) -> list[str]:
@@ -23,14 +23,16 @@ class CommandRegistry:
                 candidates.add(command.words[nb_words])
         return list(candidates)
 
-    def get_command(self, words: list[str]):
+    def get_command(self, words: list[str]) -> _NamedCommandDecorator:
         words_tuple = tuple(words)
         command = self._get_command(words_tuple)
         if command is None:
             raise NoMatchingCommandError(words)
         return command
 
-    def get_command_and_args(self, words: list[str]):
+    def get_command_and_args(
+        self, words: list[str]
+    ) -> tuple[_NamedCommandDecorator, list[str]]:
         words_tuple = tuple(words)
         for command in self._commands:
             nb_words = command.nb_words
@@ -69,5 +71,5 @@ class _NamedCommandDecorator:
             return f'usage: {self.name} {usage}'
         return f'usage: {self.name}'
 
-    def __getattr__(self, name: str) -> str:
+    def __getattr__(self, name: str) -> Any:
         return getattr(self._command, name)
