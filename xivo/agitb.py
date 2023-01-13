@@ -39,19 +39,18 @@ __author__ = 'Matthew Nicholson'
 # original __version__ = '0.1.0'
 __version__ = "$Revision$ $Date$"
 
-from typing import Any, NamedTuple, NewType, TextIO, TYPE_CHECKING, Type, Callable
-
-import keyword
 import inspect
+import keyword
 import linecache
 import os
 import pydoc
 import sys
 import tempfile
 import time
-import traceback
 import tokenize
+import traceback
 import types
+from typing import TYPE_CHECKING, Any, Callable, NamedTuple, NewType, TextIO, Type
 
 if TYPE_CHECKING:
     from xivo.agi import AGI

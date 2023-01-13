@@ -1,8 +1,10 @@
 # Copyright 2018-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import requests
+from unittest import TestCase
+from unittest.mock import Mock, patch
 
+import requests
 from hamcrest import (
     assert_that,
     calling,
@@ -12,11 +14,10 @@ from hamcrest import (
     has_property,
     instance_of,
 )
-from unittest.mock import Mock, patch
 from requests import HTTPError, RequestException
-from unittest import TestCase
-from xivo.auth_verifier import AuthServerUnreachable
 from wazo_test_helpers.hamcrest.raises import raises
+
+from xivo.auth_verifier import AuthServerUnreachable
 
 from ..tenant_helpers import (
     InvalidTenant,

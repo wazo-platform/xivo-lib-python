@@ -7,11 +7,11 @@ WARNING: Linux specific module, needs /proc/
 """
 from __future__ import annotations
 
+import errno
+import logging
 import os
 import re
 import sys
-import errno
-import logging
 from contextlib import contextmanager
 from typing import Generator
 

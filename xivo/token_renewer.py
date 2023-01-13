@@ -4,16 +4,17 @@ from __future__ import annotations
 
 import itertools
 import logging
+import threading
 import types
-from typing import TYPE_CHECKING, TypeVar, Callable
+from typing import TYPE_CHECKING, Callable, TypeVar
 
 import requests
-import threading
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from typing import TypedDict, Collection
+    from typing import Collection, TypedDict
+
     from wazo_auth_client.client import AuthClient
 
     Callback = Callable[[Collection[str]], None]

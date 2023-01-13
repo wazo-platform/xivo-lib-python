@@ -1,15 +1,17 @@
-# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
 
 from hamcrest import assert_that, contains_exactly
 
-from ..protocol_interface import ProtocolInterface
-from ..protocol_interface import InvalidChannelError
-from ..protocol_interface import protocol_interface_from_channel
-from ..protocol_interface import protocol_interfaces_from_hint
-from ..protocol_interface import agent_id_from_channel
+from ..protocol_interface import (
+    InvalidChannelError,
+    ProtocolInterface,
+    agent_id_from_channel,
+    protocol_interface_from_channel,
+    protocol_interfaces_from_hint,
+)
 
 
 class TestProtocolInterface(unittest.TestCase):

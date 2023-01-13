@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Callable, DefaultDict, Collection
+from typing import Callable, Collection, DefaultDict
 
 StatusDict = DefaultDict[str, DefaultDict[str, str]]
 StatusProvider = Callable[[StatusDict], None]

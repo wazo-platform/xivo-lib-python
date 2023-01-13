@@ -11,10 +11,10 @@ from __future__ import annotations
 
 __version__ = "$Revision$ $Date$"
 
+import logging
 import os
 import shutil
 import subprocess
-import logging
 from typing import Sequence, TextIO
 
 log = logging.getLogger("xivo.system")

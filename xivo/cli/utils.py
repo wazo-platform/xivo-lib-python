@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import functools
-from typing import TypeVar, Callable, Any
+from typing import Any, Callable, TypeVar
 
 from xivo.cli.exception import UsageError
-
 
 R = TypeVar('R')
 

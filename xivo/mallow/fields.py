@@ -2,30 +2,28 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
+import ipaddress
 from typing import TYPE_CHECKING, Any, Union
 
-import ipaddress
-
-from marshmallow.fields import (  # noqa: E402
-    Boolean as _Boolean,
-    Constant as _Constant,
-    Date as _Date,
-    DateTime as _DateTime,
-    Dict as _Dict,
-    Email as _Email,
-    Field as _Field,
-    Float as _Float,
-    Integer as _Integer,
-    List as _List,
-    Nested as _Nested,
-    String as _String,
-    TimeDelta as _TimeDelta,
-    URL as _URL,
-    UUID as _UUID,
-)
+from marshmallow.fields import URL as _URL
+from marshmallow.fields import UUID as _UUID
+from marshmallow.fields import Boolean as _Boolean  # noqa: E402
+from marshmallow.fields import Constant as _Constant
+from marshmallow.fields import Date as _Date
+from marshmallow.fields import DateTime as _DateTime
+from marshmallow.fields import Dict as _Dict
+from marshmallow.fields import Email as _Email
+from marshmallow.fields import Field as _Field
+from marshmallow.fields import Float as _Float
+from marshmallow.fields import Integer as _Integer
+from marshmallow.fields import List as _List
+from marshmallow.fields import Nested as _Nested
+from marshmallow.fields import String as _String
+from marshmallow.fields import TimeDelta as _TimeDelta
 
 if TYPE_CHECKING:
-    from typing import Dict as DictType, TypedDict
+    from typing import Dict as DictType
+    from typing import TypedDict
 
     ErrorMessages = TypedDict(
         'ErrorMessages',

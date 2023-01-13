@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Callable, TypeVar, Generator
+from functools import wraps
+from typing import Any, Callable, Generator, TypeVar
 
 import yaml
-
-from functools import wraps
-from pkg_resources import resource_string, iter_entry_points
+from pkg_resources import iter_entry_points, resource_string
 
 logger = logging.getLogger(__name__)
 

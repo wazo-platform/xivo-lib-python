@@ -1,16 +1,14 @@
-# Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import operator
 import unittest
 
-from ..chain_map import AccumulatingListChainMap as ALChainMap, ChainMap
-from hamcrest import assert_that
-from hamcrest import equal_to
-from hamcrest import has_entry
-from hamcrest import is_
-from hamcrest import none
+from hamcrest import assert_that, equal_to, has_entry, is_, none
+
+from ..chain_map import AccumulatingListChainMap as ALChainMap
+from ..chain_map import ChainMap
 
 
 class TestChainMap(unittest.TestCase):

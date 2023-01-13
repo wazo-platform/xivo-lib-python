@@ -7,8 +7,8 @@ import sys
 from typing import TYPE_CHECKING
 
 from xivo.cli import history
-from xivo.cli.command.help import HelpCommand
 from xivo.cli.command.exit import ExitCommand
+from xivo.cli.command.help import HelpCommand
 from xivo.cli.command.unknown import PrintingUnknownCommand, _BaseUnknownCommand
 from xivo.cli.completion.completer import CommandLineCompleter
 from xivo.cli.completion.readline import ReadlineCompletionHelper

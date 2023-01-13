@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import logging
 from abc import abstractmethod
-
 from collections import OrderedDict
 from functools import partial
-from typing import Sequence, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Sequence
 
 from stevedore.extension import Extension
 from stevedore.named import NamedExtensionManager

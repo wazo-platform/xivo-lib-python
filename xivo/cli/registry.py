@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence, Any
+from typing import TYPE_CHECKING, Any, Sequence
 
 from xivo.cli.exception import CommandAlreadyRegisteredError, NoMatchingCommandError
 

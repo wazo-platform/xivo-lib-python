@@ -1,12 +1,13 @@
-# Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from operator import itemgetter
 import os.path
 import random
 import string
 import tempfile
 import unittest
+from operator import itemgetter
+from unittest.mock import ANY, Mock, patch
 
 from hamcrest import (
     assert_that,
@@ -18,15 +19,16 @@ from hamcrest import (
     is_not,
     raises,
 )
-from unittest.mock import patch, Mock, ANY
 from yaml.parser import ParserError
 
-from ..config_helper import ConfigParser
-from ..config_helper import ErrorHandler
-from ..config_helper import PrintErrorHandler
-from ..config_helper import get_xivo_uuid
-from ..config_helper import set_xivo_uuid
-from ..config_helper import UUIDNotFound
+from ..config_helper import (
+    ConfigParser,
+    ErrorHandler,
+    PrintErrorHandler,
+    UUIDNotFound,
+    get_xivo_uuid,
+    set_xivo_uuid,
+)
 
 XIVO_UUID = '08c56466-8f29-45c7-9856-92bf1ba89b82'
 

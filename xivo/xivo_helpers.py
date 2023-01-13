@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
+import logging
 import re
 import sys
-import logging
 from typing import NoReturn, Sequence
 
 log = logging.getLogger("xivo.xivo_helpers")

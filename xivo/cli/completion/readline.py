@@ -6,8 +6,8 @@ import readline
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .completer import CommandLineCompleter
     from ..parser import RawCommandLineParser
+    from .completer import CommandLineCompleter
 
 
 class ReadlineCompletionHelper:

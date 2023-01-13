@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-
 from pwd import getpwnam
 
 from xivo.xivo_helpers import abort

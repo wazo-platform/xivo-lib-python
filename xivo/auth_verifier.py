@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import logging
 import re
-import requests
-
 from functools import wraps
-from typing import Any, Callable, NamedTuple, NoReturn, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, NamedTuple, NoReturn, TypeVar
+
+import requests
 
 # Postpone the raise to the first use of the Client constructor.
 # wazo-auth uses its own version of the client to avoid using its own
@@ -25,7 +25,8 @@ except ImportError as e:
 
 if TYPE_CHECKING:
     # Workaround to attempt to type `request` until we have Protocols to type properly.
-    from flask import Request as _Request, request as _request
+    from flask import Request as _Request
+    from flask import request as _request
 
     class Request(_Request):
         token_id: str

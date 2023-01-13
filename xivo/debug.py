@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import functools
 import logging
-import time
 import os
-from typing import TypeVar, Callable, Any
+import time
+from typing import Any, Callable, TypeVar
 
 logger = logging.getLogger(__name__)
 

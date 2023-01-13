@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from functools import partial
 import os
-import sys
 import subprocess
+import sys
+from functools import partial
 from logging import Logger
 from typing import Any, Generator
 

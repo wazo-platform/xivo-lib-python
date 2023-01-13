@@ -1,21 +1,21 @@
-# Copyright 2018-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from collections import OrderedDict
 import unittest
+from collections import OrderedDict
 
 from hamcrest import (
     all_of,
     assert_that,
+    calling,
     empty,
     has_entries,
     has_key,
     has_property,
-    calling,
     instance_of,
     not_,
 )
-from marshmallow import fields, ValidationError
+from marshmallow import ValidationError, fields
 from wazo_test_helpers.hamcrest.raises import raises
 
 from ..mallow_helpers import ListSchema, Schema

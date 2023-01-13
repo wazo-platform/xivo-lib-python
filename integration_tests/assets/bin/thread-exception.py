@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-import time
 import threading
+import time
 from typing import NoReturn
 
 from xivo import xivo_logging

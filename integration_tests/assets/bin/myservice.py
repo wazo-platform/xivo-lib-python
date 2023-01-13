@@ -3,16 +3,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
+import logging
+import os
+import signal
+import sys
 from types import FrameType
 from typing import Any, NoReturn
 
 import requests
-import sys
-import signal
-import logging
-import os
-
-from flask import Flask, jsonify, Response
+from flask import Flask, Response, jsonify
 
 from xivo.consul_helpers import ServiceCatalogRegistration
 

@@ -1,11 +1,12 @@
-# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
 
 from hamcrest import assert_that, equal_to
+
 from xivo import caller_id
-from xivo.caller_id import is_complete_caller_id, extract_number, extract_displayname
+from xivo.caller_id import extract_displayname, extract_number, is_complete_caller_id
 
 
 class TestCallerID(unittest.TestCase):

@@ -61,12 +61,12 @@ __license__ = """
 #     - removed double quoting from database_get()
 #     - replaced a reference to old style ListType with a call to isinstance(..., list)
 
-import sys
 import pprint
 import re
 import signal
+import sys
 from types import FrameType
-from typing import TextIO, Union, TYPE_CHECKING, Dict, Tuple, List
+from typing import TYPE_CHECKING, Dict, List, TextIO, Tuple, Union
 
 if TYPE_CHECKING:
     from typing import Literal

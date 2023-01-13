@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, TypeVar, Callable
 from functools import wraps  # noqa: E402
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
+
 import marshmallow  # noqa: E402
 
 from .mallow import fields, validate  # noqa: E402

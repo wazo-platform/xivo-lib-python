@@ -2,13 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import requests
 
 from xivo import rest_api_helpers
-from xivo.auth_verifier import extract_token_id_from_header
-from xivo.auth_verifier import AuthServerUnreachable
+from xivo.auth_verifier import AuthServerUnreachable, extract_token_id_from_header
 
 # Necessary to avoid a dependency in provd
 try:

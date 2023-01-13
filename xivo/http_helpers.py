@@ -5,14 +5,13 @@ from __future__ import annotations
 import json
 import re
 import time
+from json.decoder import JSONDecodeError
 from logging import Logger
 from typing import TYPE_CHECKING, Any, Iterable
 from urllib.parse import unquote
 
 from cheroot.ssl.builtin import BuiltinSSLAdapter
-from flask import current_app, Flask, g, request, Response
-
-from json.decoder import JSONDecodeError
+from flask import Flask, Response, current_app, g, request
 
 PRINTABLE_CONTENT_TYPES = [
     'application/json',

@@ -1,17 +1,17 @@
-# Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
 import unittest
+from unittest.mock import ANY, Mock, patch
 
 from hamcrest import assert_that, equal_to
-from unittest.mock import patch, ANY, Mock
 
 from xivo.http_helpers import (
     BodyFormatter,
+    LazyHeaderFormatter,
     log_request,
     log_request_hide_token,
-    LazyHeaderFormatter,
 )
 
 

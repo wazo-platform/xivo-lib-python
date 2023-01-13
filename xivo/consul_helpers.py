@@ -5,11 +5,10 @@ from __future__ import annotations
 import logging
 import threading
 from types import TracebackType
-from typing import Callable, Any, TypeVar, TYPE_CHECKING
-
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 from uuid import uuid4
-import requests
 
+import requests
 from consul import Check, Consul, ConsulException
 from requests.exceptions import ConnectionError
 from xivo_bus.resources.common.abstract import AbstractEvent
@@ -22,8 +21,8 @@ except ImportError:
 try:
     from xivo_bus.publisher import BusPublisher
     from xivo_bus.resources.services.event import (
-        ServiceRegisteredEvent,
         ServiceDeregisteredEvent,
+        ServiceRegisteredEvent,
     )
 except ImportError:
     pass

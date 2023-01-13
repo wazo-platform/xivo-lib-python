@@ -5,18 +5,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 
 from marshmallow import ValidationError  # noqa: E402
-from marshmallow.validate import (  # noqa: E402
-    ContainsOnly as _ContainsOnly,
-    Email as _Email,
-    Equal as _Equal,
-    Length as _Length,
-    OneOf as _OneOf,
-    NoneOf as _NoneOf,
-    Predicate as _Predicate,
-    Range as _Range,
-    Regexp as _Regexp,
-    URL as _URL,
-)
+from marshmallow.validate import URL as _URL
+from marshmallow.validate import ContainsOnly as _ContainsOnly  # noqa: E402
+from marshmallow.validate import Email as _Email
+from marshmallow.validate import Equal as _Equal
+from marshmallow.validate import Length as _Length
+from marshmallow.validate import NoneOf as _NoneOf
+from marshmallow.validate import OneOf as _OneOf
+from marshmallow.validate import Predicate as _Predicate
+from marshmallow.validate import Range as _Range
+from marshmallow.validate import Regexp as _Regexp
 
 if TYPE_CHECKING:
     from typing import Any, Dict, TypedDict, Union
