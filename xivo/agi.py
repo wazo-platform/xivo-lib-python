@@ -32,7 +32,7 @@ To use this library please see the example :
 
 __version__ = "$Revision$ $Date$"
 __license__ = """
-    Copyright 2007-2022 The Wazo Authors  (see the AUTHORS file)
+    Copyright 2007-2023 The Wazo Authors  (see the AUTHORS file)
     Copyright (C) 2004 Karl Putland
     Upstream Original Author: Karl Putland <kputland@users.sourceforge.net>
 
@@ -192,7 +192,7 @@ class AGI:
     @staticmethod
     def send_command(command, *args):
         """Send a command to Asterisk"""
-        command = ' '.join([command.strip()] + map(str, args)).strip() + "\n"
+        command = ' '.join([command.strip()] + list(map(str, args))).strip() + "\n"
         sys.stdout.write(command)
         sys.stdout.flush()
 
