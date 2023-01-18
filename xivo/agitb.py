@@ -50,12 +50,12 @@ import time
 import tokenize
 import traceback
 import types
-from typing import TYPE_CHECKING, Any, Callable, NamedTuple, NewType, TextIO, Type
+from typing import TYPE_CHECKING, Any, Callable, List, NamedTuple, NewType, TextIO, Type
 
 if TYPE_CHECKING:
     from xivo.agi import AGI
 
-Undefined = NewType('Undefined', list[str])
+Undefined = NewType('Undefined', List[str])
 
 __UNDEF__ = Undefined([])  # a special sentinel object
 
