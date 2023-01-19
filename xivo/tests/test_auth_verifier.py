@@ -1,12 +1,18 @@
-# Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import requests
-import pytest
 import unittest
+from unittest.mock import Mock, patch
+from unittest.mock import sentinel as s
 
+import pytest
+import requests
 from hamcrest import assert_that, calling, equal_to, is_, raises
-from unittest.mock import Mock, patch, sentinel as s
+from wazo_auth_client.exceptions import (
+    InvalidTokenException,
+    MissingPermissionsTokenException,
+)
+
 from ..auth_verifier import (
     AccessCheck,
     AuthServerUnreachable,
@@ -16,10 +22,6 @@ from ..auth_verifier import (
     no_auth,
     required_acl,
     required_tenant,
-)
-from wazo_auth_client.exceptions import (
-    InvalidTokenException,
-    MissingPermissionsTokenException,
 )
 
 

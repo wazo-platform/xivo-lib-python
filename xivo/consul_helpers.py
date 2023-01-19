@@ -1,14 +1,17 @@
-# Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 import logging
 import threading
-
+from types import TracebackType
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 from uuid import uuid4
-import requests
 
+import requests
 from consul import Check, Consul, ConsulException
 from requests.exceptions import ConnectionError
+from xivo_bus.resources.common.abstract import AbstractEvent
 
 try:
     import netifaces
@@ -18,11 +21,26 @@ except ImportError:
 try:
     from xivo_bus.publisher import BusPublisher
     from xivo_bus.resources.services.event import (
-        ServiceRegisteredEvent,
         ServiceDeregisteredEvent,
+        ServiceRegisteredEvent,
     )
 except ImportError:
     pass
+
+
+if TYPE_CHECKING:
+    from typing import TypedDict
+
+    ConsulService = TypedDict(
+        'ConsulService',
+        {
+            'Service': str,
+            'ID': str,
+            'Address': str,
+            'Port': int,
+            'Tags': list[str],
+        },
+    )
 
 
 logger = logging.getLogger('service_discovery')
@@ -41,16 +59,19 @@ class MissingConfigurationError(RegistererError):
     pass
 
 
+Self = TypeVar('Self', bound='ServiceCatalogRegistration')
+
+
 class ServiceCatalogRegistration:
     def __init__(
         self,
-        service_name,
-        uuid,
-        consul_config,
-        service_discovery_config,
-        bus_config,
-        check=None,
-    ):
+        service_name: str,
+        uuid: str,
+        consul_config: dict[str, Any],
+        service_discovery_config: dict[str, Any],
+        bus_config: dict[str, Any],
+        check: Callable[[], bool] | None = None,
+    ) -> None:
         self._enabled = service_discovery_config.get('enabled', True)
         if not self._enabled:
             logger.debug('service discovery has been disabled')
@@ -61,8 +82,8 @@ class ServiceCatalogRegistration:
             service_name, uuid, consul_config, service_discovery_config, bus_config
         )
 
-        self._retry_interval = service_discovery_config['retry_interval']
-        self._refresh_interval = service_discovery_config['refresh_interval']
+        self._retry_interval: int = service_discovery_config['retry_interval']
+        self._refresh_interval: int = service_discovery_config['refresh_interval']
 
         self._thread = threading.Thread(target=self._loop)
         self._sleep_event = threading.Event()
@@ -72,14 +93,19 @@ class ServiceCatalogRegistration:
         self._done = False
         self._registered = False
 
-    def __enter__(self):
+    def __enter__(self: Self) -> Self:
         if self._enabled:
             self._thread.start()
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(
+        self,
+        type: type[BaseException],
+        value: BaseException,
+        traceback: TracebackType | None,
+    ) -> None:
         if type:
-            logger.debug('An error occured: %s %s %s', type, value, traceback)
+            logger.debug('An error occurred: %s %s %s', type, value, traceback)
 
         if not self._enabled:
             return
@@ -97,7 +123,7 @@ class ServiceCatalogRegistration:
         except Exception:
             logger.exception('failed to deregister')
 
-    def _loop(self):
+    def _loop(self) -> None:
         while not self._done:
             if not self._registered:
                 service_ready = self._check()
@@ -109,13 +135,13 @@ class ServiceCatalogRegistration:
             else:
                 self._sleep(self._retry_interval)
 
-    def _sleep(self, interval):
+    def _sleep(self, interval: int) -> None:
         self._sleep_event.wait(interval)
 
-    def _wake(self):
+    def _wake(self) -> None:
         self._sleep_event.set()
 
-    def _register(self):
+    def _register(self) -> None:
         try:
             self._registerer.register()
             self._registered = True
@@ -126,12 +152,18 @@ class ServiceCatalogRegistration:
                 e,
             )
 
-    def _default_check(self):
+    def _default_check(self) -> bool:
         return True
 
 
 class Registerer:
-    def __init__(self, name, uuid, consul_config, service_discovery_config):
+    def __init__(
+        self,
+        name: str,
+        uuid: str,
+        consul_config: dict[str, Any],
+        service_discovery_config: dict[str, Any],
+    ) -> None:
         self._service_id = str(uuid4())
         self._service_name = name
         try:
@@ -146,10 +178,10 @@ class Registerer:
         self._check_id = f'service:{self._service_id}'
 
     @property
-    def _client(self):
+    def _client(self) -> Consul:
         return Consul(**self._consul_config)
 
-    def register(self):
+    def register(self) -> None:
         logger.info(
             'Registering %s on Consul as %s with %s:%s',
             self._service_name,
@@ -176,7 +208,7 @@ class Registerer:
         except (ConnectionError, ConsulException) as e:
             raise RegistererError(str(e))
 
-    def send_ttl(self):
+    def send_ttl(self) -> bool | None:
         result = None
 
         try:
@@ -189,7 +221,7 @@ class Registerer:
 
         return result
 
-    def deregister(self):
+    def deregister(self) -> bool | None:
         logger.info(
             'Deregistering %s from Consul services: %s',
             self._service_name,
@@ -203,20 +235,19 @@ class Registerer:
         except (ConnectionError, ConsulException) as e:
             raise RegistererError(str(e))
 
-    def _find_address(self, service_discovery_config):
+    def _find_address(self, service_discovery_config: dict[str, Any]) -> str:
         return address_from_config(service_discovery_config)
 
 
-def address_from_config(service_discovery_config):
+def address_from_config(service_discovery_config: dict[str, Any]) -> str:
     advertise_address = service_discovery_config['advertise_address']
     if advertise_address != 'auto':
         return advertise_address
-
     return _find_address(service_discovery_config['advertise_address_interface'])
 
 
-def _find_address(main_iface):
-    def _is_valid_iface_name(name):
+def _find_address(main_iface: str) -> str:
+    def _is_valid_iface_name(name: str) -> bool:
         for prefix in VALID_SERVICE_DISCO_IFACE_PREFIX:
             if name.startswith(prefix):
                 return True
@@ -240,13 +271,20 @@ def _find_address(main_iface):
 
 
 class NotifyingRegisterer(Registerer):
-    def __init__(self, name, uuid, consul_config, service_discovery_config, bus_config):
+    def __init__(
+        self,
+        name: str,
+        uuid: str,
+        consul_config: dict[str, Any],
+        service_discovery_config: dict[str, Any],
+        bus_config: dict[str, Any],
+    ) -> None:
         super().__init__(name, uuid, consul_config, service_discovery_config)
         self._publisher = BusPublisher(
             name='consul-helper', service_uuid=uuid, **bus_config
         )
 
-    def register(self):
+    def register(self) -> None:
         super().register()
         event = ServiceRegisteredEvent(
             self._service_name,
@@ -257,7 +295,7 @@ class NotifyingRegisterer(Registerer):
         )
         self._notify(event)
 
-    def deregister(self):
+    def deregister(self) -> bool | None:
         exception = None
         try:
             should_send_msg = super().deregister()
@@ -276,12 +314,12 @@ class NotifyingRegisterer(Registerer):
 
         return should_send_msg
 
-    def _notify(self, event):
+    def _notify(self, event: AbstractEvent) -> None:
         self._publisher.publish(event)
 
 
 class ServiceFinder:
-    def __init__(self, consul_config):
+    def __init__(self, consul_config: dict[str, Any]) -> None:
         self._dc_url = '{scheme}://{host}:{port}/v1/catalog/datacenters'.format(
             **consul_config
         )
@@ -294,34 +332,38 @@ class ServiceFinder:
         self._verify = consul_config.get('verify', True)
         self._token = consul_config.get('token')
 
-    def list_healthy_services(self, service_name, xivo_uuid=None):
+    def list_healthy_services(
+        self, service_name: str, xivo_uuid: str | None = None
+    ) -> list[ConsulService]:
         services = []
         for dc in self._get_datacenters():
             for service in self._list_running_services(service_name, dc, tag=xivo_uuid):
                 services.append(service)
         return services
 
-    def _get_datacenters(self):
+    def _get_datacenters(self) -> dict[str, Any]:
         response = requests.get(self._dc_url, verify=self._verify)
         self._assert_ok(response)
         return response.json()
 
-    def _list_running_services(self, service_name, datacenter, tag):
+    def _list_running_services(
+        self, service_name: str, datacenter: str, tag: str | None
+    ) -> list[ConsulService]:
         url = f'{self._health_url}/{service_name}'
-        params = {'dc': datacenter, 'passing': True}
+        params: dict[str, str | bool] = {'dc': datacenter, 'passing': True}
         if tag:
             params['tag'] = tag
         response = requests.get(url, verify=self._verify, params=params)
         self._assert_ok(response)
         services = []
         for node in response.json():
-            service = node.get('Service')
+            service: ConsulService | None = node.get('Service')
             if service:
                 services.append(service)
         return services
 
     @staticmethod
-    def _assert_ok(response, code=200):
+    def _assert_ok(response: requests.Response, code: int = 200) -> None:
         if response.status_code != code:
             msg = getattr(response, 'text', 'unknown error')
             raise ServiceDiscoveryError(msg)

@@ -1,17 +1,18 @@
-# Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 from collections import UserDict
 from copy import copy
 
 
 class ChainMap(UserDict):
-    def __init__(self, *dicts):
+    def __init__(self, *dicts: dict) -> None:
         self.data = {}
         for d in dicts:
             self.data = self._deep_update(self.data, d)
 
-    def _deep_update(self, original, new):
+    def _deep_update(self, original: dict, new: dict) -> dict:
         updated = copy(original)
 
         for key, value in new.items():
@@ -24,7 +25,7 @@ class ChainMap(UserDict):
 
 
 class AccumulatingListChainMap(ChainMap):
-    def _deep_update(self, original, new):
+    def _deep_update(self, original: dict, new: dict) -> dict:
         updated = copy(original)
 
         for key, value in new.items():

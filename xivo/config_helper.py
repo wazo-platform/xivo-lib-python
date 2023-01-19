@@ -1,11 +1,13 @@
-# Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
-
-from functools import partial
 import os
-import sys
 import subprocess
+import sys
+from functools import partial
+from logging import Logger
+from typing import Any, Generator
 
 import yaml
 
@@ -22,7 +24,9 @@ class _YAMLExecTag(yaml.YAMLObject):
     yaml_loader = _YAMLExecLoader
 
     @classmethod
-    def from_yaml(cls, loader, node):
+    def from_yaml(
+        cls, loader: yaml.SafeLoader | yaml.Loader | yaml.BaseLoader, node: yaml.Node
+    ) -> dict[str, Any] | None:
         with open(os.devnull) as devnull:
             for key, value in node.value:
                 if key.value == 'command':
@@ -32,38 +36,42 @@ class _YAMLExecTag(yaml.YAMLObject):
 
 
 class ErrorHandler:
-    def on_parse_config_file_env_error(self, config_file_name, e):
+    def on_parse_config_file_env_error(
+        self, config_file_name: str, e: Exception
+    ) -> None:
         pass
 
-    def on_parse_config_dir_env_error(self, directory_name, e):
+    def on_parse_config_dir_env_error(self, directory_name: str, e: Exception) -> None:
         pass
 
-    def on_parse_config_dir_parse_exception(self, filename, e):
+    def on_parse_config_dir_parse_exception(self, filename: str, e: Exception) -> None:
         pass
 
 
 class PrintErrorHandler(ErrorHandler):
-    def on_parse_config_file_env_error(self, config_file_name, e):
+    def on_parse_config_file_env_error(
+        self, config_file_name: str, e: Exception
+    ) -> None:
         print(
             f'Could not read config file {config_file_name}: {e}',
             file=sys.stderr,
         )
 
-    def on_parse_config_dir_env_error(self, directory_name, e):
+    def on_parse_config_dir_env_error(self, directory_name: str, e: Exception) -> None:
         print(
             f'Could not read config dir {directory_name}: {e}',
             file=sys.stderr,
         )
 
-    def on_parse_config_dir_parse_exception(self, filename, e):
+    def on_parse_config_dir_parse_exception(self, filename: str, e: Exception) -> None:
         print(f'Could not read config file {filename}: {e}', file=sys.stderr)
 
 
 class ConfigParser:
-    def __init__(self, error_handler=PrintErrorHandler()):
+    def __init__(self, error_handler: ErrorHandler = PrintErrorHandler()) -> None:
         self._error_handler = error_handler
 
-    def parse_config_file(self, config_file_name):
+    def parse_config_file(self, config_file_name: str) -> dict[str, Any]:
         try:
             with open(config_file_name) as config_file:
                 data = yaml.load(config_file, Loader=_YAMLExecLoader)
@@ -72,7 +80,7 @@ class ConfigParser:
             self._error_handler.on_parse_config_file_env_error(config_file_name, e)
             return {}
 
-    def parse_config_dir(self, directory_name):
+    def parse_config_dir(self, directory_name: str) -> list[dict[str, Any]]:
         """
         Reads all files in directory_name and returns a list of dictionaries containing
         the parsed yaml content from these files.
@@ -86,7 +94,7 @@ class ConfigParser:
             self._error_handler.on_parse_config_dir_env_error(directory_name, e)
             return []
 
-        def _config_generator():
+        def _config_generator() -> Generator[dict[str, Any], None, None]:
             for filename in sorted(extra_config_filenames):
                 if filename.startswith('.'):
                     continue
@@ -102,10 +110,10 @@ class ConfigParser:
 
     def read_config_file_hierarchy(
         self,
-        original_config,
-        config_file_key='config_file',
-        extra_config_dir_key='extra_config_files',
-    ):
+        original_config: dict[str, Any],
+        config_file_key: str = 'config_file',
+        extra_config_dir_key: str = 'extra_config_files',
+    ) -> ChainMap:
         """
         Read a config file and an extra config directory, then return a dictionary
         containing the config read, aggregated by the following priority:
@@ -128,7 +136,9 @@ class ConfigParser:
 
         return ChainMap(*configs)
 
-    def read_config_file_hierarchy_accumulating_list(self, original_config):
+    def read_config_file_hierarchy_accumulating_list(
+        self, original_config: dict[str, Any]
+    ) -> AccumulatingListChainMap:
         main_config_filename = original_config['config_file']
         main_config = self.parse_config_file(main_config_filename)
         extra_config_file_directory = AccumulatingListChainMap(
@@ -141,11 +151,11 @@ class ConfigParser:
 
 
 class UUIDNotFound(RuntimeError):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('XIVO_UUID environment variable is not set')
 
 
-def get_xivo_uuid(logger):
+def get_xivo_uuid(logger: Logger) -> str:
     xivo_uuid = os.getenv('XIVO_UUID')
     if not xivo_uuid:
         logger.error('undefined environment variable XIVO_UUID')
@@ -153,7 +163,7 @@ def get_xivo_uuid(logger):
     return xivo_uuid
 
 
-def set_xivo_uuid(config, logger):
+def set_xivo_uuid(config: dict[str, Any], logger: Logger) -> None:
     config['uuid'] = get_xivo_uuid(logger)
 
 

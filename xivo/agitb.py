@@ -1,4 +1,4 @@
-# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """More comprehensive traceback formatting for AGI in Python.
@@ -33,28 +33,42 @@ This script was adapted from Ka-Ping Yee's cgitb.
 Modification by Proformatique:
         PyDoc of enable() corrected. (it was the same as in cgitb)
 """
+from __future__ import annotations
 
 __author__ = 'Matthew Nicholson'
 # original __version__ = '0.1.0'
 __version__ = "$Revision$ $Date$"
 
-import keyword
 import inspect
+import keyword
 import linecache
 import os
 import pydoc
 import sys
 import tempfile
 import time
-import traceback
 import tokenize
+import traceback
 import types
+from typing import TYPE_CHECKING, Any, Callable, List, NamedTuple, NewType, TextIO, Type
+
+if TYPE_CHECKING:
+    from xivo.agi import AGI
+
+Undefined = NewType('Undefined', List[str])
+
+__UNDEF__ = Undefined([])  # a special sentinel object
 
 
-__UNDEF__ = []  # a special sentinel object
+class ExceptionInfo(NamedTuple):
+    type: Type[BaseException]
+    value: BaseException
+    traceback: types.TracebackType | None
 
 
-def lookup(name, frame, lcals):
+def lookup(
+    name: str, frame: types.FrameType, lcals: dict[str, Any]
+) -> tuple[str | None, list[str] | Undefined]:
     """Find the value for a given name in the given environment."""
     if name in lcals:
         return 'local', lcals[name]
@@ -71,13 +85,18 @@ def lookup(name, frame, lcals):
     return None, __UNDEF__
 
 
-def scanvars(reader, frame, lcals):
+def scanvars(
+    reader: Callable[[], str], frame: types.FrameType, lcals: dict[str, Any]
+) -> list[tuple[str, str | None, list[str] | Undefined]]:
     """Scan one logical line of Python and look up values of variables used."""
 
-    xvars, lasttoken, parent, prefix, value = [], None, None, '', __UNDEF__
-    for ttype, token, start, end, line in tokenize.generate_tokens(
-        reader
-    ):  # pylint: disable-msg=W0612
+    xvars: list[tuple[str, str | None, list[str] | Undefined]] = []
+    lasttoken: str | None = None
+    parent: list[str] | Undefined | None = None
+    prefix = ''
+    value: list[str] | Undefined = __UNDEF__
+
+    for ttype, token, start, end, line in tokenize.generate_tokens(reader):
         if ttype == tokenize.NEWLINE:
             break
         if ttype == tokenize.NAME and token not in keyword.kwlist:
@@ -89,7 +108,7 @@ def scanvars(reader, frame, lcals):
                 where, value = lookup(token, frame, lcals)
                 xvars.append((token, where, value))
         elif token == '.':
-            prefix += lasttoken + '.'
+            prefix += (lasttoken or '') + '.'
             parent = value
         else:
             parent, prefix = None, ''
@@ -97,24 +116,14 @@ def scanvars(reader, frame, lcals):
     return xvars
 
 
-def text(value, context=5):
-    """Return a plain text document describing a given traceback."""
-
-    etype, evalue, etb = value
-    if isinstance(etype, types.ClassType):
-        etype = etype.__name__
-    pyver = 'Python ' + sys.version.split()[0] + ': ' + sys.executable
-    date = time.ctime(time.time())
-    head = (
-        f"{str(etype)}\n{pyver}\n{date}\n"
-        + '''
-A problem occurred in a Python script.  Here is the sequence of
-function calls leading up to the error, in the order they occurred.
-'''
-    )
+def get_frames_from_traceback(
+    tb: types.TracebackType | None, context: int
+) -> list[str]:
+    if tb is None:
+        return []
 
     frames = []
-    records = inspect.getinnerframes(etb, context)
+    records = inspect.getinnerframes(tb, context)
     for frame, filen, lnum, func, lines, index in records:
         filen = filen and os.path.abspath(filen) or '?'
         args, varargs, varkw, lcals = inspect.getargvalues(frame)
@@ -128,13 +137,13 @@ function calls leading up to the error, in the order they occurred.
                     varargs,
                     varkw,
                     lcals,
-                    formatvalue=lambda value: '=' + pydoc.text.repr(value),
+                    formatvalue=lambda v: '=' + pydoc.text.repr(v),  # type: ignore[call-arg]
                 )
             )
 
         highlight = {}
 
-        def reader(lnum=[lnum]):
+        def reader(lnum: list[int] = [lnum]) -> str:
             highlight[lnum[0]] = 1
             try:
                 return linecache.getline(filen, lnum[0])
@@ -146,9 +155,8 @@ function calls leading up to the error, in the order they occurred.
         rows = [f' {filen} {call}']
         if index is not None:
             i = lnum - index
-            for line in lines:
-                num = '%5d ' % i
-                rows.append(num + line.rstrip())
+            for line in lines or []:
+                rows.append(f'{i:5d} {line.rstrip()}')
                 i += 1
 
         done, dump = {}, []
@@ -162,19 +170,39 @@ function calls leading up to the error, in the order they occurred.
                 elif where == 'local':
                     name = name
                 else:
-                    name = where + name.split('.')[-1]
-                dump.append(f'{name} = {pydoc.text.repr(value)}')
+                    name = (where or '') + name.split('.')[-1]
+                dump.append(f'{name} = {pydoc.text.repr(value)}')  # type: ignore[call-arg]
             else:
                 dump.append(name + ' undefined')
 
         rows.append('\n'.join(dump))
         frames.append('\n%s\n' % '\n'.join(rows))
+    return frames
+
+
+def text(value: ExceptionInfo, context: int = 5) -> str:
+    """Return a plain text document describing a given traceback."""
+    etype: str | type[BaseException] = value[0]
+    evalue, etb = value[1:]
+    if isinstance(etype, type):
+        etype = etype.__name__
+    pyver = f'Python {sys.version.split()[0]}: {sys.executable}'
+    date = time.ctime(time.time())
+    head = (
+        f"{str(etype)}\n{pyver}\n{date}\n"
+        + '''
+A problem occurred in a Python script.  Here is the sequence of
+function calls leading up to the error, in the order they occurred.
+'''
+    )
+
+    frames = get_frames_from_traceback(etb, context)
 
     exception = [f'{str(etype)}: {str(evalue)}']
-    if isinstance(evalue, types.InstanceType):
+    if isinstance(evalue, type):
         for name in dir(evalue):
-            value = pydoc.text.repr(getattr(evalue, name))
-            exception.append(f'\n{" " * 4}{name} = {value}')
+            value_repr = pydoc.text.repr(getattr(evalue, name))  # type: ignore[call-arg]
+            exception.append(f'\n{" " * 4}{name} = {value_repr}')
 
     return (
         head
@@ -187,26 +215,39 @@ the original traceback:
 
 %s
 '''
-        % ''.join(traceback.format_exception(etype, evalue, etb))
+        % ''.join(traceback.format_exception(*value))
     )
 
 
 class Hook:
-    """A hook to replace sys.excepthook that sends detailed tracebacks to
+    """A hook to replace `sys.excepthook` that sends detailed tracebacks to
     Asterisk via agi.verbose() calls."""
 
-    def __init__(self, display=1, logdir=None, context=5, filen=None, agi=None):
+    def __init__(
+        self,
+        display: int = 1,
+        logdir: str | None = None,
+        context: int = 5,
+        filen: TextIO | None = None,
+        agi: AGI | None = None,
+    ) -> None:
         self.display = display  # send tracebacks to browser if true
         self.logdir = logdir  # log tracebacks to files if not None
         self.context = context  # number of source code lines per frame
         self.file = filen or sys.stderr  # place to send the output
         self.agi = agi
 
-    def __call__(self, etype, evalue, etb):
-        self.handle((etype, evalue, etb))
+    def __call__(
+        self,
+        etype: type[BaseException],
+        evalue: BaseException,
+        etb: types.TracebackType | None,
+    ) -> None:
+        self.handle(ExceptionInfo(etype, evalue, etb))
 
-    def handle(self, info=None):
-        info = info or sys.exc_info()
+    def handle(self, info: ExceptionInfo | None = None) -> None:
+        if not info:
+            info = ExceptionInfo(*sys.exc_info())
 
         try:
             doc = text(info, self.context)
@@ -232,9 +273,9 @@ class Hook:
                 filen = os.fdopen(fd, 'w')
                 filen.write(doc)
                 filen.close()
-                msg = '%s contains the description of this error.' % path
+                msg = f'{path} contains the description of this error.'
             except Exception:
-                msg = 'Tried to save traceback to %s, but failed.' % path
+                msg = f'Tried to save traceback to {path}, but failed.'
 
             if self.agi:
                 self.agi.verbose(msg, 4)
@@ -250,7 +291,12 @@ class Hook:
 handler = Hook().handle
 
 
-def enable(agi=None, display=1, logdir=None, context=5):
+def enable(
+    agi: AGI | None = None,
+    display: int = 1,
+    logdir: str | None = None,
+    context: int = 5,
+) -> None:
     """Install an exception handler that can send exceptions to agi.verbose
 
     The optional argument 'display' can be set to 0 to suppress sending the

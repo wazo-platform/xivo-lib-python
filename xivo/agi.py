@@ -30,6 +30,8 @@ To use this library please see the example :
     agi.hangup()
 """
 
+from __future__ import annotations
+
 __version__ = "$Revision$ $Date$"
 __license__ = """
     Copyright 2007-2023 The Wazo Authors  (see the AUTHORS file)
@@ -59,11 +61,19 @@ __license__ = """
 #     - removed double quoting from database_get()
 #     - replaced a reference to old style ListType with a call to isinstance(..., list)
 
-import sys
 import pprint
 import re
 import signal
+import sys
+from types import FrameType
+from typing import TYPE_CHECKING, Dict, List, TextIO, Tuple, Union
 
+if TYPE_CHECKING:
+    from typing import Literal
+
+
+Digits = Union[List[Union[str, int]], str]
+Result = Dict[str, Tuple[str, str]]
 
 DEFAULT_TIMEOUT = 2000  # 2sec timeout used as default for functions that take timeouts
 DEFAULT_RECORD = 20000  # 20sec record time
@@ -103,8 +113,8 @@ class AGIAppError(AGIError):
     pass
 
 
-# there are several different types of hangups we can detect
-# they all are derrived from AGIHangup
+# there are several types of hangups we can detect
+# they all are derived from AGIHangup
 class AGIHangup(AGIAppError):
     pass
 
@@ -140,14 +150,14 @@ class AGI:
     Asterisk.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._got_sighup = False
         signal.signal(signal.SIGHUP, self._handle_sighup)  # handle SIGHUP
-        self.env = {}
+        self.env: dict[str, str] = {}
         self._get_agi_env()
         self.DEBUG_PASSTHROUGH = 0
 
-    def _get_agi_env(self):
+    def _get_agi_env(self) -> None:
         while 1:
             line = sys.stdin.readline().strip()
             if line == '':
@@ -162,22 +172,22 @@ class AGI:
                     self.env[key] = ""
 
     @staticmethod
-    def _quote(string):
+    def _quote(string: str | int) -> str:
         return '"%s"' % (
             str(string).replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ')
         )
 
-    def _handle_sighup(self, _signum, _frame):
+    def _handle_sighup(self, _signum: int, _frame: FrameType | None) -> None:
         """Handle the SIGHUP signal"""
         # pylint: disable-msg=W0613
         self._got_sighup = True
 
-    def test_hangup(self):
-        """This function throws AGIHangup if we have recieved a SIGHUP"""
+    def test_hangup(self) -> None:
+        """This function throws AGIHangup if we have received a SIGHUP"""
         if self._got_sighup:
             raise AGISIGHUPHangup("Received SIGHUP from Asterisk")
 
-    def execute(self, command, *args):
+    def execute(self, command: str, *args: str | int) -> Result:
         self.test_hangup()
         try:
             self.send_command(command, *args)
@@ -190,27 +200,28 @@ class AGI:
                 raise
 
     @staticmethod
-    def send_command(command, *args):
+    def send_command(command: str, *args: str | int) -> None:
         """Send a command to Asterisk"""
-        command = ' '.join([command.strip()] + list(map(str, args))).strip() + "\n"
+        command = ' '.join([command.strip()] + [str(a) for a in args]).strip() + "\n"
         sys.stdout.write(command)
         sys.stdout.flush()
 
-    def get_result(self, stdin=sys.stdin):
+    def get_result(self, stdin: TextIO = sys.stdin) -> Result:
         """Read the result of a command from Asterisk"""
         code = 0
+        response = ''
         result = {'result': ('', '')}
         line = stdin.readline().strip()
         m = re_code.search(line)
         if m:
-            code, response = m.groups()
+            raw_code, response = m.groups()
             if self.DEBUG_PASSTHROUGH:
                 try:
-                    code = int(code)
+                    code = int(raw_code)
                 except ValueError:
                     code = 200
             else:
-                code = int(code)
+                code = int(raw_code)
 
         if code == 200:
             for key, value, data in re_kv.findall(response):
@@ -218,7 +229,7 @@ class AGI:
 
                 # If user hangs up... we get 'hangup' in the data
                 if data == 'hangup':
-                    raise AGIResultHangup("User hungup during execution")
+                    raise AGIResultHangup("User hung up during execution")
 
                 if key == 'result' and value == '-1':
                     raise AGIAppError("Error executing application, or hangup")
@@ -232,58 +243,53 @@ class AGI:
                 usage.append(line)
                 line = stdin.readline().strip()
             usage.append(line)
-            usage = '%s\n' % '\n'.join(usage)
-            raise AGIUsageError(usage)
+            raise AGIUsageError('%s\n' % '\n'.join(usage))
         else:
             raise AGIUnknownError(code, 'Unhandled code or undefined response')
 
-    def _process_digit_list(self, digits):
+    def _process_digit_list(self, digits: Digits) -> str:
         if isinstance(digits, list):
             digits = ''.join(map(str, digits))
         return self._quote(digits)
 
-    def answer(self):
+    def answer(self) -> None:
         """
-        agi.answer() --> None
         Answer channel if not already in answer state.
         """
         self.execute('ANSWER')['result'][0]  # pylint: disable-msg=W0104
 
     @staticmethod
-    def code_to_char(code):
+    def code_to_char(code: str) -> str:
         """
         Return chr(int(code))
         Raise FastAGIError on error
         """
         if code == '0':
             return ''
-        else:
-            try:
-                return chr(int(code))
-            except (TypeError, ValueError):
-                raise AGIError('Unable to convert result to char: %s' % code)
+        try:
+            return chr(int(code))
+        except (TypeError, ValueError):
+            raise AGIError('Unable to convert result to char: %s' % code)
 
-    def wait_for_digit(self, timeout=DEFAULT_TIMEOUT):
+    def wait_for_digit(self, timeout: int = DEFAULT_TIMEOUT) -> str:
         """
-        agi.wait_for_digit(timeout=DEFAULT_TIMEOUT) --> digit
         Wait for up to 'timeout' milliseconds for a channel to receive a DTMF
         digit.  Return digit dialed.
-        Throw AGIError on channel falure.
+        Throw AGIError on channel failure.
         """
         res = self.execute('WAIT FOR DIGIT', timeout)['result'][0]
         return self.code_to_char(res)
 
-    def send_text(self, text=''):
-        """agi.send_text(text='') --> None
+    def send_text(self, text: str = '') -> None:
+        """
         Send the given text on a channel.  Most channels do not support the
         transmission of text.
         Throw AGIError on error/hangup.
         """
         self.execute('SEND TEXT', self._quote(text))['result'][0]
 
-    def receive_char(self, timeout=DEFAULT_TIMEOUT):
+    def receive_char(self, timeout: int = DEFAULT_TIMEOUT) -> str:
         """
-        agi.receive_char(timeout=DEFAULT_TIMEOUT) --> chr
         Receive a character of text on a channel.  Specify timeout to be the
         maximum time to wait for input in milliseconds, or 0 for infinite.
         Most channels do not support the reception of text.
@@ -291,9 +297,8 @@ class AGI:
         res = self.execute('RECEIVE CHAR', timeout)['result'][0]
         return self.code_to_char(res)
 
-    def tdd_mode(self, mode='off'):
+    def tdd_mode(self, mode: Literal['on', 'off'] = 'off') -> None:
         """
-        agi.tdd_mode(mode='on'|'off') --> None
         Enable/Disable TDD transmission/reception on a channel.
         Throw AGIAppError if channel is not TDD-capable.
         """
@@ -301,12 +306,11 @@ class AGI:
         if res == '0':
             raise AGIAppError('Channel %s is not TDD-capable')
 
-    def stream_file(self, filename, escape_digits='', sample_offset=0):
+    def stream_file(
+        self, filename: str, escape_digits: Digits = '', sample_offset: int = 0
+    ) -> str:
         """
-        agi.stream_file(filename, escape_digits='', sample_offset=0) --> digit
-        Send the given file, allowing playback to be interrupted by the given
-        digits, if any.  escape_digits is a string '12345' or a list of
-        ints [1,2,3,4,5] or strings ['1','2','3'] or mixed [1,'2',3,'4']
+        Send the given file, allowing playback to be interrupted by the given digits, if any.
         If sample offset is provided then the audio will seek to sample
         offset before play starts.  Return digit if one was pressed.
         Throw AGIError if the channel was disconnected.  Remember, the file
@@ -318,12 +322,16 @@ class AGI:
         return self.code_to_char(res)
 
     def control_stream_file(
-        self, filename, escape_digits='', skipms=3000, fwd='', rew='', pause=''
-    ):
+        self,
+        filename: str,
+        escape_digits: Digits = '',
+        skipms: int = 3000,
+        fwd: str = '',
+        rew: str = '',
+        pause: str = '',
+    ) -> str:
         """
-        Send the given file, allowing playback to be interrupted by the given
-        digits, if any.  escape_digits is a string '12345' or a list of
-        ints [1,2,3,4,5] or strings ['1','2','3'] or mixed [1,'2',3,'4']
+        Send the given file, allowing playback to be interrupted by the given digits, if any.
         If sample offset is provided then the audio will seek to sample
         offset before play starts.  Return digit if one was pressed.
         Throw AGIError if the channel was disconnected.  Remember, the file
@@ -342,9 +350,8 @@ class AGI:
         res = response['result'][0]
         return self.code_to_char(res)
 
-    def send_image(self, filename):
+    def send_image(self, filename: str) -> None:
         """
-        agi.send_image(filename) --> None
         Send the given image on a channel.  Most channels do not support the
         transmission of images.   Image names should not include extensions.
         Throw AGIError on channel failure
@@ -352,12 +359,11 @@ class AGI:
         res = self.execute('SEND IMAGE', filename)['result'][0]
         if res != '0':
             raise AGIAppError(
-                'Channel falure on channel %s' % self.env.get('agi_channel', 'UNKNOWN')
+                'Channel failure on channel %s' % self.env.get('agi_channel', 'UNKNOWN')
             )
 
-    def say_digits(self, digits, escape_digits=''):
+    def say_digits(self, digits: Digits, escape_digits: Digits = '') -> str:
         """
-        agi.say_digits(digits, escape_digits='') --> digit
         Say a given digit string, returning early if any of the given DTMF digits
         are received on the channel
         Throw AGIError on channel failure
@@ -367,9 +373,8 @@ class AGI:
         res = self.execute('SAY DIGITS', digits, escape_digits)['result'][0]
         return self.code_to_char(res)
 
-    def say_number(self, number, escape_digits=''):
+    def say_number(self, number: Digits, escape_digits: Digits = '') -> str:
         """
-        agi.say_number(number, escape_digits='') --> digit
         Say a given digit string, returning early if any of the given DTMF digits
         are received on the channel.
         Throw AGIError on channel failure
@@ -379,9 +384,8 @@ class AGI:
         res = self.execute('SAY NUMBER', number, escape_digits)['result'][0]
         return self.code_to_char(res)
 
-    def say_alpha(self, characters, escape_digits=''):
+    def say_alpha(self, characters: str, escape_digits: Digits = '') -> str:
         """
-        agi.say_alpha(string, escape_digits='') --> digit
         Say a given character string, returning early if any of the given DTMF
         digits are received on the channel.
         Throw AGIError on channel failure
@@ -391,9 +395,8 @@ class AGI:
         res = self.execute('SAY ALPHA', characters, escape_digits)['result'][0]
         return self.code_to_char(res)
 
-    def say_phonetic(self, characters, escape_digits=''):
+    def say_phonetic(self, characters: str, escape_digits: Digits = '') -> str:
         """
-        agi.say_phonetic(string, escape_digits='') --> digit
         Phonetically say a given character string, returning early if any of
         the given DTMF digits are received on the channel.
         Throw AGIError on channel failure
@@ -403,7 +406,7 @@ class AGI:
         res = self.execute('SAY PHONETIC', characters, escape_digits)['result'][0]
         return self.code_to_char(res)
 
-    def say_date(self, seconds, escape_digits=''):
+    def say_date(self, seconds: int | str, escape_digits: Digits = '') -> str:
         """
         agi.say_date(seconds, escape_digits='') --> digit
         Say a given date, returning early if any of the given DTMF digits are
@@ -414,7 +417,7 @@ class AGI:
         res = self.execute('SAY DATE', seconds, escape_digits)['result'][0]
         return self.code_to_char(res)
 
-    def say_time(self, seconds, escape_digits=''):
+    def say_time(self, seconds: int | str, escape_digits: Digits = '') -> str:
         """
         agi.say_time(seconds, escape_digits='') --> digit
         Say a given time, returning early if any of the given DTMF digits are
@@ -425,10 +428,15 @@ class AGI:
         res = self.execute('SAY TIME', seconds, escape_digits)['result'][0]
         return self.code_to_char(res)
 
-    def say_datetime(self, seconds, escape_digits='', format_string='', zone=''):
+    def say_datetime(
+        self,
+        seconds: int | str,
+        escape_digits: Digits = '',
+        format_string: str = '',
+        zone: str = '',
+    ) -> str:
         """
-        agi.say_datetime(seconds, escape_digits='', format_string='', zone='') --> digit
-        Say a given date in the format_string specfied (see voicemail.conf), returning
+        Say a given date in the format_string specified (see voicemail.conf), returning
         early if any of the given DTMF digits are pressed.  The date should be
         in seconds since the UNIX Epoch (Jan 1, 1970 00:00:00).
         """
@@ -438,19 +446,21 @@ class AGI:
         result = self.execute(
             'SAY DATETIME', seconds, escape_digits, format_string, zone
         )
-        res, _ = result['result']  # pylint: disable-msg=W0612
-        return self.code_to_char(res)
+        return self.code_to_char(result['result'][0])
 
-    def get_data(self, filename, timeout=DEFAULT_TIMEOUT, max_digits=255):
+    def get_data(
+        self, filename: str, timeout: int = DEFAULT_TIMEOUT, max_digits: int = 255
+    ) -> str:
         """
         agi.get_data(filename, timeout=DEFAULT_TIMEOUT, max_digits=255) --> digits
         Stream the given file and receive dialed digits
         """
         result = self.execute('GET DATA', filename, timeout, max_digits)
-        res, _ = result['result']  # pylint: disable-msg=W0612
-        return res
+        return result['result'][0]
 
-    def get_option(self, filename, escape_digits='', timeout=0):
+    def get_option(
+        self, filename: str, escape_digits: Digits = '', timeout: int = 0
+    ) -> str:
         """
         agi.get_option(filename, escape_digits='', timeout=0) --> digit
         Send the given file, allowing playback to be interrupted by the given
@@ -469,9 +479,8 @@ class AGI:
         res = response['result'][0]
         return self.code_to_char(res)
 
-    def set_context(self, context):
+    def set_context(self, context: str) -> None:
         """
-        agi.set_context(context)
         Set the context for continuation upon exiting the application.
         No error appears to be produced.  Do not set exten or priority.
 
@@ -479,9 +488,8 @@ class AGI:
         """
         self.execute('SET CONTEXT', context)
 
-    def set_extension(self, extension):
+    def set_extension(self, extension: str) -> None:
         """
-        agi.set_extension(extension)
         Set the extension for continuation upon exiting the application.
         No error appears to be produced.  Do not set context or priority.
 
@@ -489,9 +497,8 @@ class AGI:
         """
         self.execute('SET EXTENSION', extension)
 
-    def set_priority(self, priority):
+    def set_priority(self, priority: int | str) -> None:
         """
-        agi.set_priority(priority)
         Set the priority for continuation upon exiting the application.
         No error appears to be produced.  Do not set exten or context.
 
@@ -499,7 +506,9 @@ class AGI:
         """
         self.execute('set priority', priority)
 
-    def goto_on_exit(self, context='', extension='', priority=''):
+    def goto_on_exit(
+        self, context: str = '', extension: str = '', priority: str | int = ''
+    ) -> None:
         context = context or self.env['agi_context']
         extension = extension or self.env['agi_extension']
         priority = priority or self.env['agi_priority']
@@ -509,15 +518,14 @@ class AGI:
 
     def record_file(
         self,
-        filename,
-        file_format='gsm',
-        escape_digits='#',
-        timeout=DEFAULT_RECORD,
-        offset=0,
-        beep='beep',
-    ):
+        filename: str,
+        file_format: str = 'gsm',
+        escape_digits: Digits = '#',
+        timeout: int = DEFAULT_RECORD,
+        offset: int = 0,
+        beep: str = 'beep',
+    ) -> str:
         """
-        agi.record_file(filename, file_format, escape_digits, timeout=DEFAULT_TIMEOUT, offset=0, beep='beep') --> None
         Record to a file until a given dtmf digit in the sequence is received.
         The file_format will specify what kind of file will be recorded.  The
         timeout is the maximum record time in milliseconds, or -1 for no
@@ -536,26 +544,23 @@ class AGI:
         )['result'][0]
         return self.code_to_char(res)
 
-    def set_autohangup(self, secs):
+    def set_autohangup(self, secs: int | str) -> None:
         """
-        agi.set_autohangup(secs) --> None
         Cause the channel to automatically hangup at <time> seconds in the
-        future.  Of course it can be hungup before then as well.   Setting to
-        0 will cause the autohangup feature to be disabled on this channel.
+        future.  Of course, it can be hung up before then as well. Setting to
+        0 will cause the auto-hangup feature to be disabled on this channel.
         """
         self.execute('SET AUTOHANGUP', secs)
 
-    def hangup(self, channel=''):
+    def hangup(self, channel: str = '') -> None:
         """
-        agi.hangup(channel='')
         Hang up the specified channel.
         If no channel name is given, hang up the current channel
         """
         self.execute('HANGUP', channel)
 
-    def appexec(self, application, options=''):
+    def appexec(self, application: str, options: str = '') -> str:
         """
-        agi.appexec(application, options='')
         Execute <application> with given <options>.
         Return what is returned by the application, or -2 on failure to find
         application
@@ -566,14 +571,13 @@ class AGI:
             raise AGIAppError('Unable to find application: %s' % application)
         return res
 
-    def set_callerid(self, number):
+    def set_callerid(self, number: str) -> None:
         """
-        agi.set_callerid(number) --> None
         Change the callerid of the current channel.
         """
         self.execute('SET CALLERID', number)
 
-    def channel_status(self, channel=''):
+    def channel_status(self, channel: str = '') -> int:
         """
         agi.channel_status(channel='') --> int
         Return the status of the specified channel.  If no channel name is
@@ -598,13 +602,13 @@ class AGI:
 
         return int(result['result'][0])
 
-    def set_variable(self, name, value):
+    def set_variable(self, name: str, value: str | int) -> None:
         """
         Set a channel variable.
         """
         self.execute('SET VARIABLE', self._quote(name), self._quote(value))
 
-    def get_variable(self, name):
+    def get_variable(self, name: str) -> str:
         """
         Get a channel variable.
 
@@ -616,10 +620,9 @@ class AGI:
         except AGIResultHangup:
             result = {'result': ('1', 'hangup')}
 
-        _, value = result['result']  # pylint: disable-msg=W0612
-        return value
+        return result['result'][1]
 
-    def get_full_variable(self, name, channel=None):
+    def get_full_variable(self, name: str, channel: str | None = None) -> str:
         """
         Get a channel variable.
 
@@ -637,40 +640,34 @@ class AGI:
         except AGIResultHangup:
             result = {'result': ('1', 'hangup')}
 
-        _, value = result['result']  # pylint: disable-msg=W0612
-        return value
+        return result['result'][1]
 
-    def verbose(self, message, level=1):
+    def verbose(self, message: str, level: int = 1) -> None:
         """
-        agi.verbose(message='', level=1) --> None
         Send <message> to the console via verbose message system.
         <level> is the the verbose level (1-4)
         """
         self.execute('VERBOSE', self._quote(message), level)
 
-    def database_get(self, family, key):
+    def database_get(self, family: str, key: str) -> str:
         """
-        agi.database_get(family, key) --> str
         Retrieve an entry in the Asterisk database for a given family and key.
         Return 0 if <key> is not set.  Return 1 if <key> is set and return the
-        variable in parenthesis
+        variable in parentheses
         example return code: 200 result=1 (testvariable)
         """
         result = self.execute('DATABASE GET', self._quote(family), self._quote(key))
         res, value = result['result']
         if res == '0':
             raise AGIDBError(f'Key not found in database: family={family}, key={key}')
-        elif res == '1':
+        if res == '1':
             return value
-        else:
-            raise AGIError(
-                'Unknown exception for : family=%s, key=%s, result=%s'
-                % (family, key, pprint.pformat(result))
-            )
+        raise AGIError(
+            f'Unknown exception for : family={family}, key={key}, result={pprint.pformat(result)}'
+        )
 
-    def database_put(self, family, key, value):
+    def database_put(self, family: str, key: str, value: str) -> None:
         """
-        agi.database_put(family, key, value) --> None
         Add or update an entry in the Asterisk database for a given family,
         key, and value.
         """
@@ -680,13 +677,11 @@ class AGI:
         res, value = result['result']
         if res == '0':
             raise AGIDBError(
-                'Unable to put value in database: family=%s, key=%s, value=%s'
-                % (family, key, value)
+                f'Unable to put value in database: family={family}, key={key}, value={value}'
             )
 
-    def database_del(self, family, key):
+    def database_del(self, family: str, key: str) -> None:
         """
-        agi.database_del(family, key) --> None
         Delete an entry in the Asterisk database for a given family and key.
         """
         result = self.execute('DATABASE DEL', self._quote(family), self._quote(key))
@@ -696,9 +691,8 @@ class AGI:
                 f'Unable to delete from database: family={family}, key={key}'
             )
 
-    def database_deltree(self, family, key=''):
+    def database_deltree(self, family: str, key: str = '') -> None:
         """
-        agi.database_deltree(family, key='') --> None
         Delete a family or specific keytree with in a family in the Asterisk
         database.
         """
@@ -709,9 +703,8 @@ class AGI:
                 f'Unable to delete tree from database: family={family}, key={key}'
             )
 
-    def noop(self):
+    def noop(self) -> None:
         """
-        agi.noop() --> None
         Do nothing
         """
         self.execute('NOOP')

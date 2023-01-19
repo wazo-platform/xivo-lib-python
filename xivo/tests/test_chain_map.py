@@ -1,15 +1,14 @@
-# Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 import operator
 import unittest
 
-from ..chain_map import AccumulatingListChainMap as ALChainMap, ChainMap
-from hamcrest import assert_that
-from hamcrest import equal_to
-from hamcrest import has_entry
-from hamcrest import is_
-from hamcrest import none
+from hamcrest import assert_that, equal_to, has_entry, is_, none
+
+from ..chain_map import AccumulatingListChainMap as ALChainMap
+from ..chain_map import ChainMap
 
 
 class TestChainMap(unittest.TestCase):
@@ -21,7 +20,7 @@ class TestChainMap(unittest.TestCase):
         assert_that(m.get('key', 'default_value'), equal_to('default_value'))
 
     def test_lookup_order(self):
-        cli_config = {}
+        cli_config: dict[str, int] = {}
         environment_config = {'key': 2}
         file_config = {'key': 3, 'test': 42}
         default_config = {'key': 4}
@@ -73,8 +72,8 @@ class TestChainMap(unittest.TestCase):
 
 class TestAccumulatingListChainMap(unittest.TestCase):
     def test_list_is_accumulated(self):
-        empty = {}
-        empty_list = {'key': []}
+        empty: dict[str, list[str]] = {}
+        empty_list: dict[str, list] = {'key': []}
         one_item = {'key': ['item']}
         two_items = {'key': ['items', 'items']}
 

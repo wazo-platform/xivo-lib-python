@@ -1,4 +1,4 @@
-# Copyright 2007-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2007-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Supplementary synchronization primitives not provided by 'threading'
@@ -15,9 +15,11 @@
         Released under the BSD-license.
 
 """
+from __future__ import annotations
 
-import time
 import threading
+import time
+from threading import Thread
 
 
 class RWLock:
@@ -36,14 +38,14 @@ class RWLock:
     distinguish between waiting readers and waiting writers?
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__condition = threading.Condition(threading.Lock())
-        self.__readers = {}
+        self.__readers: dict[Thread, int] = {}
         self.__writer_lock_count = 0
-        self.__writer = None
-        self.__pending_writers = []
+        self.__writer: Thread | None = None
+        self.__pending_writers: list[Thread] = []
 
-    def acquire_read(self, timeout=None):
+    def acquire_read(self, timeout: int | None = None) -> bool | None:
         """
         Acquire a read lock for the current thread, waiting at most
         timeout seconds or doing a non-blocking check in case timeout
@@ -55,8 +57,9 @@ class RWLock:
         If the lock has been successfully acquired, this function
         returns True, on a timeout it returns None.
         """
+        end_time: float | None = None
         if timeout is not None:
-            endtime = time.time() + timeout
+            end_time = time.time() + timeout
         me = threading.currentThread()
         self.__condition.acquire()
         try:
@@ -70,7 +73,7 @@ class RWLock:
                             # Grant the lock anyway if we already
                             # hold one, because this would otherwise
                             # cause a deadlock between the pending
-                            # writers and ourself.
+                            # writers and ourselves.
                             self.__readers[me] += 1
                             return True
                         # else: does nothing, will wait below
@@ -78,8 +81,8 @@ class RWLock:
                     else:
                         self.__readers[me] = self.__readers.get(me, 0) + 1
                         return True
-                if timeout is not None:
-                    remaining = endtime - time.time()
+                if end_time is not None:
+                    remaining = end_time - time.time()
                     if remaining <= 0:
                         return None
                     self.__condition.wait(remaining)
@@ -88,7 +91,7 @@ class RWLock:
         finally:
             self.__condition.release()
 
-    def acquire_write(self, timeout=None):
+    def acquire_write(self, timeout: int | None = None) -> bool | None:
         """
         Acquire a write lock for the current thread, waiting at most
         timeout seconds or doing a non-blocking check in case timeout
@@ -102,8 +105,9 @@ class RWLock:
         deadlock condition is detected (the current thread already hold
         a reader lock) it returns False.
         """
+        end_time: float | None = None
         if timeout is not None:
-            endtime = time.time() + timeout
+            end_time = time.time() + timeout
         me = threading.currentThread()
         self.__condition.acquire()
         try:
@@ -124,8 +128,8 @@ class RWLock:
                     self.__writer_lock_count = 1
                     self.__pending_writers = self.__pending_writers[1:]
                     return True
-                if timeout is not None:
-                    remaining = endtime - time.time()
+                if end_time is not None:
+                    remaining = end_time - time.time()
                     if remaining <= 0:
                         self.__pending_writers.remove(me)
                         return None
@@ -135,7 +139,7 @@ class RWLock:
         finally:
             self.__condition.release()
 
-    def release(self):
+    def release(self) -> None:
         """
         Release the currently held lock.
 

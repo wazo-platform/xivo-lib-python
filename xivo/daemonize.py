@@ -1,17 +1,19 @@
-# Copyright 2007-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2007-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Transforms a process into a daemon from hell
 
 WARNING: Linux specific module, needs /proc/
 """
+from __future__ import annotations
 
+import errno
+import logging
 import os
 import re
 import sys
-import errno
-import logging
 from contextlib import contextmanager
+from typing import Generator
 
 SLASH_PROC = os.sep + 'proc'
 PROG_SLINK = 'exe'
@@ -21,11 +23,11 @@ PROG_CMDLN = 'cmdline'
 log = logging.getLogger("xivo.daemonize")  # pylint: disable-msg=C0103
 
 
-def c14n_prog_name(arg):
+def c14n_prog_name(arg: str) -> str:
     return os.path.basename(re.sub(r'\.py$', '', arg))
 
 
-def remove_if_stale_pidfile(pidfile):
+def remove_if_stale_pidfile(pidfile: str) -> None:
     """
     @pidfile: PID file to remove if it is staled.
 
@@ -113,9 +115,9 @@ def remove_if_stale_pidfile(pidfile):
         log.exception("unexpected error")
 
 
-def take_file_lock(own_file, lock_file, own_content):
+def take_file_lock(own_file: str, lock_file: str, own_content: str) -> bool:
     """
-    Atomically "move" @own_file to @lock_file if the latter does not exists,
+    Atomically "move" @own_file to @lock_file if the latter does not exist,
     else just remove @own_file.
 
     @own_file: filepath of the temporary file that contains our PID
@@ -153,7 +155,7 @@ def take_file_lock(own_file, lock_file, own_content):
     return True
 
 
-def lock_pidfile_or_die(pidfile):
+def lock_pidfile_or_die(pidfile: str) -> int:
     """
     @pidfile:
         must be a writable path
@@ -165,13 +167,13 @@ def lock_pidfile_or_die(pidfile):
     pid = os.getpid()
     try:
         remove_if_stale_pidfile(pidfile)
-        pid_write_file = pidfile + '.' + str(pid)
+        pid_write_file = f'{pidfile}.{pid}'
         fpid = open(pid_write_file, 'w')
         try:
-            fpid.write("%s\n" % pid)
+            fpid.write(f"{pid}\n")
         finally:
             fpid.close()
-        if not take_file_lock(pid_write_file, pidfile, "%s\n" % pid):
+        if not take_file_lock(pid_write_file, pidfile, f"{pid}\n"):
             sys.exit(1)
     except SystemExit:
         raise
@@ -181,13 +183,13 @@ def lock_pidfile_or_die(pidfile):
     return pid
 
 
-def unlock_pidfile(pidfile):
+def unlock_pidfile(pidfile: str) -> None:
     """
     @pidfile:
         path to the pidfile that will be removed if it is not too unsafe
     """
     try:
-        pid = "%s\n" % os.getpid()
+        pid = f"{os.getpid()}\n"
         content = open(pidfile).read(len(pid) + 1)
         if content == pid:
             os.unlink(pidfile)
@@ -198,7 +200,7 @@ def unlock_pidfile(pidfile):
 
 
 @contextmanager
-def pidfile_context(pid_file_name):
+def pidfile_context(pid_file_name: str) -> Generator[None, None, None]:
     log.debug("Locking PID file...")
     lock_pidfile_or_die(pid_file_name)
     log.debug("PID file locked.")

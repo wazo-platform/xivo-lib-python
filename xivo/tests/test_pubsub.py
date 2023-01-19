@@ -1,15 +1,12 @@
-# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
-
-from hamcrest import (
-    assert_that,
-    is_,
-)
 from unittest.mock import Mock, patch
 
-from ..pubsub import Pubsub, CallbackCollector
+from hamcrest import assert_that, is_
+
+from ..pubsub import CallbackCollector, Pubsub
 
 SOME_TOPIC = 'abcd'
 SOME_MESSAGE = 'defg'

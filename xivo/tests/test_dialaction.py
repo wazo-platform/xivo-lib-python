@@ -1,13 +1,9 @@
-# Copyright 2021-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2021-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from unittest import TestCase
 
-from ..dialaction import (
-    action,
-    action_type,
-    action_subtype,
-)
+from ..dialaction import action, action_subtype, action_type
 
 
 class TestDialaction(TestCase):

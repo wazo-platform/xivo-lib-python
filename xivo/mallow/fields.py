@@ -1,35 +1,49 @@
-# Copyright 2017-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 import ipaddress
+from typing import TYPE_CHECKING, Any, Union
 
-from marshmallow.fields import (  # noqa: E402
-    Boolean as _Boolean,
-    Constant as _Constant,
-    Date as _Date,
-    DateTime as _DateTime,
-    Dict as _Dict,
-    Email as _Email,
-    Field as _Field,
-    Float as _Float,
-    Integer as _Integer,
-    List as _List,
-    Nested as _Nested,
-    String as _String,
-    TimeDelta as _TimeDelta,
-    URL as _URL,
-    UUID as _UUID,
-)
+from marshmallow.fields import URL as _URL
+from marshmallow.fields import UUID as _UUID
+from marshmallow.fields import Boolean as _Boolean  # noqa: E402
+from marshmallow.fields import Constant as _Constant
+from marshmallow.fields import Date as _Date
+from marshmallow.fields import DateTime as _DateTime
+from marshmallow.fields import Dict as _Dict
+from marshmallow.fields import Email as _Email
+from marshmallow.fields import Field as _Field
+from marshmallow.fields import Float as _Float
+from marshmallow.fields import Integer as _Integer
+from marshmallow.fields import List as _List
+from marshmallow.fields import Nested as _Nested
+from marshmallow.fields import String as _String
+from marshmallow.fields import TimeDelta as _TimeDelta
+
+if TYPE_CHECKING:
+    from typing import Dict as DictType
+    from typing import TypedDict
+
+    ErrorMessages = TypedDict(
+        'ErrorMessages',
+        {
+            'message': str,
+            'constraint_id': str,
+            'constraint': str,
+        },
+    )
+    DefaultErrorMessages = DictType[str, Union[ErrorMessages, "_StringifiedDict"]]
 
 
 class _StringifiedDict(dict):
-    def format(self, *args, **kwargs):
+    def format(self, *args: Any, **kwargs: Any) -> _StringifiedDict:
         self['message'] = self.get('message', '').format(*args, **kwargs)
         return self
 
 
 class Field(_Field):
-    default_error_messages = {
+    default_error_messages: DefaultErrorMessages = {
         'null': _StringifiedDict(
             message=_Field.default_error_messages['null'],
             constraint_id='not_null',
@@ -44,7 +58,7 @@ class Field(_Field):
 
 
 class Boolean(_Boolean):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -57,7 +71,7 @@ class Boolean(_Boolean):
 
 
 class Date(_Date):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -70,7 +84,7 @@ class Date(_Date):
 
 
 class DateTime(_DateTime):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -83,7 +97,7 @@ class DateTime(_DateTime):
 
 
 class Dict(_Dict):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -96,7 +110,7 @@ class Dict(_Dict):
 
 
 class Email(_Email):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -109,7 +123,7 @@ class Email(_Email):
 
 
 class Integer(_Integer):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -122,7 +136,7 @@ class Integer(_Integer):
 
 
 class Float(_Float):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'special': _StringifiedDict(
@@ -135,7 +149,7 @@ class Float(_Float):
 
 
 class List(_List):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -148,7 +162,7 @@ class List(_List):
 
 
 class Nested(_Nested):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'type': _StringifiedDict(
@@ -161,7 +175,7 @@ class Nested(_Nested):
 
 
 class String(_String):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -174,7 +188,7 @@ class String(_String):
 
 
 class TimeDelta(_TimeDelta):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': _StringifiedDict(
@@ -192,7 +206,7 @@ class TimeDelta(_TimeDelta):
 
 
 class URL(_URL):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid_url': _StringifiedDict(
@@ -205,7 +219,7 @@ class URL(_URL):
 
 
 class UUID(_UUID):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid_uuid': _StringifiedDict(
@@ -218,12 +232,12 @@ class UUID(_UUID):
 
 
 class Constant(_Constant):
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
 
 
 class IP(_String):
 
-    default_error_messages = dict(Field.default_error_messages)
+    default_error_messages: DefaultErrorMessages = dict(Field.default_error_messages)
     default_error_messages.update(
         {
             'invalid': {
@@ -234,11 +248,13 @@ class IP(_String):
         }
     )
 
-    def _deserialize(self, value, attr, data, **kwargs):
+    def _deserialize(
+        self, value: Any, attr: str | None, data: dict[str, Any], **kwargs: Any
+    ) -> str | None:
         deserialized = super()._deserialize(value, attr, data, **kwargs)
         return self._validated(deserialized)
 
-    def _validated(self, value):
+    def _validated(self, value: str | None) -> str | None:
         if value is None:
             return None
         try:

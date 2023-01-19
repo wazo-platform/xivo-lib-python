@@ -1,12 +1,16 @@
-# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
-
+from __future__ import annotations
 
 import functools
+from typing import Any, Callable, TypeVar
+
 from xivo.cli.exception import UsageError
 
+R = TypeVar('R')
 
-def compute_ids(command_arg):
+
+def compute_ids(command_arg: str) -> list[int]:
     ids = []
     for id_item in command_arg.split(','):
         start, sep, end = id_item.partition('-')
@@ -17,9 +21,9 @@ def compute_ids(command_arg):
     return ids
 
 
-def wraps_error_as_usage_error(fun):
+def wraps_error_as_usage_error(fun: Callable[..., R]) -> Callable[..., R]:
     @functools.wraps(fun)
-    def aux(*args, **kwargs):
+    def aux(*args: Any, **kwargs: Any) -> R:
         try:
             return fun(*args, **kwargs)
         except UsageError:

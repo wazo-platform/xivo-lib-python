@@ -1,11 +1,17 @@
-# Copyright 2013-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
+
+from typing import Any, NoReturn
 
 
 class BaseCommand:
-    def prepare(self, command_args):
+    help: str
+    usage: str | None
+
+    def prepare(self, command_args: list[str] | None) -> tuple[Any, ...]:
         return ()
 
-    def execute(self):
+    def execute(self, *args: Any, **kwargs: Any) -> NoReturn | None:
         # must be overriden in derived class
         raise NotImplementedError()

@@ -1,22 +1,22 @@
-# Copyright 2016-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 import os
 import queue
+import threading
+from contextlib import contextmanager
 
 import kombu
-import threading
 import requests
-
 from consul import Consul
-from contextlib import contextmanager
 from hamcrest import assert_that, contains_inanyorder, contains_string, equal_to
 from kombu.mixins import ConsumerMixin
 from wazo_test_helpers import until
 from wazo_test_helpers.asset_launching_test_case import (
     AssetLaunchingTestCase,
-    _run_cmd,
     NoSuchService,
+    _run_cmd,
 )
 
 ASSET_ROOT = os.path.join(os.path.dirname(__file__), '..', 'assets')
@@ -36,8 +36,8 @@ class ServiceConsumer(ConsumerMixin):
         self._received_messages = message_queue
         self._is_running = False
 
-    def get_consumers(self, Consumer, channel):
-        return [Consumer(self._queue, callbacks=[self.on_message])]
+    def get_consumers(self, consumer, channel):
+        return [consumer(self._queue, callbacks=[self.on_message])]
 
     def on_connection_error(self, exc, interval):
         super().on_connection_error(exc, interval)
@@ -141,8 +141,8 @@ class TestServiceDiscovery(_BaseTest):
     asset = 'service_discovery'
 
     def setUp(self):
-        self._consumer = None
-        self.messages = queue.Queue()
+        self._consumer: ServiceConsumer | None = None
+        self.messages: queue.Queue[str] = queue.Queue()
         self.start_listening()
 
     def start_listening(self):
@@ -170,7 +170,8 @@ class TestServiceDiscovery(_BaseTest):
         self.stop_listening()
 
     def stop_listening(self):
-        self._consumer.should_stop = True
+        if self._consumer:
+            self._consumer.should_stop = True
         self._bus_thread.join()
         self._consumer = None
 

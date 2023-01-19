@@ -1,4 +1,4 @@
-# Copyright 2014-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -6,22 +6,26 @@ import sys
 import tempfile
 from io import StringIO
 from unittest import TestCase
-
-from hamcrest import assert_that
-from hamcrest import contains_inanyorder
-from hamcrest import contains_string
-from hamcrest import equal_to
-from hamcrest import has_length
-from hamcrest import is_
-from hamcrest import is_not
 from unittest.mock import Mock, patch
 
-from xivo.xivo_logging import DEFAULT_LOG_FORMAT
-from xivo.xivo_logging import DEFAULT_LOG_LEVEL
-from xivo.xivo_logging import excepthook
-from xivo.xivo_logging import get_log_level_by_name
-from xivo.xivo_logging import setup_logging
-from xivo.xivo_logging import silence_loggers
+from hamcrest import (
+    assert_that,
+    contains_inanyorder,
+    contains_string,
+    equal_to,
+    has_length,
+    is_,
+    is_not,
+)
+
+from xivo.xivo_logging import (
+    DEFAULT_LOG_FORMAT,
+    DEFAULT_LOG_LEVEL,
+    excepthook,
+    get_log_level_by_name,
+    setup_logging,
+    silence_loggers,
+)
 
 
 @patch('xivo.xivo_logging.logging')

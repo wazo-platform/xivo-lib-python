@@ -1,45 +1,61 @@
-# Copyright 2015-2022 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
 
 import itertools
 import logging
-import requests
 import threading
+import types
+from typing import TYPE_CHECKING, Callable, TypeVar
+
+import requests
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from typing import Collection, TypedDict
+
+    from wazo_auth_client.client import AuthClient
+
+    Callback = Callable[[Collection[str]], None]
+    CallbackDict = TypedDict('CallbackDict', {'method': Callback, 'details': bool})
+
+Self = TypeVar('Self', bound='TokenRenewer')
 
 
 class TokenRenewer:
 
-    DEFAULT_EXPIRATION = 6 * 3600
+    DEFAULT_EXPIRATION = 6 * 3_600
     _RENEW_TIME_COEFFICIENT = 0.8
 
-    def __init__(self, auth_client, expiration=DEFAULT_EXPIRATION):
+    def __init__(
+        self, auth_client: AuthClient, expiration: int = DEFAULT_EXPIRATION
+    ) -> None:
         self._auth_client = auth_client
         self._expiration = expiration
-        self._callbacks = []
-        self._callbacks_tmp = []
+        self._callbacks: list[CallbackDict] = []
+        self._callbacks_tmp: list[CallbackDict] = []
         self._started = False
         self._stopped = threading.Event()
-        self._renew_time = 0
+        self._renew_time: float = 0
         self._callback_lock = threading.Lock()
         self._renew_time_failed = itertools.chain(
             (1, 2, 4, 8, 16), itertools.repeat(32)
         )
 
-    def subscribe_to_token_change(self, callback):
+    def subscribe_to_token_change(self, callback: Callback) -> None:
         with self._callback_lock:
             self._callbacks.append({'method': callback, 'details': False})
 
-    def subscribe_to_next_token_change(self, callback):
+    def subscribe_to_next_token_change(self, callback: Callback) -> None:
         with self._callback_lock:
             self._callbacks_tmp.append({'method': callback, 'details': False})
 
-    def subscribe_to_next_token_details_change(self, callback):
+    def subscribe_to_next_token_details_change(self, callback: Callback) -> None:
         with self._callback_lock:
             self._callbacks_tmp.append({'method': callback, 'details': True})
 
-    def start(self):
+    def start(self) -> None:
         if self._started:
             raise Exception('token renewer already started')
 
@@ -49,15 +65,15 @@ class TokenRenewer:
         self._thread = threading.Thread(target=self._run, name='token-renewer')
         self._thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         self._stopped.set()
         logger.debug('joining token renewer thread...')
         self._thread.join()
 
-    def emit_stop(self):
+    def emit_stop(self) -> None:
         self._stopped.set()
 
-    def _run(self):
+    def _run(self) -> None:
         while True:
             self._stopped.wait(self._renew_time)
             if self._stopped.is_set():
@@ -65,7 +81,7 @@ class TokenRenewer:
 
             self._renew_token()
 
-    def _renew_token(self):
+    def _renew_token(self) -> None:
         logger.debug(
             'Creating token for "%s" with expiration %s',
             self._auth_client.username,
@@ -83,7 +99,7 @@ class TokenRenewer:
             self._renew_time = self._RENEW_TIME_COEFFICIENT * self._expiration
             self._notify_all(token)
 
-    def _handle_renewal_error(self, error):
+    def _handle_renewal_error(self, error: Exception) -> None:
         response = getattr(error, 'response', None)
         status_code = getattr(response, 'status_code', '')
         self._renew_time = next(self._renew_time_failed)
@@ -93,7 +109,7 @@ class TokenRenewer:
             self._renew_time,
         )
 
-    def _notify_all(self, token):
+    def _notify_all(self, token: dict[str, str]) -> None:
         with self._callback_lock:
             callbacks = list(self._callbacks + self._callbacks_tmp)
             self._callbacks_tmp = []
@@ -107,9 +123,14 @@ class TokenRenewer:
                     'unexpected exception from token change callback', exc_info=True
                 )
 
-    def __enter__(self):
+    def __enter__(self: Self) -> Self:
         self.start()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+        self,
+        exc_type: type[BaseException],
+        exc_value: BaseException,
+        traceback: types.TracebackType | None,
+    ) -> None:
         self.stop()
