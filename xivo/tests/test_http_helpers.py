@@ -21,48 +21,72 @@ def _assert_json_equals(result, expected):
 
 
 class TestLogRequest(unittest.TestCase):
-    @patch('xivo.http_helpers.current_app')
-    @patch('xivo.http_helpers.g')
-    @patch('xivo.http_helpers.request')
-    def test_log_request(self, request, g, current_app):
+    @patch('xivo.http_helpers.g', spec={})
+    def test_log_request(self, g):
         del g.request_time
-        request.url = '/foo/bar?token=1734768e-caf6'
+        mock_request = Mock()
+        mock_request.url = '/foo/bar?token=1734768e-caf6'
         response = Mock(data=None, status_code=200)
 
-        log_request(response)
+        with (
+            patch('xivo.http_helpers.request', mock_request),
+            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
+        ):
+            log_request(response)
 
-        current_app.logger.info.assert_called_once_with(
-            ANY, request.remote_addr, '', request.method, request.url, 200
-        )
+            mock_current_app.logger.info.assert_called_once_with(
+                ANY,
+                mock_request.remote_addr,
+                '',
+                mock_request.method,
+                mock_request.url,
+                200,
+            )
 
-    @patch('xivo.http_helpers.current_app')
-    @patch('xivo.http_helpers.g')
-    @patch('xivo.http_helpers.request')
-    def test_log_request_hide_token(self, request, g, current_app):
+    @patch('xivo.http_helpers.g', spec={})
+    def test_log_request_hide_token(self, g):
         del g.request_time
-        request.url = '/foo/bar?token=1734768e-caf6'
+        mock_request = Mock()
+        mock_request.url = '/foo/bar?token=1734768e-caf6'
         response = Mock(data=None, status_code=200)
 
-        log_request_hide_token(response)
+        with (
+            patch('xivo.http_helpers.request', mock_request),
+            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
+        ):
+            log_request_hide_token(response)
 
-        expected_url = '/foo/bar?token=<hidden>'
-        current_app.logger.info.assert_called_once_with(
-            ANY, request.remote_addr, '', request.method, expected_url, 200
-        )
+            expected_url = '/foo/bar?token=<hidden>'
+            mock_current_app.logger.info.assert_called_once_with(
+                ANY,
+                mock_request.remote_addr,
+                '',
+                mock_request.method,
+                expected_url,
+                200,
+            )
 
-    @patch('xivo.http_helpers.current_app')
-    @patch('xivo.http_helpers.g')
-    @patch('xivo.http_helpers.request')
-    def test_log_with_duration(self, request, g, current_app):
+    @patch('xivo.http_helpers.g', spec={})
+    def test_log_with_duration(self, g):
         g.request_time = 1667410149.0782132
-        request.url = '/foo/bar'
+        mock_request = Mock()
+        mock_request.url = '/foo/bar'
         response = Mock(data=None, status_code=200)
 
-        log_request(response)
+        with (
+            patch('xivo.http_helpers.request', mock_request),
+            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
+        ):
+            log_request(response)
 
-        current_app.logger.info.assert_called_once_with(
-            ANY, request.remote_addr, ANY, request.method, request.url, 200
-        )
+            mock_current_app.logger.info.assert_called_once_with(
+                ANY,
+                mock_request.remote_addr,
+                ANY,
+                mock_request.method,
+                mock_request.url,
+                200,
+            )
 
 
 class TestBodyFormatter(unittest.TestCase):
