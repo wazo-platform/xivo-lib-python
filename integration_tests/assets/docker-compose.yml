@@ -14,7 +14,7 @@ services:
       - "5672"
 
   consul:
-    image: consul:1.0.7
+    image: consul:1.8.7
     ports:
       - "8500"
     command: "agent -server -client 0.0.0.0 -bootstrap-expect=1"

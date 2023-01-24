@@ -32,7 +32,7 @@ from ..tenant_helpers import (
 
 
 class TestTenantAutodetect(TestCase):
-    @patch('xivo.tenant_helpers.request')
+    @patch('xivo.tenant_helpers.request', spec={})
     def test_given_no_token_when_autodetect_then_raise(self, request):
         tokens = Mock()
         tokens.from_headers.side_effect = InvalidToken
@@ -40,7 +40,7 @@ class TestTenantAutodetect(TestCase):
 
         assert_that(calling(Tenant.autodetect).with_args(tokens), raises(InvalidToken))
 
-    @patch('xivo.tenant_helpers.request')
+    @patch('xivo.tenant_helpers.request', spec={})
     def test_given_token_no_tenant_when_autodetect_then_return_tenant_from_token(
         self, request
     ):
@@ -53,7 +53,7 @@ class TestTenantAutodetect(TestCase):
 
         assert_that(result.uuid, equal_to(tenant))
 
-    @patch('xivo.tenant_helpers.request')
+    @patch('xivo.tenant_helpers.request', spec={})
     def test_given_token_and_tenant_when_autodetect_then_return_given_tenant(
         self, request
     ):
@@ -68,7 +68,7 @@ class TestTenantAutodetect(TestCase):
 
         assert_that(result.uuid, equal_to(tenant))
 
-    @patch('xivo.tenant_helpers.request')
+    @patch('xivo.tenant_helpers.request', spec={})
     def test_given_token_unknown_tenant_and_user_in_tenant_when_autodetect_then_return_tenant(
         self, request
     ):
@@ -84,7 +84,7 @@ class TestTenantAutodetect(TestCase):
 
         assert_that(result.uuid, equal_to(tenant))
 
-    @patch('xivo.tenant_helpers.request')
+    @patch('xivo.tenant_helpers.request', spec={})
     def test_given_token_unknown_tenant_and_user_not_in_tenant_when_autodetect_then_raise(
         self, request
     ):
@@ -110,13 +110,13 @@ class TestTenantAutodetect(TestCase):
 
 
 class TestTenantFromHeaders(TestCase):
-    @patch('xivo.tenant_helpers.request')
+    @patch('xivo.tenant_helpers.request', spec={})
     def test_given_no_tenant_when_from_headers_then_raise(self, request):
         request.headers = {}
 
         assert_that(calling(Tenant.from_headers), raises(InvalidTenant))
 
-    @patch('xivo.tenant_helpers.request')
+    @patch('xivo.tenant_helpers.request', spec={})
     def test_given_tenant_when_from_headers_then_return_tenant(self, request):
         tenant = 'tenant'
         request.headers = {'Wazo-Tenant': tenant}
@@ -127,16 +127,16 @@ class TestTenantFromHeaders(TestCase):
 
 
 class TestTenantFromQuery(TestCase):
-    @patch('xivo.tenant_helpers.request')
-    def test_given_no_tenant_when_from_query_then_raise(self, request):
-        request.args = {}
+    @patch('xivo.tenant_helpers.request', spec={})
+    def test_given_no_tenant_when_from_query_then_raise(self, mock_request):
+        mock_request.args = {}
 
         assert_that(calling(Tenant.from_query), raises(InvalidTenant))
 
-    @patch('xivo.tenant_helpers.request')
-    def test_given_tenant_when_from_query_then_return_tenant(self, request):
+    @patch('xivo.tenant_helpers.request', spec={})
+    def test_given_tenant_when_from_query_then_return_tenant(self, mock_request):
         tenant = 'tenant'
-        request.args = {'tenant': tenant}
+        mock_request.args = {'tenant': tenant}
 
         result = Tenant.from_query()
 
