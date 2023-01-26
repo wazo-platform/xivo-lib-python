@@ -1,13 +1,12 @@
-FROM python:3.7-buster
+FROM python:3.9-bullseye
 
 COPY integration_tests/assets/bin /usr/local/bin
 COPY . /tmp/xivo
 
 WORKDIR /tmp/xivo
 
-# importlib_metadata<5.0.0  # from kombu - https://github.com/celery/kombu/issues/1600
 RUN true && \
-    pip install -r requirements.txt kombu 'importlib_metadata<5.0.0' && \
+    pip install -r requirements.txt kombu && \
     python setup.py install && \
     true
 
