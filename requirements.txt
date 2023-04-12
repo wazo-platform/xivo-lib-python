@@ -1,13 +1,14 @@
 https://github.com/wazo-platform/wazo-lib-rest-client/archive/master.zip
 https://github.com/wazo-platform/wazo-auth-client/archive/master.zip
 https://github.com/wazo-platform/xivo-bus/archive/master.zip
-cheroot==6.5.4
-flask==1.0.2
-itsdangerous==0.24  # from flask
-jinja2==2.10  # from flask
-markupsafe==1.1.0 # from flask
+cheroot==8.5.2
+flask==1.1.2
+itsdangerous==1.1.0  # from flask
+jinja2==2.11.3  # from flask
+markupsafe==1.1.1 # from flask
+werkzeug==1.0.1 # from flask
 marshmallow==3.10.0
-netifaces==0.10.4
+netifaces==0.10.9
 python-consul==1.1.0
-pyyaml==3.13
-stevedore==1.29.0
+pyyaml==5.3.1
+stevedore==3.2.2

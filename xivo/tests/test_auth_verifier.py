@@ -48,7 +48,7 @@ class StubVerifier(AuthVerifier):
 
 class TestAuthVerifier(unittest.TestCase):
     def setUp(self):
-        self.patcher = patch('xivo.auth_verifier.request')
+        self.patcher = patch('xivo.auth_verifier.request', Mock())
         self.request_mock = self.patcher.start()
         del self.request_mock.token_id
         del self.request_mock._token_content
@@ -59,9 +59,7 @@ class TestAuthVerifier(unittest.TestCase):
 
     def test_set_client(self):
         auth_verifier = AuthVerifier()
-
         auth_verifier.set_client(s.client)
-
         assert_that(auth_verifier.client(), equal_to(s.client))
 
     @patch('xivo.auth_verifier.Client')

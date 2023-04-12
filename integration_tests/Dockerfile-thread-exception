@@ -1,4 +1,4 @@
-FROM python:3.7-slim-buster
+FROM python:3.9-slim-bullseye
 
 COPY integration_tests/assets/bin/thread-exception.py /usr/local/bin
 COPY . /usr/local/src/xivo-lib-python

@@ -1,9 +1,9 @@
 - project:
     templates:
       - wazo-tox-linters-310
-      - wazo-tox-py37
-      - wazo-tox-integration
-      - debian-packaging-template
+      - wazo-tox-py39
+      - wazo-tox-integration-py39
+      - debian-packaging-bullseye
     vars:
       docker_compose_services_override:
         - thread-exception
