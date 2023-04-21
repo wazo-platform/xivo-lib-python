@@ -66,14 +66,14 @@ import re
 import signal
 import sys
 from types import FrameType
-from typing import TYPE_CHECKING, Dict, List, TextIO, Tuple, Union
+from typing import TYPE_CHECKING, TextIO, Union
 
 if TYPE_CHECKING:
     from typing import Literal
 
 
-Digits = Union[List[Union[str, int]], str]
-Result = Dict[str, Tuple[str, str]]
+Digits = Union[list[Union[str, int]], str]
+Result = dict[str, tuple[str, str]]
 
 DEFAULT_TIMEOUT = 2000  # 2sec timeout used as default for functions that take timeouts
 DEFAULT_RECORD = 20000  # 20sec record time

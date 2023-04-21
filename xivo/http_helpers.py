@@ -7,7 +7,8 @@ import re
 import time
 from json.decoder import JSONDecodeError
 from logging import Logger
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any
+from collections.abc import Iterable
 from urllib.parse import unquote
 
 from cheroot.ssl.builtin import BuiltinSSLAdapter

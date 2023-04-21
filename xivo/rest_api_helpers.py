@@ -5,7 +5,8 @@ from __future__ import annotations
 import logging
 import time
 from functools import wraps
-from typing import Any, Callable, Generator, TypeVar
+from typing import Any, Callable, TypeVar
+from collections.abc import Generator
 
 import yaml
 from pkg_resources import iter_entry_points, resource_string

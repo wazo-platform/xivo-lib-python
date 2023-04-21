@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import ipaddress
-from typing import TYPE_CHECKING, Any, Union
+from typing import Any, Union, TypedDict
 
 from marshmallow.fields import URL as _URL
 from marshmallow.fields import UUID as _UUID
@@ -21,19 +21,14 @@ from marshmallow.fields import Nested as _Nested
 from marshmallow.fields import String as _String
 from marshmallow.fields import TimeDelta as _TimeDelta
 
-if TYPE_CHECKING:
-    from typing import Dict as DictType
-    from typing import TypedDict
 
-    ErrorMessages = TypedDict(
-        'ErrorMessages',
-        {
-            'message': str,
-            'constraint_id': str,
-            'constraint': str,
-        },
-    )
-    DefaultErrorMessages = DictType[str, Union[ErrorMessages, "_StringifiedDict"]]
+class ErrorMessages(TypedDict):
+    message: str
+    constraint_id: str
+    constraint: str
+
+
+DefaultErrorMessages = dict[str, Union[ErrorMessages, "_StringifiedDict"]]
 
 
 class _StringifiedDict(dict):

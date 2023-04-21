@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import threading
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import Any, Callable, TypedDict, TypeVar
 from uuid import uuid4
 
 import requests
@@ -28,19 +28,12 @@ except ImportError:
     pass
 
 
-if TYPE_CHECKING:
-    from typing import TypedDict
-
-    ConsulService = TypedDict(
-        'ConsulService',
-        {
-            'Service': str,
-            'ID': str,
-            'Address': str,
-            'Port': int,
-            'Tags': list[str],
-        },
-    )
+class ConsulService(TypedDict):
+    Service: str
+    ID: str
+    Address: str
+    Port: int
+    Tags: list[str]
 
 
 logger = logging.getLogger('service_discovery')
