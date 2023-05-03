@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import re
-from typing import Generator, NamedTuple
+from typing import NamedTuple
+from collections.abc import Generator
 
 channel_regexp = re.compile(r'(pjsip|sip|sccp|local|dahdi|iax2)/([*\w@/-]+)-', re.I)
 agent_channel_regex = re.compile(r'Local/id-(\d+)@agentcallback')

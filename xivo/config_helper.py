@@ -7,7 +7,8 @@ import subprocess
 import sys
 from functools import partial
 from logging import Logger
-from typing import Any, Generator
+from typing import Any
+from collections.abc import Generator
 
 import yaml
 

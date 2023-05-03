@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence
+from typing import Any, TypedDict, Union
+from collections.abc import Sequence
 
 from marshmallow import ValidationError  # noqa: E402
 from marshmallow.validate import URL as _URL
@@ -16,17 +17,11 @@ from marshmallow.validate import Predicate as _Predicate
 from marshmallow.validate import Range as _Range
 from marshmallow.validate import Regexp as _Regexp
 
-if TYPE_CHECKING:
-    from typing import Any, Dict, TypedDict, Union
 
-    ErrorDict = TypedDict(
-        'ErrorDict',
-        {
-            'message': str,
-            'constraint_id': str,
-            'constraint': Union[str, Dict[str, Any]],
-        },
-    )
+class ErrorDict(TypedDict):
+    message: str
+    constraint_id: str
+    constraint: Union[str, dict[str, Any]]
 
 
 def validate_string_dict(

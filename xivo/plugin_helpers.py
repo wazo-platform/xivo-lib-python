@@ -6,22 +6,21 @@ import logging
 from abc import abstractmethod
 from collections import OrderedDict
 from functools import partial
-from typing import TYPE_CHECKING, Any, Sequence
+from typing import Any, Protocol, TypeVar
+from collections.abc import Sequence
 
 from stevedore.extension import Extension
 from stevedore.named import NamedExtensionManager
 
 logger = logging.getLogger(__name__)
 
-if TYPE_CHECKING:
-    from typing import Protocol, TypeVar
+Self = TypeVar('Self', bound="Plugin")
 
-    Self = TypeVar('Self', bound="Plugin")
 
-    class Plugin(Protocol):
-        @abstractmethod
-        def load(self: Self, dependencies: dict[str, Any]) -> Self:
-            ...
+class Plugin(Protocol):
+    @abstractmethod
+    def load(self: Self, dependencies: dict[str, Any]) -> Self:
+        ...
 
 
 def enabled_names(plugins_dict: OrderedDict[str, bool]) -> list[str]:

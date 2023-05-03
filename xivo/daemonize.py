@@ -13,7 +13,7 @@ import os
 import re
 import sys
 from contextlib import contextmanager
-from typing import Generator
+from collections.abc import Generator
 
 SLASH_PROC = os.sep + 'proc'
 PROG_SLINK = 'exe'

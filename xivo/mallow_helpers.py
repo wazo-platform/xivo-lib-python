@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 from functools import wraps  # noqa: E402
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import Any, Callable, Literal, TypeVar
 
 import marshmallow  # noqa: E402
 
 from .mallow import fields, validate  # noqa: E402
 from .rest_api_helpers import APIException  # noqa: E402
-
-if TYPE_CHECKING:
-    from typing import Literal
 
 
 R = TypeVar('R')

@@ -50,18 +50,18 @@ import time
 import tokenize
 import traceback
 import types
-from typing import TYPE_CHECKING, Any, Callable, List, NamedTuple, NewType, TextIO, Type
+from typing import TYPE_CHECKING, Any, Callable, NamedTuple, NewType, TextIO
 
 if TYPE_CHECKING:
     from xivo.agi import AGI
 
-Undefined = NewType('Undefined', List[str])
+Undefined = NewType('Undefined', list[str])
 
 __UNDEF__ = Undefined([])  # a special sentinel object
 
 
 class ExceptionInfo(NamedTuple):
-    type: Type[BaseException]
+    type: type[BaseException]
     value: BaseException
     traceback: types.TracebackType | None
 

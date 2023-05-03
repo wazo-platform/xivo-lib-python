@@ -5,7 +5,8 @@ from __future__ import annotations
 import logging
 import sys
 import types
-from typing import Callable, Sequence
+from typing import Callable
+from collections.abc import Sequence
 
 DEFAULT_LOG_FORMAT = '%(asctime)s [%(process)d] (%(levelname)s) (%(name)s): %(message)s'
 DEFAULT_LOG_LEVEL = logging.INFO

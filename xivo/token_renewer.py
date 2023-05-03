@@ -2,23 +2,28 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
+from collections.abc import Collection
 import itertools
 import logging
 import threading
 import types
-from typing import TYPE_CHECKING, Callable, TypeVar
+from typing import TYPE_CHECKING, Callable, TypedDict, TypeVar
 
 import requests
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from typing import Collection, TypedDict
-
     from wazo_auth_client.client import AuthClient
 
-    Callback = Callable[[Collection[str]], None]
-    CallbackDict = TypedDict('CallbackDict', {'method': Callback, 'details': bool})
+
+Callback = Callable[[Collection[str]], None]
+
+
+class CallbackDict(TypedDict):
+    method: Callback
+    details: bool
+
 
 Self = TypeVar('Self', bound='TokenRenewer')
 
