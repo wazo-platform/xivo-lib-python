@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from abc import abstractmethod
-from collections import OrderedDict
 from functools import partial
 from typing import Any, Protocol, TypeVar
 from collections.abc import Sequence
@@ -23,7 +22,7 @@ class Plugin(Protocol):
         ...
 
 
-def enabled_names(plugins_dict: OrderedDict[str, bool]) -> list[str]:
+def enabled_names(plugins_dict: dict[str, bool]) -> list[str]:
     return [name for name, enabled in plugins_dict.items() if enabled]
 
 
@@ -51,7 +50,7 @@ def load_plugin(ext: Extension, *load_args: Any, **load_kwargs: Any) -> Plugin:
 
 
 def load(
-    namespace: str, names: OrderedDict[str, bool], dependencies: dict[str, Any]
+    namespace: str, names: dict[str, bool], dependencies: dict[str, Any]
 ) -> NamedExtensionManager | None:
     enabled_plugins = enabled_names(names)
     logger.debug('Enabled plugins for namespace "%s": %s', namespace, enabled_plugins)
@@ -73,5 +72,5 @@ def load(
     return manager
 
 
-def from_list(enabled_names: Sequence[str]) -> OrderedDict[str, bool]:
-    return OrderedDict((name, True) for name in enabled_names)
+def from_list(enabled_names: Sequence[str]) -> dict[str, bool]:
+    return {name: True for name in enabled_names}

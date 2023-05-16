@@ -22,18 +22,12 @@ class InvalidChannelError(ValueError):
 
 
 def protocol_interface_from_channel(channel: str) -> ProtocolInterface:
-    matches = channel_regexp.search(channel)
-    if matches is None:
+    if (match := channel_regexp.search(channel)) is None:
         raise InvalidChannelError(channel)
 
-    protocol = matches.group(1)
-    interface = matches.group(2)
-
-    if protocol == 'pjsip':
-        protocol = 'sip'
-    elif protocol == 'PJSIP':
-        protocol = 'SIP'
-
+    protocol, interface = match.groups()
+    if protocol.lower() == 'pjsip':
+        protocol = protocol[-3:]
     return ProtocolInterface(protocol, interface)
 
 
@@ -41,27 +35,20 @@ def protocol_interfaces_from_hint(
     hint: str, ignore_invalid: bool = True
 ) -> Generator[ProtocolInterface, None, None]:
     for device in hint.split('&'):
-        protocol_interface = _protocol_interface_from_device(device)
-        if protocol_interface:
+        if protocol_interface := _protocol_interface_from_device(device):
             yield protocol_interface
         elif not ignore_invalid:
             raise InvalidChannelError(device)
 
 
 def _protocol_interface_from_device(device: str) -> ProtocolInterface | None:
-    matches = device_regexp.match(device)
-    if matches is None:
+    if (match := device_regexp.match(device)) is None:
         return None
-
-    protocol = matches.group(1)
-    interface = matches.group(2)
-
+    protocol, interface = match.groups()
     return ProtocolInterface(protocol, interface)
 
 
 def agent_id_from_channel(channel: str) -> int:
-    matches = agent_channel_regex.match(channel)
-    if matches is None:
+    if (match := agent_channel_regex.match(channel)) is None:
         raise InvalidChannelError(channel)
-
-    return int(matches.group(1))
+    return int(match.group(1))

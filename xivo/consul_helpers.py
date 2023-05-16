@@ -254,8 +254,7 @@ def _find_address(main_iface: str) -> str:
     for iface in ifaces:
         try:
             for config in netifaces.ifaddresses(iface).get(netifaces.AF_INET, []):
-                address = config.get('addr')
-                if address:
+                if address := config.get('addr'):
                     return address
         except ValueError:
             logger.info('The configured interface does not exists: %s', iface)

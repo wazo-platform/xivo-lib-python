@@ -2,17 +2,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
-from collections import OrderedDict
 
 from hamcrest import (
     all_of,
     assert_that,
     calling,
     empty,
+    equal_to,
     has_entries,
     has_key,
     has_property,
-    instance_of,
     not_,
 )
 from marshmallow import ValidationError, fields
@@ -41,7 +40,7 @@ class TestSchema(unittest.TestCase):
             key1 = fields.String(required=True)
 
         result = TestSchema().dump({'key1': '1', 'key2': '2'})
-        assert_that(result, instance_of(OrderedDict))
+        assert_that(list(result), equal_to(['key2', 'key1']))
 
 
 class TestListSchema(unittest.TestCase):

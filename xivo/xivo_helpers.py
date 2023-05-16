@@ -15,8 +15,7 @@ find_asterisk_pattern_char = re.compile(r'[\[NXZ!.]').search
 
 
 def position_of_asterisk_pattern_char(ast_pattern: str) -> int | None:
-    mo = find_asterisk_pattern_char(ast_pattern)
-    if not mo:
+    if not (mo := find_asterisk_pattern_char(ast_pattern)):
         return None
     return mo.start()
 
@@ -102,7 +101,7 @@ def unsplit_extension(xlist: list[str] | tuple[str, ...]) -> str:
         i += 1
         for c in x:
             if c == '*':
-                cur += "**%d" % i
+                cur += f"**{i}"
             else:
                 cur += c
         else:
@@ -113,14 +112,7 @@ def unsplit_extension(xlist: list[str] | tuple[str, ...]) -> str:
 
 
 def fkey_extension(funckey_prefix: str, funckey_args: Sequence[str]) -> str:
-    components = []
-
-    for x in funckey_args:
-        cleaned = clean_extension(x)
-
-        if cleaned:
-            components.append(cleaned)
-
+    components = [cleaned for x in funckey_args if (cleaned := clean_extension(x))]
     return clean_extension(funckey_prefix) + unsplit_extension(components)
 
 

@@ -12,16 +12,14 @@ def is_complete_caller_id(caller_id: str) -> bool:
 
 
 def extract_number(caller_id: str) -> str:
-    result = COMPLETE_CALLER_ID_PATTERN.search(caller_id)
-    if result:
-        return result.groups()[1]
+    if match := COMPLETE_CALLER_ID_PATTERN.search(caller_id):
+        return match.groups()[1]
     raise ValueError('Not a valid Caller ID: %s', caller_id)
 
 
 def extract_displayname(caller_id: str) -> str:
-    result = COMPLETE_CALLER_ID_PATTERN.search(caller_id)
-    if result:
-        return result.groups()[0]
+    if match := COMPLETE_CALLER_ID_PATTERN.search(caller_id):
+        return match.groups()[0]
     raise ValueError('Not a valid Caller ID: %s', caller_id)
 
 
