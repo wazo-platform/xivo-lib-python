@@ -27,7 +27,7 @@ def protocol_interface_from_channel(channel: str) -> ProtocolInterface:
 
     protocol, interface = match.groups()
     if protocol.lower() == 'pjsip':
-        protocol = protocol[-3:]
+        protocol = 'SIP' if protocol.isupper() else 'sip'
     return ProtocolInterface(protocol, interface)
 
 
