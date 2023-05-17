@@ -110,13 +110,11 @@ class LazyHeaderFormatter:
 
         if 'X-Auth-Token' in headers:
             value = headers['X-Auth-Token']
-            visible_pos = len(value) - self.VISIBLE_TOKEN_SIZE
-            new_value: list[str] = []
-            for i, c in enumerate(value):
-                if i >= visible_pos or c == '-':
-                    new_value.append(c)
-                else:
-                    new_value.append('X')
+            visible_position = len(value) - self.VISIBLE_TOKEN_SIZE
+            new_value = [
+                character if i >= visible_position or character == '-' else 'X'
+                for i, character in enumerate(value)
+            ]
             headers['X-Auth-Token'] = ''.join(new_value)
 
         return headers

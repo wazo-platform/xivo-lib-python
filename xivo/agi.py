@@ -173,7 +173,7 @@ class AGI:
 
     @staticmethod
     def _quote(string: str | int) -> str:
-        return '"%s"' % (
+        return '"{}"'.format(
             str(string).replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ')
         )
 
@@ -212,9 +212,9 @@ class AGI:
         response = ''
         result = {'result': ('', '')}
         line = stdin.readline().strip()
-        m = re_code.search(line)
-        if m:
-            raw_code, response = m.groups()
+
+        if match := re_code.search(line):
+            raw_code, response = match.groups()
             if self.DEBUG_PASSTHROUGH:
                 try:
                     code = int(raw_code)
@@ -243,7 +243,7 @@ class AGI:
                 usage.append(line)
                 line = stdin.readline().strip()
             usage.append(line)
-            raise AGIUsageError('%s\n' % '\n'.join(usage))
+            raise AGIUsageError('{}\n'.format('\n'.join(usage)))
         else:
             raise AGIUnknownError(code, 'Unhandled code or undefined response')
 
@@ -269,7 +269,7 @@ class AGI:
         try:
             return chr(int(code))
         except (TypeError, ValueError):
-            raise AGIError('Unable to convert result to char: %s' % code)
+            raise AGIError(f'Unable to convert result to char: {code}')
 
     def wait_for_digit(self, timeout: int = DEFAULT_TIMEOUT) -> str:
         """
@@ -359,7 +359,7 @@ class AGI:
         res = self.execute('SEND IMAGE', filename)['result'][0]
         if res != '0':
             raise AGIAppError(
-                'Channel failure on channel %s' % self.env.get('agi_channel', 'UNKNOWN')
+                f'Channel failure on channel {self.env.get("agi_channel", "UNKNOWN")}'
             )
 
     def say_digits(self, digits: Digits, escape_digits: Digits = '') -> str:
@@ -568,7 +568,7 @@ class AGI:
         result = self.execute('EXEC', application, self._quote(options))
         res = result['result'][0]
         if res == '-2':
-            raise AGIAppError('Unable to find application: %s' % application)
+            raise AGIAppError(f'Unable to find application: {application}')
         return res
 
     def set_callerid(self, number: str) -> None:

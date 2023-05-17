@@ -176,7 +176,7 @@ def get_frames_from_traceback(
                 dump.append(name + ' undefined')
 
         rows.append('\n'.join(dump))
-        frames.append('\n%s\n' % '\n'.join(rows))
+        frames.append('\n{}\n'.format('\n'.join(rows)))
     return frames
 
 
@@ -208,14 +208,13 @@ function calls leading up to the error, in the order they occurred.
         head
         + ''.join(frames)
         + ''.join(exception)
-        + '''
+        + f'''
 
 The above is a description of an error in a Python program.  Here is
 the original traceback:
 
-%s
+{''.join(traceback.format_exception(*value))}
 '''
-        % ''.join(traceback.format_exception(*value))
     )
 
 

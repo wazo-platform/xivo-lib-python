@@ -61,4 +61,4 @@ class TestCallerID(unittest.TestCase):
 
         result = caller_id.assemble_caller_id(fullname, number)
 
-        assert_that(result, equal_to('"%s"' % fullname))
+        assert_that(result, equal_to(f'"{fullname}"'))

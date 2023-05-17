@@ -368,7 +368,7 @@ class TestRemoteServiceFinderListRunningServices(BaseFinderTestCase):
             requests.get.assert_called_once_with(ANY, verify=ANY, params=expected)
             requests.reset_mock()
 
-    def test_that_param_contains_the_optionnal_tag(self, requests):
+    def test_that_param_contains_the_optional_tag(self, requests):
         requests.get.return_value = Mock(status_code=200, json=Mock(return_value=[]))
 
         finder = ServiceFinder(self.consul_config)

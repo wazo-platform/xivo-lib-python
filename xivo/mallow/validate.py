@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from typing import Any, TypedDict, Union
+from typing import Any, TypedDict
 from collections.abc import Sequence
 
 from marshmallow import ValidationError  # noqa: E402
@@ -21,7 +21,7 @@ from marshmallow.validate import Regexp as _Regexp
 class ErrorDict(TypedDict):
     message: str
     constraint_id: str
-    constraint: Union[str, dict[str, Any]]
+    constraint: str | dict[str, Any]
 
 
 def validate_string_dict(
