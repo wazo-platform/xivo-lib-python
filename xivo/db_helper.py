@@ -6,21 +6,21 @@ from typing import TYPE_CHECKING
 from collections.abc import Sequence
 
 if TYPE_CHECKING:
-    import psycopg2
+    from psycopg2.extensions import cursor
 
 
-def db_user_exists(cursor: psycopg2.cursor, user: str) -> bool:
+def db_user_exists(cursor: cursor, user: str) -> bool:
     cursor.execute("""SELECT 1 FROM pg_roles WHERE rolname=%s""", (user,))
     row = cursor.fetchone()
     return bool(row and row[0] == 1)
 
 
-def create_db_user(cursor: psycopg2.cursor, user: str, password: str) -> None:
+def create_db_user(cursor: cursor, user: str, password: str) -> None:
     sql = f'CREATE ROLE "{user}" WITH LOGIN PASSWORD %s'
     cursor.execute(sql, (password,))
 
 
-def db_exists(cursor: psycopg2.cursor, name: str) -> bool:
+def db_exists(cursor: cursor, name: str) -> bool:
     cursor.execute(
         """SELECT count(datname) FROM pg_catalog.pg_database WHERE datname=%s""",
         (name,),
@@ -29,12 +29,12 @@ def db_exists(cursor: psycopg2.cursor, name: str) -> bool:
     return bool(row and row[0] > 0)
 
 
-def create_db(cursor: psycopg2.cursor, db_name: str, owner: str) -> None:
+def create_db(cursor: cursor, db_name: str, owner: str) -> None:
     sql = f"""CREATE DATABASE "{db_name}" WITH OWNER "{owner}" ENCODING 'UTF8'"""
     cursor.execute(sql)
 
 
-def create_db_extensions(cursor: psycopg2.cursor, extensions: Sequence[str]) -> None:
+def create_db_extensions(cursor: cursor, extensions: Sequence[str]) -> None:
     sql = 'CREATE EXTENSION IF NOT EXISTS "{}"'
     for extension in extensions:
         cursor.execute(sql.format(extension))
