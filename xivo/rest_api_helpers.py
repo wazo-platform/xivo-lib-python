@@ -63,5 +63,5 @@ def load_all_api_specs(
             yield spec
         except OSError:
             logger.debug('API spec for module "%s" does not exist', module.module_name)
-        except ImportError:
-            logger.warning('Could not load module %s', module.module_name)
+        except ImportError as e:
+            logger.warning('Could not load module %s: %s', module.module_name, e)
