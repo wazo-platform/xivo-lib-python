@@ -7,7 +7,7 @@ import re
 from collections.abc import Generator
 from typing import NamedTuple
 
-channel_regexp = re.compile(r'(pjsip|sip|sccp|local|dahdi|iax2)/([#+*\w@/-]+)-', re.I)
+channel_regexp = re.compile(r'(pjsip|sip|sccp|local|dahdi|iax2)/([#+|*\w@/-]+)-', re.I)
 agent_channel_regex = re.compile(r'Local/id-(\d+)@agentcallback')
 device_regexp = re.compile(r'(sip|sccp|local|dahdi|iax2)/([\w@/-]+)', re.I)
 
