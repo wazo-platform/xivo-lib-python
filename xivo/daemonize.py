@@ -20,7 +20,7 @@ PROG_SLINK = 'exe'
 PROG_CMDLN = 'cmdline'
 
 
-log = logging.getLogger("xivo.daemonize")  # pylint: disable-msg=C0103
+log = logging.getLogger("xivo.daemonize")
 
 
 def c14n_prog_name(arg: str) -> str:
@@ -111,7 +111,7 @@ def remove_if_stale_pidfile(pidfile: str) -> None:
             )
         os.unlink(pidfile)
         return
-    except Exception:  # pylint: disable-msg=W0703
+    except Exception:
         log.exception("unexpected error")
 
 

@@ -179,7 +179,6 @@ class AGI:
 
     def _handle_sighup(self, _signum: int, _frame: FrameType | None) -> None:
         """Handle the SIGHUP signal"""
-        # pylint: disable-msg=W0613
         self._got_sighup = True
 
     def test_hangup(self) -> None:
@@ -256,7 +255,7 @@ class AGI:
         """
         Answer channel if not already in answer state.
         """
-        self.execute('ANSWER')['result'][0]  # pylint: disable-msg=W0104
+        self.execute('ANSWER')['result'][0]
 
     @staticmethod
     def code_to_char(code: str) -> str:
@@ -685,7 +684,7 @@ class AGI:
         Delete an entry in the Asterisk database for a given family and key.
         """
         result = self.execute('DATABASE DEL', self._quote(family), self._quote(key))
-        res, _ = result['result']  # pylint: disable-msg=W0612
+        res, _ = result['result']
         if res == '0':
             raise AGIDBError(
                 f'Unable to delete from database: family={family}, key={key}'
@@ -697,7 +696,7 @@ class AGI:
         database.
         """
         result = self.execute('DATABASE DELTREE', self._quote(family), self._quote(key))
-        res, _ = result['result']  # pylint: disable-msg=W0612
+        res, _ = result['result']
         if res == '0':
             raise AGIDBError(
                 f'Unable to delete tree from database: family={family}, key={key}'
