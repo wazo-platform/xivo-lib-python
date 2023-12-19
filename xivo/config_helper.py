@@ -20,7 +20,6 @@ class _YAMLExecLoader(yaml.SafeLoader):
 
 
 class _YAMLExecTag(yaml.YAMLObject):
-
     yaml_tag = '!exec'
     yaml_loader = _YAMLExecLoader
 

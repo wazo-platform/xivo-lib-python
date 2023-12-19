@@ -61,7 +61,6 @@ class Pubsub:
 
 
 class CallbackCollector:
-
     _TOPIC = 'callback-collector'
 
     def __init__(self) -> None:

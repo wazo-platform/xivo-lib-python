@@ -266,7 +266,6 @@ class Hook:
             self.file.write('A problem occurred in a python script\n')
 
         if self.logdir is not None:
-
             (fd, path) = tempfile.mkstemp(suffix='.txt', dir=self.logdir)
             try:
                 filen = os.fdopen(fd, 'w')

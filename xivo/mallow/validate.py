@@ -50,7 +50,6 @@ def validate_string_dict(
 
 
 class ContainsOnly(_ContainsOnly):
-
     constraint_id = 'enum'
 
     def _format_error(self, value: Sequence[Any]) -> ErrorDict:
@@ -64,7 +63,6 @@ class ContainsOnly(_ContainsOnly):
 
 
 class Email(_Email):
-
     constraint_id = 'email'
 
     def _format_error(self, value: str | None) -> ErrorDict:
@@ -78,7 +76,6 @@ class Email(_Email):
 
 
 class Equal(_Equal):
-
     constraint_id = 'equal'
 
     def _format_error(self, value: Any) -> ErrorDict:
@@ -92,7 +89,6 @@ class Equal(_Equal):
 
 
 class Length(_Length):
-
     constraint_id = 'length'
 
     def _format_error(self, value: str | None, message: str) -> ErrorDict:
@@ -110,7 +106,6 @@ class Length(_Length):
 
 
 class OneOf(_OneOf):
-
     constraint_id = 'enum'
 
     def _format_error(self, value: str | None) -> ErrorDict:
@@ -124,7 +119,6 @@ class OneOf(_OneOf):
 
 
 class NoneOf(_NoneOf):
-
     constraint_id = 'ban'
 
     def _format_error(self, value: str | None) -> ErrorDict:
@@ -138,7 +132,6 @@ class NoneOf(_NoneOf):
 
 
 class Predicate(_Predicate):
-
     constraint_id = 'predicate'
 
     def _format_error(self, value: str | None) -> ErrorDict:
@@ -152,7 +145,6 @@ class Predicate(_Predicate):
 
 
 class Range(_Range):
-
     constraint_id = 'range'
 
     def _format_error(self, value: str | None, *args: str | None) -> ErrorDict:
@@ -171,7 +163,6 @@ class Range(_Range):
 
 
 class Regexp(_Regexp):
-
     constraint_id = 'regex'
 
     def _format_error(self, value: str | None) -> ErrorDict:
@@ -185,7 +176,6 @@ class Regexp(_Regexp):
 
 
 class URL(_URL):
-
     constraint_id = 'url'
 
     def _format_error(self, value: str | None) -> ErrorDict:

@@ -192,7 +192,6 @@ class Constant(_Constant):
 
 
 class IP(_String):
-
     default_error_messages: DefaultErrorMessages = Field.default_error_messages | {
         'invalid': {
             'message': 'Not a valid IP address.',
