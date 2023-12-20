@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 import re
 import sys
-from typing import NoReturn
 from collections.abc import Sequence
+from typing import NoReturn
 
 log = logging.getLogger("xivo.xivo_helpers")
 

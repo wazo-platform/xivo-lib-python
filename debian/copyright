@@ -16,7 +16,7 @@ License (agitb.py):
 
 License (agi.py):
 
-	Copyright (C) 2007-2013 Avencall
+	Copyright 2007-2023 The Wazo Authors  (see the AUTHORS file)
 	Copyright (C) 2004 Karl Putland
 	Upstream Original Author: Karl Putland <kputland@users.sourceforge.net>
 
@@ -55,8 +55,8 @@ License (everything else):
 moresynchro.py contains portions of:
 	http://code.activestate.com/recipes/502283/
 which is:
-	Copyright (C) 2007, Heiko Wundram.                                                       
-	Released under the BSD-license. 
+	Copyright (C) 2007, Heiko Wundram.
+	Released under the BSD-license.
 however moresynchro.py taken as a whole is under either version 2.1 of the
 GNU Lesser General Public License, or (at your option) any later version.
 
@@ -179,8 +179,8 @@ license to reproduce, analyze, test, perform and/or display publicly,
 prepare derivative works, distribute, and otherwise use Python
 alone or in any derivative version, provided, however, that PSF's
 License Agreement and PSF's notice of copyright, i.e., "Copyright (c)
-2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Python Software Foundation; 
-All Rights Reserved" are retained in Python alone or in any derivative 
+2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Python Software Foundation;
+All Rights Reserved" are retained in Python alone or in any derivative
 version prepared by Licensee.
 
 3. In the event Licensee prepares a derivative work that is based on

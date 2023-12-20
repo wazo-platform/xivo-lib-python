@@ -1,10 +1,10 @@
 # Copyright 2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import pytest
+from collections.abc import Iterator
 
+import pytest
 from pytest import FixtureRequest
-from typing import Iterator
 from wazo_test_helpers.asset_launching_test_case import NoSuchService
 
 

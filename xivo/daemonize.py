@@ -12,8 +12,8 @@ import logging
 import os
 import re
 import sys
-from contextlib import contextmanager
 from collections.abc import Generator
+from contextlib import contextmanager
 
 SLASH_PROC = os.sep + 'proc'
 PROG_SLINK = 'exe'

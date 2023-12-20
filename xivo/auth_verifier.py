@@ -47,7 +47,6 @@ else:
 
 from xivo import rest_api_helpers
 
-
 logger = logging.getLogger(__name__)
 
 F = TypeVar('F', bound=Callable[..., Any])

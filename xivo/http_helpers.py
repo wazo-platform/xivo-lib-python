@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 import re
 import time
+from collections.abc import Iterable
 from json.decoder import JSONDecodeError
 from logging import Logger
 from typing import TYPE_CHECKING, Any
-from collections.abc import Iterable
 from urllib.parse import unquote
 
 from cheroot.ssl.builtin import BuiltinSSLAdapter
