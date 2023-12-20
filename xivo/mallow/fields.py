@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import ipaddress
-from typing import Any, Union, TypedDict
+from typing import Any, TypedDict, Union
 
 from marshmallow.fields import URL as _URL
 from marshmallow.fields import UUID as _UUID

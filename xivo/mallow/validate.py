@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from typing import Any, TypedDict
 from collections.abc import Sequence
+from typing import Any, TypedDict
 
 from marshmallow import ValidationError  # noqa: E402
 from marshmallow.validate import URL as _URL

@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from collections.abc import Collection
 import itertools
 import logging
 import threading
 import types
+from collections.abc import Collection
 from typing import TYPE_CHECKING, Callable, TypedDict, TypeVar
 
 import requests
