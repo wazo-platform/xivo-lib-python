@@ -357,7 +357,6 @@ class TestAuthVerifier(unittest.TestCase):
 
 
 class TestAccessCheck:
-
     scenarios = [
         {
             'scenario': 'user_access_ends_with_hashtag',

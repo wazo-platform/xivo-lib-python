@@ -29,7 +29,6 @@ Self = TypeVar('Self', bound='TokenRenewer')
 
 
 class TokenRenewer:
-
     DEFAULT_EXPIRATION = 6 * 3_600
     _RENEW_TIME_COEFFICIENT = 0.8
 

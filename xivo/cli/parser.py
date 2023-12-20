@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 
 class RawCommandLineParser:
-
     word_delimiter = ' '
 
     def __init__(self, command_registry: CommandRegistry) -> None:

@@ -24,7 +24,6 @@ BUS_URL = 'amqp://{username}:{password}@{host}:{port}//'
 
 
 class ServiceConsumer(ConsumerMixin):
-
     _exchange = kombu.Exchange('xivo', type='topic')
     _routing_key = 'service.#'
 
@@ -59,7 +58,6 @@ class ServiceConsumer(ConsumerMixin):
 
 
 class _BaseTest(AssetLaunchingTestCase):
-
     assets_root = ASSET_ROOT
     service = 'myservice'
 
@@ -116,7 +114,6 @@ class _BaseTest(AssetLaunchingTestCase):
 
 
 class TestServiceDiscoveryDisabled(_BaseTest):
-
     asset = 'service_discovery_disabled'
 
     def test_that_my_service_can_start_when_service_disc_is_disabled(self):
@@ -137,7 +134,6 @@ class TestServiceDiscoveryDisabled(_BaseTest):
 
 
 class TestServiceDiscovery(_BaseTest):
-
     asset = 'service_discovery'
 
     def setUp(self):
