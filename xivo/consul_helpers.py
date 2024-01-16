@@ -1,4 +1,4 @@
-# Copyright 2015-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from uuid import uuid4
 import requests
 from consul import Check, Consul, ConsulException
 from requests.exceptions import ConnectionError
-from xivo_bus.resources.common.abstract import AbstractEvent
+from wazo_bus.resources.common.abstract import EventProtocol
 
 try:
     import netifaces
@@ -19,8 +19,8 @@ except ImportError:
     pass
 
 try:
-    from xivo_bus.publisher import BusPublisher
-    from xivo_bus.resources.services.event import (
+    from wazo_bus.publisher import BusPublisher
+    from wazo_bus.resources.services.event import (
         ServiceDeregisteredEvent,
         ServiceRegisteredEvent,
     )
@@ -306,7 +306,7 @@ class NotifyingRegisterer(Registerer):
 
         return should_send_msg
 
-    def _notify(self, event: AbstractEvent) -> None:
+    def _notify(self, event: EventProtocol) -> None:
         self._publisher.publish(event)
 
 
