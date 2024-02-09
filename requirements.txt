@@ -6,7 +6,7 @@ flask==1.1.2
 itsdangerous==1.1.0  # from flask
 jinja2==2.11.3  # from flask
 markupsafe==1.1.1 # from flask
-werkzeug==1.0.1 # from flask
+werkzeug==2.2.3 # from flask
 marshmallow==3.10.0
 netifaces==0.10.9
 python-consul==1.1.0
