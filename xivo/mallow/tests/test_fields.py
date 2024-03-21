@@ -1,4 +1,4 @@
-# Copyright 2018-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -6,6 +6,7 @@ import unittest
 from hamcrest import assert_that, calling, empty, has_entry, has_property, is_not
 from marshmallow import Schema, ValidationError
 from wazo_test_helpers.hamcrest.raises import raises
+from werkzeug.datastructures import ImmutableMultiDict, MultiDict
 
 from .. import fields
 
@@ -25,6 +26,7 @@ class AllFieldsSchema(Schema):
     constant = fields.Constant('constant')
     ip = fields.IP()
     timedelta = fields.TimeDelta()
+    multi_dict_aware = fields.MultiDictAwareList(fields.String())
 
 
 class TestFields(unittest.TestCase):
@@ -61,3 +63,24 @@ class TestFields(unittest.TestCase):
             calling(AllFieldsSchema().load).with_args({'ip': invalid_ipv6}),
             raises(ValidationError, has_property('messages', is_not(empty()))),
         )
+
+    def test_given_werkzeug_multidict_with_one_item(self):
+        data = AllFieldsSchema().load(
+            ImmutableMultiDict(
+                MultiDict([('multi_dict_aware', 'foobar')]),
+            ),
+        )
+        assert_that(data, has_entry('multi_dict_aware', ['foobar']))
+
+    def test_given_werkzeug_multidict_with_multiple_item(self):
+        data = AllFieldsSchema().load(
+            ImmutableMultiDict(
+                MultiDict(
+                    [
+                        ('multi_dict_aware', 'foobar'),
+                        ('multi_dict_aware', 'foobaz'),
+                    ]
+                ),
+            ),
+        )
+        assert_that(data, has_entry('multi_dict_aware', ['foobar', 'foobaz']))
