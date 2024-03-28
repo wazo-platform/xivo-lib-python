@@ -1,4 +1,4 @@
-# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import re
 from collections.abc import Generator
 from typing import NamedTuple
 
-channel_regexp = re.compile(r'(pjsip|sip|sccp|local|dahdi|iax2)/([*\w@/-]+)-', re.I)
+channel_regexp = re.compile(r'(pjsip|sip|sccp|local|dahdi|iax2)/([#+*\w@/-]+)-', re.I)
 agent_channel_regex = re.compile(r'Local/id-(\d+)@agentcallback')
 device_regexp = re.compile(r'(sip|sccp|local|dahdi|iax2)/([\w@/-]+)', re.I)
 
