@@ -93,7 +93,7 @@ class _BaseTest(AssetLaunchingTestCase):
 
     def _run_docker_compose_cmd(self, cmd: list[str]) -> None:
         self._run_cmd(
-            f'docker-compose {" ".join(self._docker_compose_options())} {" ".join(cmd)}'
+            f'docker compose {" ".join(self._docker_compose_options())} {" ".join(cmd)}'
         )
 
     # NOTE(fblackburn): override to include containers started with run command
@@ -101,7 +101,7 @@ class _BaseTest(AssetLaunchingTestCase):
     def _container_id(cls, service_name: str) -> str:
         specific_options = ['-a', '--status', 'running']
         result = _run_cmd(
-            ['docker-compose']
+            ['docker', 'compose']
             + cls._docker_compose_options()
             + ['ps', '-q']
             + specific_options
@@ -215,7 +215,7 @@ class TestServiceDiscovery(_BaseTest):
                 ip
             )  # to remove the message from the queue
             self.stop_listening()
-            self._run_cmd('docker-compose restart rabbitmq')
+            self._run_cmd('docker compose restart rabbitmq')
             self.start_listening()
         self.assert_deregistered_msg_received()
 
