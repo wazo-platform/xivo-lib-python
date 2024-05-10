@@ -1,4 +1,4 @@
-# Copyright 2018-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
@@ -96,7 +96,7 @@ class Tenant:
     def check_against_token(self: Self, token: Token) -> Self:
         if self.uuid == token.tenant_uuid:
             return self
-        if not token.visible_tenants(tenant_uuid=self.uuid):
+        if not token.has_tenant_access(self.uuid):
             raise InvalidTenant(self.uuid)
         return self
 
@@ -147,6 +147,15 @@ class Token:
     @property
     def user_uuid(self) -> str | None:
         return self._token_dict['metadata'].get('uuid')
+
+    def has_tenant_access(self, tenant_uuid: str | None) -> bool:
+        if not tenant_uuid:
+            return False
+
+        try:
+            return self._auth.token.is_valid(self.uuid, tenant=tenant_uuid)
+        except requests.RequestException as e:
+            raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
 
     def visible_tenants(self, tenant_uuid: str | None = None) -> list[Tenant]:
         if not tenant_uuid:
