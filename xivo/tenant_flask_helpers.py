@@ -23,7 +23,6 @@ def get_auth_client() -> AuthClient:
     return auth_client
 
 
-# TODO: When werkzeug is updated it the ignore can be removed.
 auth_client: AuthClient = LocalProxy(get_auth_client)
 
 
