@@ -111,30 +111,19 @@ class Tokens:
     def __init__(self, auth: Client):
         self._auth = auth
 
-    def get(self, token_id: str) -> Token:
-        try:
-            return Token(self._auth.token.get(token_id), self._auth)
-        except requests.HTTPError:
-            raise InvalidToken(token_id)
-        except requests.RequestException as e:
-            raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
-
     def from_headers(self) -> Token:
         token_id = extract_token_id_from_header()
         if not token_id:
             raise InvalidToken()
-        return self.get(token_id)
+        return Token(token_id, self._auth)
 
 
 class Token:
-    def __init__(self, token_dict: dict[str, Any], auth: Client) -> None:
+    def __init__(self, uuid: str, auth: Client) -> None:
+        self.uuid = uuid
         self._auth = auth
-        self._token_dict = token_dict
+        self.__token_dict: dict[str, Any] | None = None
         self._cache_tenants: dict[str, list[Tenant]] = {}
-
-    @property
-    def uuid(self) -> str:
-        return self._token_dict['token']
 
     @property
     def infos(self) -> dict[str, Any]:
@@ -147,6 +136,18 @@ class Token:
     @property
     def user_uuid(self) -> str | None:
         return self._token_dict['metadata'].get('uuid')
+
+    @property
+    def _token_dict(self) -> dict[str, Any]:
+        if self.__token_dict is None:
+            try:
+                self.__token_dict = self._auth.token.get(self.uuid)
+            except requests.HTTPError:
+                raise InvalidToken(self.uuid)
+            except requests.RequestException as e:
+                raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
+
+        return self.__token_dict
 
     def has_tenant_access(self, tenant_uuid: str | None) -> bool:
         if not tenant_uuid:

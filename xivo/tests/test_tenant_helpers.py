@@ -4,7 +4,6 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-import requests
 from hamcrest import (
     assert_that,
     calling,
@@ -205,33 +204,6 @@ class TestTenantCheckAgainstToken(TestCase):
         )
 
 
-class TestTokensGet(TestCase):
-    def test_given_no_auth_server_when_get_then_raise(self):
-        auth = Mock()
-        auth.token.get.side_effect = requests.RequestException
-        tokens = Tokens(auth)
-
-        assert_that(
-            calling(tokens.get).with_args('token'), raises(AuthServerUnreachable)
-        )
-
-    def test_given_unknown_token_when_get_then_raise(self):
-        auth = Mock()
-        auth.token.get.side_effect = requests.HTTPError
-        tokens = Tokens(auth)
-
-        assert_that(calling(tokens.get).with_args('token'), raises(InvalidToken))
-
-    def test_given_correct_token_id_when_get_then_return_token(self):
-        auth = Mock()
-        auth.token.get.return_value = {'token': 'token'}
-        tokens = Tokens(auth)
-
-        result = tokens.get('token')
-
-        assert_that(result.uuid, equal_to('token'))
-
-
 class TestTokensFromHeaders(TestCase):
     @patch('xivo.tenant_helpers.extract_token_id_from_header')
     def test_given_no_header_when_get_then_raise(self, extract):
@@ -240,17 +212,6 @@ class TestTokensFromHeaders(TestCase):
         tokens = Tokens(auth)
 
         assert_that(calling(tokens.from_headers), raises(InvalidToken))
-
-    @patch('xivo.tenant_helpers.extract_token_id_from_header')
-    def test_given_header_token_when_get_then_return_token(self, extract):
-        extract.return_value = token_id = 'token'
-        auth = Mock()
-        auth.token.get.return_value = {'token': token_id}
-        tokens = Tokens(auth)
-
-        result = tokens.get(token_id)
-
-        assert_that(result.uuid, equal_to(token_id))
 
 
 class TestUsersGet(TestCase):
@@ -266,7 +227,10 @@ class TestUsersGet(TestCase):
 class TestTokenVisibleTenants(TestCase):
     def test_without_tenant_uuid(self):
         auth = Mock()
-        token = Token({'metadata': {}}, auth)
+        token_uuid = 'my-token-uuid'
+        token_dict = {'token': token_uuid, 'metadata': {}}
+        auth.token.get.return_value = token_dict
+        token = Token(token_uuid, auth)
 
         result = token.visible_tenants()
 
@@ -274,8 +238,11 @@ class TestTokenVisibleTenants(TestCase):
 
     def test_auth_unauthorized(self):
         auth = Mock()
+        token_uuid = 'my-token-uuid'
+        token_dict = {'token': token_uuid, 'metadata': {'tenant_uuid': 'tenant'}}
+        auth.token.get.return_value = token_dict
+        token = Token(token_uuid, auth)
         auth.tenants.list.side_effect = HTTPError(response=Mock(status_code=401))
-        token = Token({'metadata': {'tenant_uuid': 'tenant'}}, auth)
 
         result = token.visible_tenants()
 
@@ -283,15 +250,20 @@ class TestTokenVisibleTenants(TestCase):
 
     def test_auth_exception(self):
         auth = Mock()
+        token = Token('token', auth)
         auth.tenants.list.side_effect = RequestException()
-        token = Token({'metadata': {'tenant_uuid': 'tenant'}}, auth)
 
         assert_that(
-            calling(token.visible_tenants).with_args(), raises(AuthServerUnreachable)
+            calling(token.visible_tenants).with_args('tenant'),
+            raises(AuthServerUnreachable),
         )
 
     def test_visible_tenants(self):
         auth = Mock()
+        token_uuid = 'my-token-uuid'
+        token_dict = {'token': token_uuid, 'metadata': {'tenant_uuid': 'supertenant'}}
+        auth.token.get.return_value = token_dict
+        token = Token(token_uuid, auth)
         auth.tenants.list.return_value = {
             'items': [
                 {'name': 'supertenant-name', 'uuid': 'supertenant'},
@@ -299,7 +271,6 @@ class TestTokenVisibleTenants(TestCase):
                 {'name': 'subtenant2-name', 'uuid': 'subtenant2'},
             ]
         }
-        token = Token({'metadata': {'tenant_uuid': 'supertenant'}}, auth)
 
         result = token.visible_tenants()
 
@@ -314,6 +285,7 @@ class TestTokenVisibleTenants(TestCase):
 
     def test_visible_tenants_with_specified_tenant_uuid(self):
         auth = Mock()
+        token = Token('token', auth)
         auth.tenants.list.return_value = {
             'items': [
                 {'name': 'supertenant-name', 'uuid': 'supertenant'},
@@ -321,7 +293,6 @@ class TestTokenVisibleTenants(TestCase):
                 {'name': 'subtenant2-name', 'uuid': 'subtenant2'},
             ]
         }
-        token = Token({'metadata': {'tenant_uuid': 'supertenant'}}, auth)
 
         result = token.visible_tenants("supertenant")
 
@@ -336,22 +307,26 @@ class TestTokenVisibleTenants(TestCase):
 
     def test_auth_unauthorized_with_specified_tenant(self):
         auth = Mock()
+        token_uuid = 'my-token-uuid'
+        token_dict = {'token': token_uuid, 'metadata': {'tenant_uuid': 'tenant'}}
+        auth.token.get.return_value = token_dict
+        token = Token(token_uuid, auth)
         auth.tenants.list.side_effect = HTTPError(response=Mock(status_code=401))
-        token = Token({'metadata': {'tenant_uuid': 'tenant'}}, auth)
 
         result = token.visible_tenants("tenant")
         assert_that(result, contains_exactly(has_property('uuid', 'tenant')))
 
         assert_that(
-            calling(token.visible_tenants).with_args("other"), raises(InvalidTenant)
+            calling(token.visible_tenants).with_args("other"),
+            raises(InvalidTenant),
         )
 
 
 class TestTokenHasTenantAccess(TestCase):
     def test_auth_exception(self):
         auth = Mock()
+        token = Token('token', auth)
         auth.token.is_valid.side_effect = RequestException()
-        token = Token({'token': 'uuid'}, auth)
 
         assert_that(
             calling(token.has_tenant_access).with_args('tenant_uuid'),
@@ -360,8 +335,8 @@ class TestTokenHasTenantAccess(TestCase):
 
     def test_has_not_access(self):
         auth = Mock()
+        token = Token('token', auth)
         auth.token.is_valid.return_value = False
-        token = Token({'token': 'uuid'}, auth)
 
         has_access = token.has_tenant_access('tenant_uuid')
 
@@ -369,8 +344,8 @@ class TestTokenHasTenantAccess(TestCase):
 
     def test_has_access(self):
         auth = Mock()
+        token = Token('token', auth)
         auth.token.is_valid.return_value = True
-        token = Token({'token': 'uuid'}, auth)
 
         has_access = token.has_tenant_access('tenant_uuid')
 
@@ -378,8 +353,63 @@ class TestTokenHasTenantAccess(TestCase):
 
     def test_tenant_is_none(self):
         auth = Mock()
-        token = Token({}, auth)
+        token = Token('token', auth)
 
         has_access = token.has_tenant_access(None)
 
         assert_that(not has_access)
+
+
+class TestTokenProperties(TestCase):
+    def test_token_dict_cached(self):
+        auth = Mock()
+        token_uuid = 'my-token-uuid'
+        token_dict = {'token': token_uuid, 'metadata': {}}
+        auth.token.get.return_value = token_dict
+        token = Token(token_uuid, auth)
+
+        result = token._token_dict
+
+        auth.token.get.assert_called_once_with(token_uuid)
+        assert_that(result, equal_to(token_dict))
+
+        auth.token.get.reset_mock()
+        result = token._token_dict
+
+        auth.token.get.assert_not_called()
+        assert_that(token.infos, equal_to(token_dict))
+
+    def test_infos(self):
+        auth = Mock()
+        token_uuid = 'my-token-uuid'
+        token_dict = {'token': token_uuid, 'metadata': {}}
+        auth.token.get.return_value = token_dict
+        token = Token(token_uuid, auth)
+
+        result = token.infos
+
+        assert_that(result, equal_to(token_dict))
+
+    def test_tenant_uuid(self):
+        auth = Mock()
+        token_uuid = 'my-token-uuid'
+        tenant_uuid = 'my-tenant-uuid'
+        token_dict = {'token': token_uuid, 'metadata': {'tenant_uuid': tenant_uuid}}
+        auth.token.get.return_value = token_dict
+        token = Token(token_uuid, auth)
+
+        result = token.tenant_uuid
+
+        assert_that(result, equal_to(tenant_uuid))
+
+    def test_user_uuid(self):
+        auth = Mock()
+        token_uuid = 'my-token-uuid'
+        user_uuid = 'my-user-uuid'
+        token_dict = {'token': token_uuid, 'metadata': {'uuid': user_uuid}}
+        auth.token.get.return_value = token_dict
+        token = Token(token_uuid, auth)
+
+        result = token.user_uuid
+
+        assert_that(result, equal_to(user_uuid))
