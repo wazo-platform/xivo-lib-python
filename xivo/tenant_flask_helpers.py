@@ -1,4 +1,4 @@
-# Copyright 2018-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from flask import current_app, g
 from wazo_auth_client import Client as AuthClient
 from werkzeug.local import LocalProxy
 
-from xivo.tenant_helpers import Token, Tokens, User, Users
+from xivo.tenant_helpers import Token, Tokens
 
 from . import tenant_helpers
 
@@ -36,17 +36,6 @@ def get_token() -> Token:
 
 
 token: Token = LocalProxy(get_token)  # type: ignore[assignment]
-
-
-def get_current_user() -> User:
-    current_user = g.get('current_user')
-    if not current_user:
-        auth_client.set_token(token.uuid)
-        current_user = g.current_user = Users(auth_client).get(token.user_uuid)
-    return current_user
-
-
-current_user: User = LocalProxy(get_current_user)  # type: ignore[assignment]
 
 Self = TypeVar('Self', bound='Tenant')
 
