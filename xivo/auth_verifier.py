@@ -194,6 +194,7 @@ class AuthVerifier:
         return wrapper
 
     def _add_request_properties(self, token_id: str) -> None:
+        # NOTE(fblackburn): Token is only fetched if/when properties are used
         request.token_id = token_id
         request._get_token_content = self._get_token_content
         request._get_user_uuid = self._get_user_uuid
