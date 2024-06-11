@@ -167,15 +167,6 @@ class TestTenantCheckAgainstToken(TestCase):
             calling(tenant.check_against_token).with_args(token), raises(InvalidTenant)
         )
 
-    def test_when_token_has_same_tenant_uuid(self):
-        tenant_uuid = 'tenant'
-        tenant = Tenant(tenant_uuid)
-        token = Mock(tenant_uuid=tenant_uuid)
-
-        result = tenant.check_against_token(token)
-
-        assert_that(result.uuid, equal_to(tenant_uuid))
-
     def test_when_has_tenant_access(self):
         tenant = Tenant('subtenant')
         token = Mock(tenant_uuid='supertenant')
