@@ -30,7 +30,11 @@ def function_with_acl(pattern):
 
 
 class StubVerifier(AuthVerifier):
-    def token(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._extract_token_id = self._fake_extract_token_id
+
+    def _fake_extract_token_id(self):
         return s.token
 
     def handle_unreachable(self, error):
@@ -295,22 +299,6 @@ class TestAuthVerifier(unittest.TestCase):
             calling(decorated),
             raises(NotImplementedError),
         )
-
-    def test_token_empty(self):
-        self.request_mock.headers = {}
-        auth_verifier = AuthVerifier()
-
-        token = auth_verifier.token()
-
-        assert_that(token, equal_to(''))
-
-    def test_token_not_empty(self):
-        self.request_mock.headers = {'X-Auth-Token': s.token}
-        auth_verifier = AuthVerifier()
-
-        token = auth_verifier.token()
-
-        assert_that(token, equal_to(s.token))
 
     def test_handle_unreachable(self):
         auth_verifier = AuthVerifier()
