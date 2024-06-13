@@ -151,6 +151,9 @@ class Token:
         if not tenant_uuid:
             return False
 
+        if self.__token_dict and self.tenant_uuid == tenant_uuid:
+            return True
+
         try:
             return self._auth.token.is_valid(self.uuid, tenant=tenant_uuid)
         except requests.RequestException as e:

@@ -350,6 +350,27 @@ class TestTokenIsTenantAllowed(TestCase):
 
         assert_that(not has_access)
 
+    def test_tenant_is_same_as_token_when_already_fetched(self):
+        auth = Mock()
+        token = Token('token', auth)
+        auth.token.get.return_value = {'metadata': {'tenant_uuid': 'tenant_uuid'}}
+        token.tenant_uuid  # fetch token
+
+        has_access = token.is_tenant_allowed('tenant_uuid')
+
+        auth.token.is_valid.assert_not_called()
+        assert_that(has_access)
+
+    def test_tenant_is_different_as_token_when_already_fetched(self):
+        auth = Mock()
+        token = Token('token', auth)
+        auth.token.get.return_value = {'metadata': {'tenant_uuid': 'tenant_uuid'}}
+        token.tenant_uuid  # fetch token
+
+        token.is_tenant_allowed('other_uuid')
+
+        auth.token.is_valid.assert_called_once_with('token', tenant='other_uuid')
+
 
 class TestTokenProperties(TestCase):
     def test_token_dict_cached(self):
