@@ -73,7 +73,7 @@ class TestTenantAutodetect(TestCase):
         tenant = 'tenant'
         other = 'other'
         token = Mock(tenant_uuid=other)
-        token.has_tenant_access.return_value = True
+        token.is_tenant_allowed.return_value = True
         tokens = Mock()
         tokens.from_headers.return_value = token
         request.headers = {'X-Auth-Token': 'token', 'Wazo-Tenant': tenant}
@@ -89,7 +89,7 @@ class TestTenantAutodetect(TestCase):
         tenant = 'tenant'
         other = 'other'
         token = Mock(tenant_uuid=other)
-        token.has_tenant_access.return_value = False
+        token.is_tenant_allowed.return_value = False
         tokens = Mock()
         tokens.from_headers.return_value = token
         request.headers = {'X-Auth-Token': 'token', 'Wazo-Tenant': tenant}
@@ -161,25 +161,25 @@ class TestTenantCheckAgainstToken(TestCase):
         tenant_uuid = 'tenant'
         tenant = Tenant(tenant_uuid)
         token = Mock(tenant_uuid=None)
-        token.has_tenant_access.return_value = False
+        token.is_tenant_allowed.return_value = False
 
         assert_that(
             calling(tenant.check_against_token).with_args(token), raises(InvalidTenant)
         )
 
-    def test_when_has_tenant_access(self):
+    def test_when_is_tenant_allowed(self):
         tenant = Tenant('subtenant')
         token = Mock(tenant_uuid='supertenant')
-        token.has_tenant_access.return_value = True
+        token.is_tenant_allowed.return_value = True
 
         result = tenant.check_against_token(token)
 
         assert_that(result.uuid, equal_to('subtenant'))
 
-    def test_when_has_tenant_access_return_error(self):
+    def test_when_is_tenant_allowed_return_error(self):
         tenant = Tenant('othertenant')
         token = Mock(tenant_uuid='supertenant')
-        token.has_tenant_access.side_effect = InvalidTenant()
+        token.is_tenant_allowed.side_effect = InvalidTenant()
 
         assert_that(
             calling(tenant.check_against_token).with_args(token), raises(InvalidTenant)
@@ -188,7 +188,7 @@ class TestTenantCheckAgainstToken(TestCase):
     def test_when_has_no_tenant_access(self):
         tenant = Tenant('othertenant')
         token = Mock(tenant_uuid='supertenant')
-        token.has_tenant_access.return_value = False
+        token.is_tenant_allowed.return_value = False
 
         assert_that(
             calling(tenant.check_against_token).with_args(token), raises(InvalidTenant)
@@ -313,14 +313,14 @@ class TestTokenVisibleTenants(TestCase):
         )
 
 
-class TestTokenHasTenantAccess(TestCase):
+class TestTokenIsTenantAllowed(TestCase):
     def test_auth_exception(self):
         auth = Mock()
         token = Token('token', auth)
         auth.token.is_valid.side_effect = RequestException()
 
         assert_that(
-            calling(token.has_tenant_access).with_args('tenant_uuid'),
+            calling(token.is_tenant_allowed).with_args('tenant_uuid'),
             raises(AuthServerUnreachable),
         )
 
@@ -329,7 +329,7 @@ class TestTokenHasTenantAccess(TestCase):
         token = Token('token', auth)
         auth.token.is_valid.return_value = False
 
-        has_access = token.has_tenant_access('tenant_uuid')
+        has_access = token.is_tenant_allowed('tenant_uuid')
 
         assert_that(not has_access)
 
@@ -338,7 +338,7 @@ class TestTokenHasTenantAccess(TestCase):
         token = Token('token', auth)
         auth.token.is_valid.return_value = True
 
-        has_access = token.has_tenant_access('tenant_uuid')
+        has_access = token.is_tenant_allowed('tenant_uuid')
 
         assert_that(has_access)
 
@@ -346,7 +346,7 @@ class TestTokenHasTenantAccess(TestCase):
         auth = Mock()
         token = Token('token', auth)
 
-        has_access = token.has_tenant_access(None)
+        has_access = token.is_tenant_allowed(None)
 
         assert_that(not has_access)
 

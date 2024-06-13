@@ -94,7 +94,7 @@ class Tenant:
         self.name = name
 
     def check_against_token(self: Self, token: Token) -> Self:
-        if not token.has_tenant_access(self.uuid):
+        if not token.is_tenant_allowed(self.uuid):
             raise InvalidTenant(self.uuid)
         return self
 
@@ -147,7 +147,7 @@ class Token:
 
         return self.__token_dict
 
-    def has_tenant_access(self, tenant_uuid: str | None) -> bool:
+    def is_tenant_allowed(self, tenant_uuid: str | None) -> bool:
         if not tenant_uuid:
             return False
 
