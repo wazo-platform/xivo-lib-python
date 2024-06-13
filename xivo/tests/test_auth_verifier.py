@@ -1,4 +1,4 @@
-# Copyright 2015-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -279,6 +279,22 @@ class TestAuthVerifier(unittest.TestCase):
         result = decorated()
 
         assert_that(result, equal_to(s.unauthorized))
+
+    def test_verify_token_raise_not_implemented_when_invalid_without_raising(self):
+        mock_client = Mock()
+        mock_client.token.check.return_value = False
+        auth_verifier = StubVerifier()
+        auth_verifier.set_client(mock_client)
+
+        @auth_verifier.verify_token
+        @required_acl('foo')
+        def decorated():
+            return s.result
+
+        assert_that(
+            calling(decorated),
+            raises(NotImplementedError),
+        )
 
     def test_token_empty(self):
         self.request_mock.headers = {}

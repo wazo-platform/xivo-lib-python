@@ -1,4 +1,4 @@
-# Copyright 2015-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
@@ -186,18 +186,15 @@ class AuthVerifier:
             except requests.RequestException as e:
                 return self.handle_unreachable(e)
 
-            if token_is_valid:
-                return func(*args, **kwargs)
+            if not token_is_valid:
+                raise NotImplementedError('Invalid token without exception')
 
-            # NOTE(pc-m): This "should" be unreachable. is_valid can only return True or raise
-            # I've left this logger to avoid debugging for hours if I'm mistaken and a resource
-            # returns doing nothing silently
-            logger.warning("This is a bug")
-            return None
+            return func(*args, **kwargs)
 
         return wrapper
 
     def _add_request_properties(self, token_id: str) -> None:
+        # NOTE(fblackburn): Token is only fetched if/when properties are used
         request.token_id = token_id
         request._get_token_content = self._get_token_content
         request._get_user_uuid = self._get_user_uuid
