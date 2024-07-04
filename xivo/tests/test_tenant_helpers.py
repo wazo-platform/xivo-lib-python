@@ -11,7 +11,6 @@ from hamcrest import (
     empty,
     equal_to,
     has_property,
-    instance_of,
 )
 from requests import HTTPError, RequestException
 from wazo_test_helpers.hamcrest.raises import raises
@@ -24,8 +23,6 @@ from ..tenant_helpers import (
     Tenant,
     Token,
     UnauthorizedTenant,
-    User,
-    Users,
 )
 
 
@@ -223,16 +220,6 @@ class TestTokenFromHeaders(TestCase):
         auth = Mock()
 
         assert_that(calling(Token.from_headers).with_args(auth), raises(InvalidToken))
-
-
-class TestUsersGet(TestCase):
-    def test_when_get_then_return_user(self):
-        auth = Mock()
-        users = Users(auth)
-
-        result = users.get('user-uuid')
-
-        assert_that(result, instance_of(User))
 
 
 class TestTokenVisibleTenants(TestCase):

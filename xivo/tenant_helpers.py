@@ -186,14 +186,6 @@ class Token:
         return tenants
 
 
-class Users:
-    def __init__(self, auth: AuthClient) -> None:
-        self._auth = auth
-
-    def get(self, user_uuid: str | None) -> User:
-        return User(self._auth, user_uuid)
-
-
 class User:
     def __init__(self, auth: AuthClient, uuid: str | None, **kwargs: Any) -> None:
         self._auth = auth
