@@ -40,7 +40,6 @@ Self = TypeVar('Self', bound='Tenant')
 
 
 class Tenant(tenant_helpers.Tenant):
-    # It's true we shouldn't be changing the signature here...
     @classmethod
     def autodetect(cls: type[Self], include_query: bool = False) -> Self:
         tenant = None
