@@ -16,7 +16,7 @@ except ImportError:
     pass
 
 if TYPE_CHECKING:
-    from .auth_verifier import Client
+    from .auth_verifier import Client as AuthClient
 
 
 class InvalidTenant(Exception):
@@ -55,7 +55,7 @@ Self = TypeVar('Self', bound='Tenant')
 
 class Tenant:
     @classmethod
-    def autodetect(cls: type[Self], auth: Client) -> Self:
+    def autodetect(cls: type[Self], auth: AuthClient) -> Self:
         token: Token = Token.from_headers(auth)
         try:
             tenant = cls.from_headers()
@@ -110,13 +110,13 @@ SelfToken = TypeVar('SelfToken', bound='Token')
 
 class Token:
     @classmethod
-    def from_headers(cls: type[SelfToken], auth: Client) -> SelfToken:
+    def from_headers(cls: type[SelfToken], auth: AuthClient) -> SelfToken:
         token_id = extract_token_id_from_header()
         if not token_id:
             raise InvalidToken()
         return cls(token_id, auth)
 
-    def __init__(self, uuid: str, auth: Client) -> None:
+    def __init__(self, uuid: str, auth: AuthClient) -> None:
         self.uuid = uuid
         self._auth = auth
         self.__token_dict: dict[str, Any] | None = None
@@ -187,7 +187,7 @@ class Token:
 
 
 class Users:
-    def __init__(self, auth: Client) -> None:
+    def __init__(self, auth: AuthClient) -> None:
         self._auth = auth
 
     def get(self, user_uuid: str | None) -> User:
@@ -195,7 +195,7 @@ class Users:
 
 
 class User:
-    def __init__(self, auth: Client, uuid: str | None, **kwargs: Any) -> None:
+    def __init__(self, auth: AuthClient, uuid: str | None, **kwargs: Any) -> None:
         self._auth = auth
         self._uuid = uuid
         self._tenants = None
