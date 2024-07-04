@@ -55,8 +55,8 @@ Self = TypeVar('Self', bound='Tenant')
 
 class Tenant:
     @classmethod
-    def autodetect(cls: type[Self], tokens: Tokens) -> Self:
-        token = tokens.from_headers()
+    def autodetect(cls: type[Self], auth: Client) -> Self:
+        token: Token = Token.from_headers(auth)
         try:
             tenant = cls.from_headers()
         except InvalidTenant:
@@ -105,18 +105,17 @@ class Tenant:
         return result
 
 
-class Tokens:
-    def __init__(self, auth: Client):
-        self._auth = auth
-
-    def from_headers(self) -> Token:
-        token_id = extract_token_id_from_header()
-        if not token_id:
-            raise InvalidToken()
-        return Token(token_id, self._auth)
+SelfToken = TypeVar('SelfToken', bound='Token')
 
 
 class Token:
+    @classmethod
+    def from_headers(cls: type[SelfToken], auth: Client) -> SelfToken:
+        token_id = extract_token_id_from_header()
+        if not token_id:
+            raise InvalidToken()
+        return cls(token_id, auth)
+
     def __init__(self, uuid: str, auth: Client) -> None:
         self.uuid = uuid
         self._auth = auth
