@@ -11,7 +11,6 @@ from hamcrest import (
     empty,
     equal_to,
     has_property,
-    instance_of,
 )
 from requests import HTTPError, RequestException
 from wazo_test_helpers.hamcrest.raises import raises
@@ -23,79 +22,88 @@ from ..tenant_helpers import (
     InvalidToken,
     Tenant,
     Token,
-    Tokens,
     UnauthorizedTenant,
-    User,
-    Users,
 )
 
 
 class TestTenantAutodetect(TestCase):
+    @patch('xivo.tenant_helpers.Token')
     @patch('xivo.tenant_helpers.request', spec={})
-    def test_given_no_token_when_autodetect_then_raise(self, request):
-        tokens = Mock()
-        tokens.from_headers.side_effect = InvalidToken
+    def test_given_no_token_when_autodetect_then_raise(self, request, Token):
+        auth = Mock()
+        Token.from_headers = Mock()
+        Token.from_headers.side_effect = InvalidToken()
+
         request.headers = {}
 
-        assert_that(calling(Tenant.autodetect).with_args(tokens), raises(InvalidToken))
+        assert_that(calling(Tenant.autodetect).with_args(auth), raises(InvalidToken))
 
+    @patch('xivo.tenant_helpers.Token')
     @patch('xivo.tenant_helpers.request', spec={})
     def test_given_token_no_tenant_when_autodetect_then_return_tenant_from_token(
-        self, request
-    ):
-        tenant = 'tenant'
-        tokens = Mock()
-        tokens.from_headers.return_value = Mock(tenant_uuid=tenant)
-        request.headers = {'X-Auth-Token': 'token'}
-
-        result = Tenant.autodetect(tokens)
-
-        assert_that(result.uuid, equal_to(tenant))
-
-    @patch('xivo.tenant_helpers.request', spec={})
-    def test_given_token_and_tenant_when_autodetect_then_return_given_tenant(
-        self, request
+        self, request, Token
     ):
         tenant = 'tenant'
         token = Mock(tenant_uuid=tenant)
-        tokens = Mock()
-        tokens.from_headers.return_value = token
-        request.headers = {'X-Auth-Token': 'token', 'Wazo-Tenant': tenant}
+        auth = Mock()
+        Token.from_headers = Mock()
+        Token.from_headers.return_value = token
+        request.headers = {'X-Auth-Token': 'token'}
 
-        result = Tenant.autodetect(tokens)
+        result = Tenant.autodetect(auth)
 
         assert_that(result.uuid, equal_to(tenant))
 
+    @patch('xivo.tenant_helpers.Token')
+    @patch('xivo.tenant_helpers.request', spec={})
+    def test_given_token_and_tenant_when_autodetect_then_return_given_tenant(
+        self, request, Token
+    ):
+        tenant = 'tenant'
+        token = Mock(tenant_uuid=tenant)
+        auth = Mock()
+        Token.from_headers = Mock()
+        Token.from_headers.return_value = token
+        request.headers = {'X-Auth-Token': 'token', 'Wazo-Tenant': tenant}
+
+        result = Tenant.autodetect(auth)
+
+        assert_that(result.uuid, equal_to(tenant))
+
+    @patch('xivo.tenant_helpers.Token')
     @patch('xivo.tenant_helpers.request', spec={})
     def test_given_token_unknown_tenant_and_user_in_tenant_when_autodetect_then_return_tenant(
-        self, request
+        self, request, Token
     ):
         tenant = 'tenant'
         other = 'other'
         token = Mock(tenant_uuid=other)
         token.is_tenant_allowed.return_value = True
-        tokens = Mock()
-        tokens.from_headers.return_value = token
+        auth = Mock()
+        Token.from_headers = Mock()
+        Token.from_headers.return_value = token
         request.headers = {'X-Auth-Token': 'token', 'Wazo-Tenant': tenant}
 
-        result = Tenant.autodetect(tokens)
+        result = Tenant.autodetect(auth)
 
         assert_that(result.uuid, equal_to(tenant))
 
+    @patch('xivo.tenant_helpers.Token')
     @patch('xivo.tenant_helpers.request', spec={})
     def test_given_token_unknown_tenant_and_user_not_in_tenant_when_autodetect_then_raise(
-        self, request
+        self, request, Token
     ):
         tenant = 'tenant'
         other = 'other'
         token = Mock(tenant_uuid=other)
         token.is_tenant_allowed.return_value = False
-        tokens = Mock()
-        tokens.from_headers.return_value = token
+        auth = Mock()
+        Token.from_headers = Mock()
+        Token.from_headers.return_value = token
         request.headers = {'X-Auth-Token': 'token', 'Wazo-Tenant': tenant}
 
         assert_that(
-            calling(Tenant.autodetect).with_args(tokens), raises(UnauthorizedTenant)
+            calling(Tenant.autodetect).with_args(auth), raises(UnauthorizedTenant)
         )
 
     def test_given_visible_tenants_called_twice_with_same_tenant(self):
@@ -195,24 +203,23 @@ class TestTenantCheckAgainstToken(TestCase):
         )
 
 
-class TestTokensFromHeaders(TestCase):
+class TestTokenFromHeaders(TestCase):
+    @patch('xivo.tenant_helpers.extract_token_id_from_header')
+    def test_given_valid_header(self, extract):
+        token_id = 'my-valid-uuid'
+        extract.return_value = token_id
+        auth = Mock()
+
+        token = Token.from_headers(auth)
+
+        assert_that(token.uuid, equal_to(token_id))
+
     @patch('xivo.tenant_helpers.extract_token_id_from_header')
     def test_given_no_header_when_get_then_raise(self, extract):
         extract.return_value = ''
         auth = Mock()
-        tokens = Tokens(auth)
 
-        assert_that(calling(tokens.from_headers), raises(InvalidToken))
-
-
-class TestUsersGet(TestCase):
-    def test_when_get_then_return_user(self):
-        auth = Mock()
-        users = Users(auth)
-
-        result = users.get('user-uuid')
-
-        assert_that(result, instance_of(User))
+        assert_that(calling(Token.from_headers).with_args(auth), raises(InvalidToken))
 
 
 class TestTokenVisibleTenants(TestCase):

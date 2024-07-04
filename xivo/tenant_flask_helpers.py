@@ -9,7 +9,7 @@ from flask import current_app, g
 from wazo_auth_client import Client as AuthClient
 from werkzeug.local import LocalProxy
 
-from xivo.tenant_helpers import Token, Tokens
+from xivo.tenant_helpers import Token
 
 from . import tenant_helpers
 
@@ -29,7 +29,7 @@ auth_client: AuthClient = LocalProxy(get_auth_client)
 def get_token() -> Token:
     token = g.get('token')
     if not token:
-        token = g.token = Tokens(auth_client).from_headers()
+        token = g.token = Token.from_headers(auth_client)
         auth_client.set_token(token.uuid)
     return token
 
@@ -40,9 +40,8 @@ Self = TypeVar('Self', bound='Tenant')
 
 
 class Tenant(tenant_helpers.Tenant):
-    # It's true we shouldn't be changing the signature here...
     @classmethod
-    def autodetect(cls: type[Self], include_query: bool = False) -> Self:  # type: ignore[override]
+    def autodetect(cls: type[Self], include_query: bool = False) -> Self:
         tenant = None
         if include_query:
             try:
