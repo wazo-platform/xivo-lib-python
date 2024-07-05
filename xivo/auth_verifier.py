@@ -9,6 +9,24 @@ from typing import TYPE_CHECKING, Any, Callable, NamedTuple, NoReturn, TypeVar
 
 import requests
 
+from .http.exceptions import (
+    AuthServerUnreachable,
+    InvalidTokenAPIException,
+    MissingPermissionsTokenAPIException,
+    Unauthorized,
+)
+from .http.headers import (
+    extract_token_id_from_header,
+    extract_token_id_from_query_or_header,
+    extract_token_id_from_query_string,
+)
+
+# Compatibility with old import
+__all__ = [
+    'extract_token_id_from_query_string',
+    'extract_token_id_from_query_or_header',
+]
+
 # Postpone the raise to the first use of the Client constructor.
 # wazo-auth uses its own version of the client to avoid using its own
 # rest-api to call itself.
@@ -45,7 +63,6 @@ else:
     except ImportError:
         pass
 
-from xivo import rest_api_helpers
 
 logger = logging.getLogger(__name__)
 
@@ -79,62 +96,6 @@ def required_tenant(tenant_uuid: str) -> Callable[[F], F]:
         return func
 
     return wrapper
-
-
-class Unauthorized(rest_api_helpers.APIException):
-    def __init__(self, token: str, required_access: str | None = None) -> None:
-        details = {'invalid_token': token}
-        if required_access:
-            details['required_access'] = required_access
-
-        super().__init__(
-            status_code=401,
-            message='Unauthorized',
-            error_id='unauthorized',
-            details=details,
-        )
-
-
-class InvalidTokenAPIException(rest_api_helpers.APIException):
-    def __init__(self, token: str, required_access: str | None = None) -> None:
-        details = {'invalid_token': token, 'reason': 'not_found_or_expired'}
-        if required_access:
-            details['required_access'] = required_access
-        super().__init__(
-            status_code=401,
-            message='Unauthorized',
-            error_id='unauthorized',
-            details=details,
-        )
-
-
-class MissingPermissionsTokenAPIException(rest_api_helpers.APIException):
-    def __init__(self, token: str, required_access: str | None = None) -> None:
-        details = {'invalid_token': token, 'reason': 'missing_permission'}
-        if required_access:
-            details['required_access'] = required_access
-        super().__init__(
-            status_code=401,
-            message='Unauthorized',
-            error_id='unauthorized',
-            details=details,
-        )
-
-
-class AuthServerUnreachable(rest_api_helpers.APIException):
-    def __init__(
-        self, host: str | None, port: int | None, error: requests.RequestException
-    ) -> None:
-        super().__init__(
-            status_code=503,
-            message='Authentication server unreachable',
-            error_id='authentication-server-unreachable',
-            details={
-                'auth_server_host': host,
-                'auth_server_port': port,
-                'original_error': str(error),
-            },
-        )
 
 
 class AuthVerifier:
@@ -277,18 +238,6 @@ class AuthVerifier:
         if not self._auth_client:
             self._auth_client = Client(**self._auth_config)
         return self._auth_client
-
-
-def extract_token_id_from_header() -> str:
-    return request.headers.get('X-Auth-Token', '')
-
-
-def extract_token_id_from_query_string() -> str:
-    return request.args.get('token', '')
-
-
-def extract_token_id_from_query_or_header() -> str:
-    return extract_token_id_from_query_string() or extract_token_id_from_header()
 
 
 class AccessCheck:
