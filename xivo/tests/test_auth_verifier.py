@@ -267,10 +267,9 @@ class TestAuthVerifier(unittest.TestCase):
 
         assert_that(result, equal_to(s.unauthorized))
 
-    def test_verify_tenant_calls_handle_unauthorized_when_404(self):
+    def test_verify_tenant_calls_handle_unauthorized_when_httperror(self):
         mock_client = Mock()
-        response = Mock(status_code=404)
-        exception = requests.RequestException(response=response)
+        exception = requests.HTTPError
         mock_client.token.get.side_effect = exception
         auth_verifier = StubVerifier()
         auth_verifier.set_client(mock_client)

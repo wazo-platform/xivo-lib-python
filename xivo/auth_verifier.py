@@ -187,9 +187,9 @@ class AuthVerifier:
 
             try:
                 token = request.token_content
+            except requests.HTTPError:
+                return self.handle_unauthorized(request.token_id)
             except requests.RequestException as e:
-                if e.response is not None and e.response.status_code == 404:
-                    return self.handle_unauthorized(request.token_id)
                 return self.handle_unreachable(e)
 
             tenant_uuid = token.get('metadata', {}).get('tenant_uuid')
