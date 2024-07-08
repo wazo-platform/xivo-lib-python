@@ -9,7 +9,7 @@ from flask import current_app, g
 from wazo_auth_client import Client as AuthClient
 from werkzeug.local import LocalProxy
 
-from xivo.tenant_helpers import Token
+from xivo.tenant_helpers import Token, User
 
 from . import tenant_helpers
 
@@ -39,6 +39,16 @@ def get_token() -> Token:
 
 
 token: Token = LocalProxy(get_token)  # type: ignore[assignment]
+
+
+def get_user() -> User:
+    user = g.get('user')
+    if not user:
+        user = g.user = User(token.user_uuid)
+    return user
+
+
+user: User = LocalProxy(get_user)  # type: ignore[assignment]
 
 Self = TypeVar('Self', bound='Tenant')
 

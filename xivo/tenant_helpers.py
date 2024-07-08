@@ -183,7 +183,5 @@ class Token:
 
 
 class User:
-    def __init__(self, auth: AuthClient, uuid: str | None, **kwargs: Any) -> None:
-        self._auth = auth
-        self._uuid = uuid
-        self._tenants = None
+    def __init__(self, uuid: str | None) -> None:
+        self.uuid = uuid
