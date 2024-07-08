@@ -63,6 +63,9 @@ else:
     except ImportError:
         pass
 
+from flask import g
+
+from .tenant_flask_helpers import token
 
 logger = logging.getLogger(__name__)
 
@@ -130,20 +133,22 @@ class AuthVerifier:
             # backward compatibility: when func.acl is not defined, it should
             # probably just raise an AttributeError
             acl_check = getattr(func, 'acl', self._fallback_acl_check)
+            self._set_extract_token_function(
+                acl_check.extract_token_id,
+                self._extract_token_id,
+            )
             token_id = (acl_check.extract_token_id or self._extract_token_id)()
             self._add_request_properties(token_id)
             required_acl = self._required_acl(acl_check, args, kwargs)
             try:
-                token_is_valid = self.client().token.check(
-                    request.token_id, required_acl
-                )
+                token_is_valid = self.client().token.check(token.uuid, required_acl)
             except exceptions.InvalidTokenException:
                 return self._handle_invalid_token_exception(
-                    request.token_id, required_access=required_acl
+                    token.uuid, required_access=required_acl
                 )
             except exceptions.MissingPermissionsTokenException:
                 return self._handle_missing_permissions_token_exception(
-                    request.token_id, required_access=required_acl
+                    token.uuid, required_access=required_acl
                 )
             except requests.RequestException as e:
                 return self.handle_unreachable(e)
@@ -154,6 +159,13 @@ class AuthVerifier:
             return func(*args, **kwargs)
 
         return wrapper
+
+    def _set_extract_token_function(
+        self,
+        specific_extractor: Callable[[], str] | None,
+        default_extractor: Callable[[], str] | None = None,
+    ) -> None:
+        g.token_extractor = specific_extractor or default_extractor
 
     def _add_request_properties(self, token_id: str) -> None:
         # NOTE(fblackburn): Token is only fetched if/when properties are used
@@ -182,21 +194,21 @@ class AuthVerifier:
             required_tenant = getattr(func, 'tenant_uuid', None)
             if not required_tenant:
                 return func(*args, **kwargs)
+            self._set_extract_token_function(self._extract_token_id)
             token_id = self._extract_token_id()
             self._add_request_properties(token_id)
 
             try:
-                token = request.token_content
-            except requests.HTTPError:
-                return self.handle_unauthorized(request.token_id)
-            except requests.RequestException as e:
-                return self.handle_unreachable(e)
+                tenant_uuid = token.tenant_uuid
+            except InvalidTokenAPIException as e:
+                return self.handle_unauthorized(e.details['invalid_token'])
+            except AuthServerUnreachable as e:
+                return self.handle_unreachable(e.details['original_error'])
 
-            tenant_uuid = token.get('metadata', {}).get('tenant_uuid')
             if required_tenant == tenant_uuid:
                 return func(*args, **kwargs)
 
-            return self.handle_unauthorized(request.token_id)
+            return self.handle_unauthorized(token.uuid)
 
         return wrapper
 

@@ -29,7 +29,11 @@ auth_client: AuthClient = LocalProxy(get_auth_client)
 def get_token() -> Token:
     token = g.get('token')
     if not token:
-        token = g.token = Token.from_headers(auth_client)
+        if g.get('token_extractor'):
+            _token = Token(g.token_extractor(), auth_client)
+        else:
+            _token = Token.from_headers(auth_client)
+        token = g.token = _token
         auth_client.set_token(token.uuid)
     return token
 
