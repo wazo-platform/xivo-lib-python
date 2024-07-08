@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import re
 from functools import wraps
-from typing import TYPE_CHECKING, Any, Callable, NamedTuple, NoReturn, TypeVar
+from typing import Any, Callable, NamedTuple, NoReturn, TypeVar
 
 import requests
 
@@ -40,28 +40,6 @@ except ImportError as e:
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             raise self._exc
 
-
-if TYPE_CHECKING:
-    # Workaround to attempt to type `request` until we have Protocols to type properly.
-    from flask import Request as _Request
-    from flask import request as _request
-
-    class Request(_Request):
-        token_id: str
-        token_content: dict[str, Any]
-        _token_content: dict[str, Any]
-        user_uuid: str
-        _get_token_content: Callable[[], dict[str, Any]]
-        _get_user_uuid: Callable[[], str | None]
-
-    request: Request = _request  # type: ignore[assignment]
-
-else:
-    # Necessary to avoid a dependency in provd
-    try:
-        from flask import request
-    except ImportError:
-        pass
 
 from flask import g
 
@@ -137,8 +115,6 @@ class AuthVerifier:
                 acl_check.extract_token_id,
                 self._extract_token_id,
             )
-            token_id = (acl_check.extract_token_id or self._extract_token_id)()
-            self._add_request_properties(token_id)
             required_acl = self._required_acl(acl_check, args, kwargs)
             try:
                 token_is_valid = self.client().token.check(token.uuid, required_acl)
@@ -167,27 +143,6 @@ class AuthVerifier:
     ) -> None:
         g.token_extractor = specific_extractor or default_extractor
 
-    def _add_request_properties(self, token_id: str) -> None:
-        # NOTE(fblackburn): Token is only fetched if/when properties are used
-        request.token_id = token_id
-        request._get_token_content = self._get_token_content
-        request._get_user_uuid = self._get_user_uuid
-        request.__class__.token_content = property(  # type: ignore[assignment]
-            lambda this: this._get_token_content()
-        )
-        request.__class__.user_uuid = property(  # type: ignore[assignment]
-            lambda this: this._get_user_uuid()
-        )
-
-    def _get_token_content(self) -> dict[str, Any]:
-        if not hasattr(request, '_token_content'):
-            token_content = self.client().token.get(request.token_id)
-            request._token_content = token_content
-        return request._token_content
-
-    def _get_user_uuid(self) -> str | None:
-        return request.token_content.get('metadata', {}).get('uuid')
-
     def verify_tenant(self, func: Callable[..., R]) -> Callable[..., R]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -195,8 +150,6 @@ class AuthVerifier:
             if not required_tenant:
                 return func(*args, **kwargs)
             self._set_extract_token_function(self._extract_token_id)
-            token_id = self._extract_token_id()
-            self._add_request_properties(token_id)
 
             try:
                 tenant_uuid = token.tenant_uuid
