@@ -83,13 +83,10 @@ class AuthVerifier:
     def __init__(
         self,
         auth_config: dict[str, Any] | None = None,
-        extract_token_id: Callable[[], str] | None = None,
     ) -> None:
-        if extract_token_id is None:
-            extract_token_id = extract_token_id_from_header
         self._auth_client: Client | None = None
         self._auth_config = auth_config
-        self._extract_token_id = extract_token_id
+        self._extract_token_id = extract_token_id_from_header
         self._fallback_acl_check = _ACLCheck('', None)
 
     def set_config(self, auth_config: dict[str, Any]) -> None:
