@@ -15,15 +15,9 @@ from hamcrest import (
 from requests import HTTPError, RequestException
 from wazo_test_helpers.hamcrest.raises import raises
 
-from xivo.auth_verifier import AuthServerUnreachable
+from xivo.auth_verifier import AuthServerUnreachable, InvalidTokenAPIException
 
-from ..tenant_helpers import (
-    InvalidTenant,
-    InvalidToken,
-    Tenant,
-    Token,
-    UnauthorizedTenant,
-)
+from ..tenant_helpers import InvalidTenant, Tenant, Token, UnauthorizedTenant
 
 
 class TestTenantAutodetect(TestCase):
@@ -32,11 +26,13 @@ class TestTenantAutodetect(TestCase):
     def test_given_no_token_when_autodetect_then_raise(self, request, Token):
         auth = Mock()
         Token.from_headers = Mock()
-        Token.from_headers.side_effect = InvalidToken()
+        Token.from_headers.side_effect = InvalidTokenAPIException('')
 
         request.headers = {}
 
-        assert_that(calling(Tenant.autodetect).with_args(auth), raises(InvalidToken))
+        assert_that(
+            calling(Tenant.autodetect).with_args(auth), raises(InvalidTokenAPIException)
+        )
 
     @patch('xivo.tenant_helpers.Token')
     @patch('xivo.tenant_helpers.request', spec={})
@@ -219,7 +215,10 @@ class TestTokenFromHeaders(TestCase):
         extract.return_value = ''
         auth = Mock()
 
-        assert_that(calling(Token.from_headers).with_args(auth), raises(InvalidToken))
+        assert_that(
+            calling(Token.from_headers).with_args(auth),
+            raises(InvalidTokenAPIException),
+        )
 
 
 class TestTokenVisibleTenants(TestCase):
