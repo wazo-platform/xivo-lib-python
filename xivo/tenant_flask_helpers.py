@@ -19,7 +19,11 @@ logger = logging.getLogger(__name__)
 def get_auth_client() -> AuthClient:
     auth_client = g.get('auth_client')
     if not auth_client:
-        auth_client = g.auth_client = AuthClient(**current_app.config['auth'])
+        auth_config = dict(current_app.config['auth'])
+        auth_config.pop('username', None)
+        auth_config.pop('password', None)
+        auth_config.pop('key_file', None)
+        auth_client = g.auth_client = AuthClient(**auth_config)
     return auth_client
 
 

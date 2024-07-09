@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, PropertyMock, patch
 from unittest.mock import sentinel as s
 
 import pytest
 import requests
-from hamcrest import assert_that, calling, equal_to, is_, raises
+from hamcrest import assert_that, equal_to, is_
 from wazo_auth_client.exceptions import (
     InvalidTokenException,
     MissingPermissionsTokenException,
@@ -17,381 +17,188 @@ from ..auth_verifier import (
     AccessCheck,
     AuthServerUnreachable,
     AuthVerifier,
+    AuthVerifierHelpers,
     Unauthorized,
-    _ACLCheck,
     no_auth,
     required_acl,
     required_tenant,
 )
-
-
-def function_with_acl(pattern):
-    return Mock(acl=_ACLCheck(pattern, None))
-
-
-class StubVerifier(AuthVerifier):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._extract_token_id = self._fake_extract_token_id
-
-    def _fake_extract_token_id(self):
-        return s.token
-
-    def handle_unreachable(self, error):
-        return s.unreachable
-
-    def handle_unauthorized(self, error, required_access=None):
-        return s.unauthorized
-
-    def _handle_invalid_token_exception(self, error, required_access=None):
-        return s.invalid_token
-
-    def _handle_missing_permissions_token_exception(self, error, required_access=None):
-        return s.missing_permission
+from ..http.exceptions import (
+    InvalidTokenAPIException,
+    MissingPermissionsTokenAPIException,
+)
 
 
 class TestAuthVerifier(unittest.TestCase):
-    def test_set_client(self):
-        auth_verifier = AuthVerifier()
-        auth_verifier.set_client(s.client)
-        assert_that(auth_verifier.client(), equal_to(s.client))
-
-    @patch('xivo.auth_verifier.Client')
-    def test_set_config(self, auth_client_init):
-        auth_verifier = AuthVerifier()
-        config = {
-            'host': s.host,
-            'username': s.username,
-            'password': s.password,
-            'key_file': s.key_file,
-        }
-        expected_config = {'host': s.host}
-
-        auth_verifier.set_config(config)
-        auth_verifier.client()
-
-        auth_client_init.assert_called_once_with(**expected_config)
-
-    def test_verify_token_not_configured(self):
-        auth_verifier = AuthVerifier()
-
-        @auth_verifier.verify_token
-        @required_acl('foo')
-        def decorated():
-            pass
-
-        assert_that(decorated, raises(RuntimeError))
-
-    def test_verify_tenant_not_configured(self):
-        auth_verifier = AuthVerifier()
-
-        @auth_verifier.verify_tenant
-        @required_tenant('foo')
-        def decorated():
-            pass
-
-        assert_that(decorated, raises(RuntimeError))
-
-    def test_verify_token_calls_auth_client(self):
+    def test_verify_tenant_raise_unauthorized(self):
         mock_client = Mock()
-        auth_verifier = StubVerifier()
-        auth_verifier.set_client(mock_client)
-        g_mock = Mock()
+        auth_verifier = AuthVerifier()
+        mock_token = Mock(uuid=s.token)
+        type(mock_token).tenant_uuid = PropertyMock(
+            side_effect=InvalidTokenAPIException(s.token)
+        )
+        mock_g = Mock()
         g_data = {
             'auth_client': mock_client,
-            'token': None,
-            'token_extractor': lambda: 'token_uuid',
+            'token': mock_token,
+            'token_extractor': None,
         }
-        g_mock.get.side_effect = lambda x: g_data[x]
+        mock_g.get.side_effect = lambda x: g_data[x]
 
-        @auth_verifier.verify_token
+        @auth_verifier.verify_tenant
         @required_acl('foo')
         def decorated():
+            return s.result
+
+        with patch('xivo.auth_verifier.g', mock_g):
+            with patch('xivo.tenant_flask_helpers.g', mock_g):
+                with pytest.raises(Unauthorized) as exc_info:
+                    decorated()
+        assert exc_info.value.details['invalid_token'] == s.token
+
+    def test_verify_tenant_raise_unreacheable(self):
+        mock_client = Mock(host=s.host, port=s.port)
+        auth_verifier = AuthVerifier()
+        mock_token = Mock()
+        type(mock_token).uuid = PropertyMock(
+            side_effect=AuthServerUnreachable(s.host, s.port, s.error)
+        )
+        mock_g = Mock()
+        g_data = {
+            'auth_client': mock_client,
+            'token': mock_token,
+            'token_extractor': None,
+        }
+        mock_g.get.side_effect = lambda x: g_data[x]
+
+        @auth_verifier.verify_tenant
+        @required_acl('foo')
+        def decorated():
+            return s.result
+
+        with patch('xivo.auth_verifier.g', mock_g):
+            with patch('xivo.tenant_flask_helpers.g', mock_g):
+                with pytest.raises(AuthServerUnreachable) as exc_info:
+                    decorated()
+
+        assert exc_info.value.details['auth_server_host'] == s.host
+        assert exc_info.value.details['auth_server_port'] == s.port
+        assert exc_info.value.details['original_error'] == str(s.error)
+
+
+class TestAuthVerifierHelpers(unittest.TestCase):
+    def test_validate_token_calls_auth_client(self):
+        mock_client = Mock()
+        helpers = AuthVerifierHelpers()
+        token_uuid = s.token
+
+        @required_acl('foo')
+        def endpoint():
             pass
 
-        with patch('xivo.auth_verifier.g', g_mock):
-            with patch('xivo.tenant_flask_helpers.g', g_mock):
-                decorated()
+        helpers.validate_token(endpoint, mock_client, token_uuid, {})
 
         mock_client.token.check.assert_called_once_with(s.token, 'foo')
 
-    @patch('xivo.tenant_helpers.extract_token_id_from_header')
-    def test_verify_tenant_calls_auth_client(self, extract_header):
-        extract_header.return_value = s.token
+    def test_validate_token_calls_function_when_no_auth(self):
         mock_client = Mock()
-        mock_client.token.get.return_value = {'metadata': {'tenant_uuid': '123'}}
-        g_mock = Mock()
-        g_data = {
-            'auth_client': mock_client,
-            'token': None,
-            'token_extractor': lambda: 'token_uuid',
-        }
-        g_mock.get.side_effect = lambda x: g_data[x]
-        auth_verifier = StubVerifier()
-        auth_verifier.set_client(mock_client)
+        mock_client.token.check.side_effect = MissingPermissionsTokenException
+        token_uuid = s.token
+        helpers = AuthVerifierHelpers()
 
-        @auth_verifier.verify_tenant
-        @required_tenant('foo')
-        def decorated():
+        @no_auth
+        def endpoint():
             pass
 
-        with patch('xivo.auth_verifier.g', g_mock):
-            with patch('xivo.tenant_flask_helpers.g', g_mock):
-                decorated()
+        helpers.validate_token(endpoint, mock_client, token_uuid, {})
 
-        mock_client.token.get.assert_called_once_with(s.token)
-
-    def test_verify_token_calls_function_when_no_auth(self):
+    def test_validate_token_with_no_acl_permission_raises_exception(self):
         mock_client = Mock()
         mock_client.token.check.side_effect = MissingPermissionsTokenException
-        auth_verifier = StubVerifier()
-        auth_verifier.set_client(mock_client)
+        token_uuid = s.token
+        helpers = AuthVerifierHelpers()
 
-        @auth_verifier.verify_token
-        @no_auth
-        def decorated():
-            return s.result
-
-        result = decorated()
-
-        assert_that(result, equal_to(s.result))
-
-    def test_verify_token_with_no_acl_permission_raises_exception(self):
-        mock_client = Mock()
-        mock_client.token.check.side_effect = MissingPermissionsTokenException
-        auth_verifier = StubVerifier()
-        auth_verifier.set_client(mock_client)
-        g_mock = Mock()
-        g_data = {
-            'auth_client': mock_client,
-            'token': None,
-            'token_extractor': lambda: 'token_uuid',
-        }
-        g_mock.get.side_effect = lambda x: g_data[x]
-
-        @auth_verifier.verify_token
         @required_acl('confd')
-        def decorated():
-            return s.result
+        def endpoint():
+            pass
 
-        with patch('xivo.auth_verifier.g', g_mock):
-            with patch('xivo.tenant_flask_helpers.g', g_mock):
-                result = decorated()
+        with pytest.raises(MissingPermissionsTokenAPIException):
+            helpers.validate_token(endpoint, mock_client, token_uuid, {})
 
-        assert_that(result, equal_to(s.missing_permission))
-
-    def test_verify_token_calls_function_when_valid(self):
+    def test_validate_token_calls_function_when_valid(self):
         mock_client = Mock()
         mock_client.token.check.return_value = True
-        auth_verifier = StubVerifier()
-        auth_verifier.set_client(mock_client)
-        g_mock = Mock()
-        g_data = {
-            'auth_client': mock_client,
-            'token': None,
-            'token_extractor': lambda: 'token_uuid',
-        }
-        g_mock.get.side_effect = lambda x: g_data[x]
+        token_uuid = s.token
+        helpers = AuthVerifierHelpers()
 
-        @auth_verifier.verify_token
         @required_acl('foo')
-        def decorated():
-            return s.result
+        def endpoint():
+            pass
 
-        with patch('xivo.auth_verifier.g', g_mock):
-            with patch('xivo.tenant_flask_helpers.g', g_mock):
-                result = decorated()
+        helpers.validate_token(endpoint, mock_client, token_uuid, {})
 
-        assert_that(result, equal_to(s.result))
+    def test_validate_tenant_calls_function_when_valid(self):
+        tenant_uuid = s.tenant
+        token_uuid = s.token
+        helpers = AuthVerifierHelpers()
 
-    @patch('xivo.tenant_helpers.extract_token_id_from_header')
-    def test_verify_tenant_calls_function_when_valid(self, extract_header):
-        extract_header.return_value = s.token
-        mock_client = Mock()
-        mock_client.token.get.return_value = {'metadata': {'tenant_uuid': 'foo'}}
-        g_mock = Mock()
-        g_data = {
-            'auth_client': mock_client,
-            'token': None,
-            'token_extractor': lambda: 'token_uuid',
-        }
-        g_mock.get.side_effect = lambda x: g_data[x]
-        auth_verifier = StubVerifier()
-        auth_verifier.set_client(mock_client)
+        @required_tenant(tenant_uuid)
+        def endpoint():
+            pass
 
-        @auth_verifier.verify_tenant
-        @required_tenant('foo')
-        def decorated():
-            return s.result
+        helpers.validate_tenant(endpoint, tenant_uuid, token_uuid)
 
-        with patch('xivo.auth_verifier.g', g_mock):
-            with patch('xivo.tenant_flask_helpers.g', g_mock):
-                result = decorated()
-
-        assert_that(result, equal_to(s.result))
-
-    def test_verify_token_calls_handle_unreachable(self):
+    def test_validate_token_raise_unreachable(self):
         mock_client = Mock()
         mock_client.token.check.side_effect = requests.RequestException
-        auth_verifier = StubVerifier()
-        auth_verifier.set_client(mock_client)
-        g_mock = Mock()
-        g_data = {
-            'auth_client': mock_client,
-            'token': None,
-            'token_extractor': lambda: 'token_uuid',
-        }
-        g_mock.get.side_effect = lambda x: g_data[x]
+        token_uuid = s.token
+        helpers = AuthVerifierHelpers()
 
-        @auth_verifier.verify_token
         @required_acl('foo')
-        def decorated():
-            return s.result
+        def endpoint():
+            pass
 
-        with patch('xivo.auth_verifier.g', g_mock):
-            with patch('xivo.tenant_flask_helpers.g', g_mock):
-                result = decorated()
+        with pytest.raises(AuthServerUnreachable):
+            helpers.validate_token(endpoint, mock_client, token_uuid, {})
 
-        assert_that(result, equal_to(s.unreachable))
-
-    def test_verify_tenant_calls_handle_unreachable(self):
-        mock_client = Mock()
-        mock_client.token.get.side_effect = requests.RequestException
-        g_mock = Mock()
-        g_data = {
-            'auth_client': mock_client,
-            'token': None,
-            'token_extractor': lambda: 'token_uuid',
-        }
-        g_mock.get.side_effect = lambda x: g_data[x]
-        auth_verifier = StubVerifier()
-        auth_verifier.set_client(mock_client)
-
-        @auth_verifier.verify_tenant
-        @required_tenant('foo')
-        def decorated():
-            return s.result
-
-        with patch('xivo.auth_verifier.g', g_mock):
-            with patch('xivo.tenant_flask_helpers.g', g_mock):
-                result = decorated()
-
-        assert_that(result, equal_to(s.unreachable))
-
-    def test_verify_invalid_token_calls_handle_invalid_token(self):
+    def test_validate_invalid_token_raise_invalid_token(self):
         mock_client = Mock()
         mock_client.token.check.side_effect = InvalidTokenException
-        auth_verifier = StubVerifier()
-        auth_verifier.set_client(mock_client)
-        g_mock = Mock()
-        g_data = {
-            'auth_client': mock_client,
-            'token': None,
-            'token_extractor': lambda: 'token_uuid',
-        }
-        g_mock.get.side_effect = lambda x: g_data[x]
+        token_uuid = s.token
+        helpers = AuthVerifierHelpers()
 
-        @auth_verifier.verify_token
         @required_acl('foo')
-        def decorated():
-            return s.result
+        def endpoint():
+            pass
 
-        with patch('xivo.auth_verifier.g', g_mock):
-            with patch('xivo.tenant_flask_helpers.g', g_mock):
-                result = decorated()
+        with pytest.raises(InvalidTokenAPIException):
+            helpers.validate_token(endpoint, mock_client, token_uuid, {})
 
-        assert_that(result, equal_to(s.invalid_token))
+    def test_validate_tenant_raise_unauthorized(self):
+        tenant_uuid = s.tenant
+        token_uuid = s.token
+        different_tenant_uuid = s.different_tenant
+        helpers = AuthVerifierHelpers()
 
-    def test_verify_tenant_calls_handle_unauthorized(self):
-        mock_client = Mock()
-        mock_client.token.get.return_value = {'metadata': {'tenant_uuid': 'bar'}}
-        auth_verifier = StubVerifier()
-        auth_verifier.set_client(mock_client)
-        g_mock = Mock()
-        g_data = {
-            'auth_client': mock_client,
-            'token': None,
-            'token_extractor': lambda: 'token_uuid',
-        }
-        g_mock.get.side_effect = lambda x: g_data[x]
+        @required_tenant(different_tenant_uuid)
+        def endpoint():
+            pass
 
-        @auth_verifier.verify_tenant
-        @required_tenant('foo')
-        def decorated():
-            return s.result
+        with pytest.raises(Unauthorized):
+            helpers.validate_tenant(endpoint, tenant_uuid, token_uuid)
 
-        with patch('xivo.auth_verifier.g', g_mock):
-            with patch('xivo.tenant_flask_helpers.g', g_mock):
-                result = decorated()
-
-        assert_that(result, equal_to(s.unauthorized))
-
-    def test_verify_tenant_calls_handle_unauthorized_when_httperror(self):
-        mock_client = Mock()
-        exception = requests.HTTPError
-        mock_client.token.get.side_effect = exception
-        auth_verifier = StubVerifier()
-        auth_verifier.set_client(mock_client)
-        g_mock = Mock()
-        g_data = {
-            'auth_client': mock_client,
-            'token': None,
-            'token_extractor': lambda: 'token_uuid',
-        }
-        g_mock.get.side_effect = lambda x: g_data[x]
-
-        @auth_verifier.verify_tenant
-        @required_tenant('foo')
-        def decorated():
-            return s.result
-
-        with patch('xivo.auth_verifier.g', g_mock):
-            with patch('xivo.tenant_flask_helpers.g', g_mock):
-                result = decorated()
-
-        assert_that(result, equal_to(s.unauthorized))
-
-    def test_verify_token_raise_not_implemented_when_invalid_without_raising(self):
+    def test_validate_token_raise_not_implemented_when_invalid_without_raising(self):
         mock_client = Mock()
         mock_client.token.check.return_value = False
-        auth_verifier = StubVerifier()
-        auth_verifier.set_client(mock_client)
-        g_mock = Mock()
-        g_data = {
-            'auth_client': mock_client,
-            'token': None,
-            'token_extractor': lambda: 'token_uuid',
-        }
-        g_mock.get.side_effect = lambda x: g_data[x]
+        token_uuid = s.token
+        helpers = AuthVerifierHelpers()
 
-        @auth_verifier.verify_token
         @required_acl('foo')
-        def decorated():
-            return s.result
+        def endpoint():
+            pass
 
-        with patch('xivo.auth_verifier.g', g_mock):
-            with patch('xivo.tenant_flask_helpers.g', g_mock):
-                assert_that(
-                    calling(decorated),
-                    raises(NotImplementedError),
-                )
-
-    def test_handle_unreachable(self):
-        auth_verifier = AuthVerifier()
-        auth_verifier.set_config({'host': s.host, 'port': s.port})
-
-        assert_that(
-            calling(auth_verifier.handle_unreachable).with_args(None),
-            raises(AuthServerUnreachable),
-        )
-
-    def test_handle_unauthorized(self):
-        auth_verifier = AuthVerifier()
-
-        assert_that(
-            calling(auth_verifier.handle_unauthorized).with_args(None),
-            raises(Unauthorized),
-        )
+        with pytest.raises(NotImplementedError):
+            helpers.validate_token(endpoint, mock_client, token_uuid, {})
 
 
 class TestAccessCheck:

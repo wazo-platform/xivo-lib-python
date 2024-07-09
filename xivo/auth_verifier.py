@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import re
 from functools import wraps
-from typing import Any, Callable, NamedTuple, NoReturn, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, NamedTuple, TypeVar
 
 import requests
 
@@ -15,35 +15,36 @@ from .http.exceptions import (
     MissingPermissionsTokenAPIException,
     Unauthorized,
 )
-from .http.headers import (
-    extract_token_id_from_header,
-    extract_token_id_from_query_or_header,
-    extract_token_id_from_query_string,
-)
 
-# Compatibility with old import
-__all__ = [
-    'extract_token_id_from_query_string',
-    'extract_token_id_from_query_or_header',
-]
-
-# Postpone the raise to the first use of the Client constructor.
-# wazo-auth uses its own version of the client to avoid using its own
-# rest-api to call itself.
+# Necessary to avoid a dependency in wazo-provd
+# FIXME: move flask logic to its own module
 try:
-    from wazo_auth_client import Client, exceptions
-except ImportError as e:
+    from flask import g
 
-    class Client:  # type: ignore[no-redef]
-        _exc: Exception = e
+    from .http.headers import (
+        extract_token_id_from_header,
+        extract_token_id_from_query_or_header,
+        extract_token_id_from_query_string,
+    )
+    from .tenant_flask_helpers import auth_client, token
 
-        def __init__(self, *args: Any, **kwargs: Any) -> None:
-            raise self._exc
+    # Compatibility with old import
+    __all__ = [
+        'extract_token_id_from_query_string',
+        'extract_token_id_from_query_or_header',
+    ]
+except ImportError:
+    pass
 
+# Necessary to avoid a dependency in wazo-auth
+# FIXME: move flask logic to its own module
+try:
+    from wazo_auth_client import exceptions
+except ImportError:
+    pass
 
-from flask import g
-
-from .tenant_flask_helpers import token
+if TYPE_CHECKING:
+    from wazo_auth_client import Client as AuthClient
 
 logger = logging.getLogger(__name__)
 
@@ -80,126 +81,97 @@ def required_tenant(tenant_uuid: str) -> Callable[[F], F]:
 
 
 class AuthVerifier:
-    def __init__(
-        self,
-        auth_config: dict[str, Any] | None = None,
-    ) -> None:
-        self._auth_client: Client | None = None
-        self._auth_config = auth_config
-        self._extract_token_id = extract_token_id_from_header
-        self._fallback_acl_check = _ACLCheck('', None)
+    # Using Flask dependancy
+
+    def __init__(self) -> None:
+        self.helpers = AuthVerifierHelpers()
 
     def set_config(self, auth_config: dict[str, Any]) -> None:
-        self._auth_config = dict(auth_config)
-        self._auth_config.pop('username', None)
-        self._auth_config.pop('password', None)
-        self._auth_config.pop('key_file', None)
+        logger.warning(
+            'Deprecated AuthVerifier.set_config(). You can safely remove this line'
+        )
 
-    def set_client(self, auth_client: Client) -> None:
-        self._auth_client = auth_client
+    def set_token_extractor(self, func: Callable[..., R]) -> None:
+        endpoint_extract_token_id = self.helpers.get_acl_check(func).extract_token_id
+        service_extract_token_id = extract_token_id_from_header
+        g.token_extractor = endpoint_extract_token_id or service_extract_token_id
 
     def verify_token(self, func: Callable[..., R]) -> Callable[..., R | None]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> R | None:
-            no_auth: bool = getattr(func, 'no_auth', False)
-            if no_auth:
-                return func(*args, **kwargs)
-
-            # backward compatibility: when func.acl is not defined, it should
-            # probably just raise an AttributeError
-            acl_check = getattr(func, 'acl', self._fallback_acl_check)
-            self._set_extract_token_function(
-                acl_check.extract_token_id,
-                self._extract_token_id,
-            )
-            required_acl = self._required_acl(acl_check, args, kwargs)
-            try:
-                token_is_valid = self.client().token.check(token.uuid, required_acl)
-            except exceptions.InvalidTokenException:
-                return self._handle_invalid_token_exception(
-                    token.uuid, required_access=required_acl
-                )
-            except exceptions.MissingPermissionsTokenException:
-                return self._handle_missing_permissions_token_exception(
-                    token.uuid, required_access=required_acl
-                )
-            except requests.RequestException as e:
-                return self.handle_unreachable(e)
-
-            if not token_is_valid:
-                raise NotImplementedError('Invalid token without exception')
-
+            self.set_token_extractor(func)
+            self.helpers.validate_token(func, auth_client, token.uuid, kwargs)
             return func(*args, **kwargs)
 
         return wrapper
 
-    def _set_extract_token_function(
-        self,
-        specific_extractor: Callable[[], str] | None,
-        default_extractor: Callable[[], str] | None = None,
-    ) -> None:
-        g.token_extractor = specific_extractor or default_extractor
-
     def verify_tenant(self, func: Callable[..., R]) -> Callable[..., R]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            required_tenant = getattr(func, 'tenant_uuid', None)
-            if not required_tenant:
-                return func(*args, **kwargs)
-            self._set_extract_token_function(self._extract_token_id)
-
+            self.set_token_extractor(func)
+            token_uuid = token.uuid
             try:
                 tenant_uuid = token.tenant_uuid
             except InvalidTokenAPIException as e:
-                return self.handle_unauthorized(e.details['invalid_token'])
-            except AuthServerUnreachable as e:
-                return self.handle_unreachable(e.details['original_error'])
+                raise Unauthorized(e.details['invalid_token'])
 
-            if required_tenant == tenant_uuid:
-                return func(*args, **kwargs)
-
-            return self.handle_unauthorized(token.uuid)
+            self.helpers.validate_tenant(func, tenant_uuid, token_uuid)
+            return func(*args, **kwargs)
 
         return wrapper
 
-    def _required_acl(
-        self, acl_check: _ACLCheck, args: Any, kwargs: dict[str, str]
-    ) -> str:
-        escaped_kwargs = {
-            key: str(value).replace('.', '_') for key, value in kwargs.items()
-        }
+
+class AuthVerifierHelpers:
+    def get_acl_check(self, func: Callable[..., R]) -> _ACLCheck:
+        # backward compatibility: when func.acl is not defined, it should
+        # probably just raise an AttributeError
+        return getattr(func, 'acl', _ACLCheck('', None))
+
+    def validate_token(
+        self,
+        func: Callable[..., R],
+        auth_client: AuthClient,
+        token_uuid: str,
+        func_kwargs: Any,
+    ) -> None:
+        no_auth: bool = getattr(func, 'no_auth', False)
+        if no_auth:
+            return None
+
+        acl_check = self.get_acl_check(func)
+        required_acl = self._required_acl(acl_check, func_kwargs)
+        try:
+            token_is_valid = auth_client.token.check(token_uuid, required_acl)
+        except exceptions.InvalidTokenException:
+            raise InvalidTokenAPIException(token_uuid, required_acl)
+        except exceptions.MissingPermissionsTokenException:
+            raise MissingPermissionsTokenAPIException(token_uuid, required_acl)
+        except requests.RequestException as error:
+            raise AuthServerUnreachable(auth_client.host, auth_client.port, error)
+
+        if not token_is_valid:
+            raise NotImplementedError('Invalid token without exception')
+
+        return None
+
+    def validate_tenant(
+        self,
+        func: Callable[..., R],
+        tenant_uuid: str | None,
+        token_uuid: str,
+    ) -> None:
+        required_tenant = getattr(func, 'tenant_uuid', None)
+        if not required_tenant:
+            return None
+
+        if required_tenant == tenant_uuid:
+            return None
+
+        raise Unauthorized(token_uuid)
+
+    def _required_acl(self, acl_check: _ACLCheck, kwargs: dict[str, str]) -> str:
+        escaped_kwargs = {k: str(v).replace('.', '_') for k, v in kwargs.items()}
         return str(acl_check.pattern).format(**escaped_kwargs)
-
-    def handle_unreachable(self, error: requests.RequestException) -> NoReturn:
-        host: str | None = None
-        port: int | None = None
-
-        if self._auth_config:
-            host, port = self._auth_config['host'], self._auth_config['port']
-        raise AuthServerUnreachable(host, port, error)
-
-    def handle_unauthorized(
-        self, token: str, required_access: str | None = None
-    ) -> NoReturn:
-        raise Unauthorized(token, required_access)
-
-    def _handle_invalid_token_exception(
-        self, token: str, required_access: str | None = None
-    ) -> NoReturn:
-        raise InvalidTokenAPIException(token, required_access)
-
-    def _handle_missing_permissions_token_exception(
-        self, token: str, required_access: str | None = None
-    ) -> NoReturn:
-        raise MissingPermissionsTokenAPIException(token, required_access)
-
-    def client(self) -> Client:
-        if not (self._auth_config or self._auth_client):
-            raise RuntimeError('AuthVerifier is not configured')
-
-        if not self._auth_client:
-            self._auth_client = Client(**self._auth_config)
-        return self._auth_client
 
 
 class AccessCheck:

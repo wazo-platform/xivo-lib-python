@@ -7,11 +7,8 @@ from typing import TYPE_CHECKING, Any, TypeVar
 import requests
 
 from xivo import rest_api_helpers
-from xivo.auth_verifier import (
-    AuthServerUnreachable,
-    InvalidTokenAPIException,
-    extract_token_id_from_header,
-)
+from xivo.http.exceptions import AuthServerUnreachable, InvalidTokenAPIException
+from xivo.http.headers import extract_token_id_from_header
 
 # Necessary to avoid a dependency in provd
 try:
@@ -20,7 +17,7 @@ except ImportError:
     pass
 
 if TYPE_CHECKING:
-    from .auth_verifier import Client as AuthClient
+    from wazo_auth_client import Client as AuthClient
 
 
 class InvalidTenant(Exception):
