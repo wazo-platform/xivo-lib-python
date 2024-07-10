@@ -21,7 +21,7 @@ from .http_exceptions import (
 try:
     from flask import g
 
-    from .http.headers import (
+    from .flask.headers import (
         extract_token_id_from_header,
         extract_token_id_from_query_or_header,
         extract_token_id_from_query_string,
