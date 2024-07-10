@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_auth_client() -> AuthClient:
+    # NOTE: It's possible to inject its own client (ex: wazo-auth)
     auth_client = g.get('auth_client')
     if not auth_client:
         auth_config = dict(current_app.config['auth'])
