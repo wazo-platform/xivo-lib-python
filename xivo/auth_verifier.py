@@ -100,7 +100,14 @@ class AuthVerifier:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> R | None:
             self.set_token_extractor(func)
-            self.helpers.validate_token(func, auth_client, token.uuid, kwargs)
+            tenant_uuid = None  # FIXME: Logic not implemented
+            self.helpers.validate_token(
+                func,
+                auth_client,
+                token.uuid,
+                tenant_uuid,
+                kwargs,
+            )
             return func(*args, **kwargs)
 
         return wrapper
@@ -132,6 +139,7 @@ class AuthVerifierHelpers:
         func: Callable[..., R],
         auth_client: AuthClient,
         token_uuid: str,
+        tenant_uuid: str | None,
         func_kwargs: Any,
     ) -> None:
         no_auth: bool = getattr(func, 'no_auth', False)
@@ -141,7 +149,11 @@ class AuthVerifierHelpers:
         acl_check = self.get_acl_check(func)
         required_acl = self._required_acl(acl_check, func_kwargs)
         try:
-            token_is_valid = auth_client.token.check(token_uuid, required_acl)
+            token_is_valid = auth_client.token.check(
+                token_uuid,
+                required_acl,
+                tenant=tenant_uuid,
+            )
         except exceptions.InvalidTokenException:
             raise InvalidTokenAPIException(token_uuid, required_acl)
         except exceptions.MissingPermissionsTokenException:

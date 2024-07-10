@@ -89,33 +89,36 @@ class TestAuthVerifier(unittest.TestCase):
 class TestAuthVerifierHelpers(unittest.TestCase):
     def test_validate_token_calls_auth_client(self):
         mock_client = Mock()
-        helpers = AuthVerifierHelpers()
         token_uuid = s.token
+        tenant_uuid = s.tenant
+        helpers = AuthVerifierHelpers()
 
         @required_acl('foo')
         def endpoint():
             pass
 
-        helpers.validate_token(endpoint, mock_client, token_uuid, {})
+        helpers.validate_token(endpoint, mock_client, token_uuid, tenant_uuid, {})
 
-        mock_client.token.check.assert_called_once_with(s.token, 'foo')
+        mock_client.token.check.assert_called_once_with(s.token, 'foo', tenant=s.tenant)
 
     def test_validate_token_calls_function_when_no_auth(self):
         mock_client = Mock()
         mock_client.token.check.side_effect = MissingPermissionsTokenException
         token_uuid = s.token
+        tenant_uuid = s.tenant
         helpers = AuthVerifierHelpers()
 
         @no_auth
         def endpoint():
             pass
 
-        helpers.validate_token(endpoint, mock_client, token_uuid, {})
+        helpers.validate_token(endpoint, mock_client, token_uuid, tenant_uuid, {})
 
     def test_validate_token_with_no_acl_permission_raises_exception(self):
         mock_client = Mock()
         mock_client.token.check.side_effect = MissingPermissionsTokenException
         token_uuid = s.token
+        tenant_uuid = s.tenant
         helpers = AuthVerifierHelpers()
 
         @required_acl('confd')
@@ -123,19 +126,20 @@ class TestAuthVerifierHelpers(unittest.TestCase):
             pass
 
         with pytest.raises(MissingPermissionsTokenAPIException):
-            helpers.validate_token(endpoint, mock_client, token_uuid, {})
+            helpers.validate_token(endpoint, mock_client, token_uuid, tenant_uuid, {})
 
     def test_validate_token_calls_function_when_valid(self):
         mock_client = Mock()
         mock_client.token.check.return_value = True
         token_uuid = s.token
+        tenant_uuid = s.tenant
         helpers = AuthVerifierHelpers()
 
         @required_acl('foo')
         def endpoint():
             pass
 
-        helpers.validate_token(endpoint, mock_client, token_uuid, {})
+        helpers.validate_token(endpoint, mock_client, token_uuid, tenant_uuid, {})
 
     def test_validate_tenant_calls_function_when_valid(self):
         tenant_uuid = s.tenant
@@ -152,6 +156,7 @@ class TestAuthVerifierHelpers(unittest.TestCase):
         mock_client = Mock()
         mock_client.token.check.side_effect = requests.RequestException
         token_uuid = s.token
+        tenant_uuid = s.tenant
         helpers = AuthVerifierHelpers()
 
         @required_acl('foo')
@@ -159,12 +164,13 @@ class TestAuthVerifierHelpers(unittest.TestCase):
             pass
 
         with pytest.raises(AuthServerUnreachable):
-            helpers.validate_token(endpoint, mock_client, token_uuid, {})
+            helpers.validate_token(endpoint, mock_client, token_uuid, tenant_uuid, {})
 
     def test_validate_invalid_token_raise_invalid_token(self):
         mock_client = Mock()
         mock_client.token.check.side_effect = InvalidTokenException
         token_uuid = s.token
+        tenant_uuid = s.tenant
         helpers = AuthVerifierHelpers()
 
         @required_acl('foo')
@@ -172,11 +178,12 @@ class TestAuthVerifierHelpers(unittest.TestCase):
             pass
 
         with pytest.raises(InvalidTokenAPIException):
-            helpers.validate_token(endpoint, mock_client, token_uuid, {})
+            helpers.validate_token(endpoint, mock_client, token_uuid, tenant_uuid, {})
 
     def test_validate_tenant_raise_unauthorized(self):
         tenant_uuid = s.tenant
         token_uuid = s.token
+        tenant_uuid = s.tenant
         different_tenant_uuid = s.different_tenant
         helpers = AuthVerifierHelpers()
 
@@ -191,6 +198,7 @@ class TestAuthVerifierHelpers(unittest.TestCase):
         mock_client = Mock()
         mock_client.token.check.return_value = False
         token_uuid = s.token
+        tenant_uuid = s.tenant
         helpers = AuthVerifierHelpers()
 
         @required_acl('foo')
@@ -198,7 +206,7 @@ class TestAuthVerifierHelpers(unittest.TestCase):
             pass
 
         with pytest.raises(NotImplementedError):
-            helpers.validate_token(endpoint, mock_client, token_uuid, {})
+            helpers.validate_token(endpoint, mock_client, token_uuid, tenant_uuid, {})
 
 
 class TestAccessCheck:
