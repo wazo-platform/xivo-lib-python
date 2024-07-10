@@ -30,7 +30,76 @@ from ..http_exceptions import (
 
 
 class TestAuthVerifier(unittest.TestCase):
-    def test_verify_tenant_raise_unauthorized(self):
+    def test_verify_token_decorator(self):
+        mock_client = Mock(host=s.host, port=s.port)
+        auth_verifier = AuthVerifier()
+        mock_token = Mock()
+        mock_g = Mock()
+        g_data = {
+            'auth_client': mock_client,
+            'token': mock_token,
+            'token_extractor': None,
+        }
+        mock_g.get.side_effect = lambda x: g_data[x]
+
+        @auth_verifier.verify_token
+        @required_acl('foo')
+        def decorated():
+            return s.result
+
+        with patch('xivo.auth_verifier.g', mock_g):
+            with patch('xivo.tenant_flask_helpers.g', mock_g):
+                result = decorated()
+
+        assert result == s.result
+
+    def test_verify_token_when_no_auth(self):
+        auth_verifier = AuthVerifier()
+
+        @auth_verifier.verify_token
+        @no_auth
+        def decorated():
+            return s.result
+
+        result = decorated()
+
+        assert result == s.result
+
+    def test_verify_tenant_decorator(self):
+        mock_client = Mock()
+        auth_verifier = AuthVerifier()
+        mock_token = Mock(uuid=s.token, tenant_uuid=s.tenant)
+        mock_g = Mock()
+        g_data = {
+            'auth_client': mock_client,
+            'token': mock_token,
+            'token_extractor': None,
+        }
+        mock_g.get.side_effect = lambda x: g_data[x]
+
+        @auth_verifier.verify_tenant
+        @required_tenant(s.tenant)
+        def decorated():
+            return s.result
+
+        with patch('xivo.auth_verifier.g', mock_g):
+            with patch('xivo.tenant_flask_helpers.g', mock_g):
+                result = decorated()
+
+        assert result == s.result
+
+    def test_verify_tenant_when_no_required_tenant(self):
+        auth_verifier = AuthVerifier()
+
+        @auth_verifier.verify_tenant
+        def decorated():
+            return s.result
+
+        result = decorated()
+
+        assert result == s.result
+
+    def test_verify_tenant_when_invalid_token(self):
         mock_client = Mock()
         auth_verifier = AuthVerifier()
         mock_token = Mock(uuid=s.token)
@@ -46,7 +115,7 @@ class TestAuthVerifier(unittest.TestCase):
         mock_g.get.side_effect = lambda x: g_data[x]
 
         @auth_verifier.verify_tenant
-        @required_acl('foo')
+        @required_tenant(s.tenant)
         def decorated():
             return s.result
 
@@ -54,159 +123,169 @@ class TestAuthVerifier(unittest.TestCase):
             with patch('xivo.tenant_flask_helpers.g', mock_g):
                 with pytest.raises(Unauthorized) as exc_info:
                     decorated()
+
         assert exc_info.value.details['invalid_token'] == s.token
-
-    def test_verify_tenant_raise_unreacheable(self):
-        mock_client = Mock(host=s.host, port=s.port)
-        auth_verifier = AuthVerifier()
-        mock_token = Mock()
-        type(mock_token).uuid = PropertyMock(
-            side_effect=AuthServerUnreachable(s.host, s.port, s.error)
-        )
-        mock_g = Mock()
-        g_data = {
-            'auth_client': mock_client,
-            'token': mock_token,
-            'token_extractor': None,
-        }
-        mock_g.get.side_effect = lambda x: g_data[x]
-
-        @auth_verifier.verify_tenant
-        @required_acl('foo')
-        def decorated():
-            return s.result
-
-        with patch('xivo.auth_verifier.g', mock_g):
-            with patch('xivo.tenant_flask_helpers.g', mock_g):
-                with pytest.raises(AuthServerUnreachable) as exc_info:
-                    decorated()
-
-        assert exc_info.value.details['auth_server_host'] == s.host
-        assert exc_info.value.details['auth_server_port'] == s.port
-        assert exc_info.value.details['original_error'] == str(s.error)
 
 
 class TestAuthVerifierHelpers(unittest.TestCase):
+    def setUp(self):
+        self.helpers = AuthVerifierHelpers()
+
     def test_validate_token_calls_auth_client(self):
         mock_client = Mock()
         token_uuid = s.token
         tenant_uuid = s.tenant
-        helpers = AuthVerifierHelpers()
+        required_acl = s.acl
 
-        @required_acl('foo')
-        def endpoint():
-            pass
+        self.helpers.validate_token(mock_client, token_uuid, required_acl, tenant_uuid)
 
-        helpers.validate_token(endpoint, mock_client, token_uuid, tenant_uuid, {})
-
-        mock_client.token.check.assert_called_once_with(s.token, 'foo', tenant=s.tenant)
-
-    def test_validate_token_calls_function_when_no_auth(self):
-        mock_client = Mock()
-        mock_client.token.check.side_effect = MissingPermissionsTokenException
-        token_uuid = s.token
-        tenant_uuid = s.tenant
-        helpers = AuthVerifierHelpers()
-
-        @no_auth
-        def endpoint():
-            pass
-
-        helpers.validate_token(endpoint, mock_client, token_uuid, tenant_uuid, {})
-
-    def test_validate_token_with_no_acl_permission_raises_exception(self):
-        mock_client = Mock()
-        mock_client.token.check.side_effect = MissingPermissionsTokenException
-        token_uuid = s.token
-        tenant_uuid = s.tenant
-        helpers = AuthVerifierHelpers()
-
-        @required_acl('confd')
-        def endpoint():
-            pass
-
-        with pytest.raises(MissingPermissionsTokenAPIException):
-            helpers.validate_token(endpoint, mock_client, token_uuid, tenant_uuid, {})
+        mock_client.token.check.assert_called_once_with(s.token, s.acl, tenant=s.tenant)
 
     def test_validate_token_calls_function_when_valid(self):
         mock_client = Mock()
         mock_client.token.check.return_value = True
         token_uuid = s.token
         tenant_uuid = s.tenant
-        helpers = AuthVerifierHelpers()
+        required_acl = s.acl
 
-        @required_acl('foo')
-        def endpoint():
-            pass
+        self.helpers.validate_token(mock_client, token_uuid, required_acl, tenant_uuid)
 
-        helpers.validate_token(endpoint, mock_client, token_uuid, tenant_uuid, {})
-
-    def test_validate_tenant_calls_function_when_valid(self):
-        tenant_uuid = s.tenant
+    def test_validate_token_with_no_acl_permission_raises_exception(self):
+        mock_client = Mock()
+        mock_client.token.check.side_effect = MissingPermissionsTokenException
         token_uuid = s.token
-        helpers = AuthVerifierHelpers()
+        tenant_uuid = s.tenant
+        required_acl = s.acl
 
-        @required_tenant(tenant_uuid)
-        def endpoint():
-            pass
-
-        helpers.validate_tenant(endpoint, tenant_uuid, token_uuid)
+        with pytest.raises(MissingPermissionsTokenAPIException):
+            self.helpers.validate_token(
+                mock_client,
+                token_uuid,
+                required_acl,
+                tenant_uuid,
+            )
 
     def test_validate_token_raise_unreachable(self):
         mock_client = Mock()
         mock_client.token.check.side_effect = requests.RequestException
         token_uuid = s.token
         tenant_uuid = s.tenant
-        helpers = AuthVerifierHelpers()
-
-        @required_acl('foo')
-        def endpoint():
-            pass
+        required_acl = s.acl
 
         with pytest.raises(AuthServerUnreachable):
-            helpers.validate_token(endpoint, mock_client, token_uuid, tenant_uuid, {})
+            self.helpers.validate_token(
+                mock_client,
+                token_uuid,
+                required_acl,
+                tenant_uuid,
+            )
 
     def test_validate_invalid_token_raise_invalid_token(self):
         mock_client = Mock()
         mock_client.token.check.side_effect = InvalidTokenException
         token_uuid = s.token
         tenant_uuid = s.tenant
-        helpers = AuthVerifierHelpers()
-
-        @required_acl('foo')
-        def endpoint():
-            pass
+        required_acl = s.acl
 
         with pytest.raises(InvalidTokenAPIException):
-            helpers.validate_token(endpoint, mock_client, token_uuid, tenant_uuid, {})
-
-    def test_validate_tenant_raise_unauthorized(self):
-        tenant_uuid = s.tenant
-        token_uuid = s.token
-        tenant_uuid = s.tenant
-        different_tenant_uuid = s.different_tenant
-        helpers = AuthVerifierHelpers()
-
-        @required_tenant(different_tenant_uuid)
-        def endpoint():
-            pass
-
-        with pytest.raises(Unauthorized):
-            helpers.validate_tenant(endpoint, tenant_uuid, token_uuid)
+            self.helpers.validate_token(
+                mock_client,
+                token_uuid,
+                required_acl,
+                tenant_uuid,
+            )
 
     def test_validate_token_raise_not_implemented_when_invalid_without_raising(self):
         mock_client = Mock()
         mock_client.token.check.return_value = False
         token_uuid = s.token
         tenant_uuid = s.tenant
-        helpers = AuthVerifierHelpers()
-
-        @required_acl('foo')
-        def endpoint():
-            pass
+        required_acl = s.acl
 
         with pytest.raises(NotImplementedError):
-            helpers.validate_token(endpoint, mock_client, token_uuid, tenant_uuid, {})
+            self.helpers.validate_token(
+                mock_client,
+                token_uuid,
+                required_acl,
+                tenant_uuid,
+            )
+
+    def test_validate_tenant_calls_function_when_valid(self):
+        required_tenant = s.tenant
+        tenant_uuid = s.tenant
+        token_uuid = s.token
+
+        self.helpers.validate_tenant(required_tenant, tenant_uuid, token_uuid)
+
+    def test_validate_tenant_raise_unauthorized(self):
+        token_uuid = s.token
+        tenant_uuid = s.tenant
+        required_tenant = s.different_tenant_uuid
+
+        with pytest.raises(Unauthorized):
+            self.helpers.validate_tenant(required_tenant, tenant_uuid, token_uuid)
+
+    def test_extract_acl_check_when_set(self):
+        @required_acl('foo')
+        def decorated():
+            pass
+
+        result = self.helpers.extract_acl_check(decorated)
+        assert result.pattern == 'foo'
+        assert result.extract_token_id is None
+
+    def test_extract_acl_check_when_not_set(self):
+        def decorated():
+            pass
+
+        result = self.helpers.extract_acl_check(decorated)
+        assert result.pattern == ''
+        assert result.extract_token_id is None
+
+    def test_extract_required_acl_when_set(self):
+        @required_acl('foo')
+        def decorated():
+            pass
+
+        result = self.helpers.extract_required_acl(decorated, {})
+        assert result == 'foo'
+
+    def test_extract_required_acl_when_not_set(self):
+        def decorated():
+            pass
+
+        result = self.helpers.extract_required_acl(decorated, {})
+        assert result == ''
+
+    def test_extract_no_auth_when_set(self):
+        @no_auth
+        def decorated():
+            pass
+
+        result = self.helpers.extract_no_auth(decorated)
+        assert result is True
+
+    def test_extract_no_auth_when_not_set(self):
+        def decorated():
+            pass
+
+        result = self.helpers.extract_no_auth(decorated)
+        assert result is False
+
+    def test_extract_required_tenant_when_set(self):
+        @required_tenant(s.tenant)
+        def decorated():
+            pass
+
+        result = self.helpers.extract_required_tenant(decorated)
+        assert result == s.tenant
+
+    def test_extract_required_tenant_when_not_set(self):
+        def decorated():
+            pass
+
+        result = self.helpers.extract_required_tenant(decorated)
+        assert result is None
 
 
 class TestAccessCheck:

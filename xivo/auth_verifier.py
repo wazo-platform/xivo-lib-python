@@ -92,21 +92,26 @@ class AuthVerifier:
         )
 
     def set_token_extractor(self, func: Callable[..., R]) -> None:
-        endpoint_extract_token_id = self.helpers.get_acl_check(func).extract_token_id
-        service_extract_token_id = extract_token_id_from_header
-        g.token_extractor = endpoint_extract_token_id or service_extract_token_id
+        endpoint_extract_token = self.helpers.extract_acl_check(func).extract_token_id
+        service_extract_token = extract_token_id_from_header
+        g.token_extractor = endpoint_extract_token or service_extract_token
 
     def verify_token(self, func: Callable[..., R]) -> Callable[..., R | None]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> R | None:
+            if self.helpers.extract_no_auth(func):
+                return func(*args, **kwargs)
+
             self.set_token_extractor(func)
+            token_uuid = token.uuid
+            required_acl = self.helpers.extract_required_acl(func, kwargs)
             tenant_uuid = None  # FIXME: Logic not implemented
+
             self.helpers.validate_token(
-                func,
                 auth_client,
-                token.uuid,
+                token_uuid,
+                required_acl,
                 tenant_uuid,
-                kwargs,
             )
             return func(*args, **kwargs)
 
@@ -115,39 +120,43 @@ class AuthVerifier:
     def verify_tenant(self, func: Callable[..., R]) -> Callable[..., R]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
+            required_tenant = self.helpers.extract_required_tenant(func)
+            if not required_tenant:
+                return func(*args, **kwargs)
+
             self.set_token_extractor(func)
-            token_uuid = token.uuid
+
             try:
                 tenant_uuid = token.tenant_uuid
-            except InvalidTokenAPIException as e:
-                raise Unauthorized(e.details['invalid_token'])
+            except InvalidTokenAPIException:
+                raise Unauthorized(token.uuid)
 
-            self.helpers.validate_tenant(func, tenant_uuid, token_uuid)
+            self.helpers.validate_tenant(required_tenant, tenant_uuid, token.uuid)
             return func(*args, **kwargs)
 
         return wrapper
 
 
 class AuthVerifierHelpers:
-    def get_acl_check(self, func: Callable[..., R]) -> _ACLCheck:
+    def extract_acl_check(self, func: Callable[..., R]) -> _ACLCheck:
         # backward compatibility: when func.acl is not defined, it should
         # probably just raise an AttributeError
         return getattr(func, 'acl', _ACLCheck('', None))
 
+    def extract_no_auth(self, func: Callable[..., R]) -> bool:
+        return getattr(func, 'no_auth', False)
+
+    def extract_required_acl(self, func: Callable[..., R], func_kwargs: Any) -> str:
+        acl_check = self.extract_acl_check(func)
+        return self._required_acl(acl_check, func_kwargs)
+
     def validate_token(
         self,
-        func: Callable[..., R],
         auth_client: AuthClient,
         token_uuid: str,
+        required_acl: str,
         tenant_uuid: str | None,
-        func_kwargs: Any,
     ) -> None:
-        no_auth: bool = getattr(func, 'no_auth', False)
-        if no_auth:
-            return None
-
-        acl_check = self.get_acl_check(func)
-        required_acl = self._required_acl(acl_check, func_kwargs)
         try:
             token_is_valid = auth_client.token.check(
                 token_uuid,
@@ -166,16 +175,15 @@ class AuthVerifierHelpers:
 
         return None
 
+    def extract_required_tenant(self, func: Callable[..., R]) -> str | None:
+        return getattr(func, 'tenant_uuid', None)
+
     def validate_tenant(
         self,
-        func: Callable[..., R],
+        required_tenant: str | None,
         tenant_uuid: str | None,
         token_uuid: str,
     ) -> None:
-        required_tenant = getattr(func, 'tenant_uuid', None)
-        if not required_tenant:
-            return None
-
         if required_tenant == tenant_uuid:
             return None
 
