@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Callable, NamedTuple, TypeVar
 
 import requests
 
-from .http.exceptions import (
+from .http_exceptions import (
     AuthServerUnreachable,
     InvalidTokenAPIException,
     MissingPermissionsTokenAPIException,

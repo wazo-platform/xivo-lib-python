@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, Any, TypeVar
 import requests
 
 from xivo import rest_api_helpers
-from xivo.http.exceptions import AuthServerUnreachable, InvalidTokenAPIException
 from xivo.http.headers import extract_token_id_from_header
+from xivo.http_exceptions import AuthServerUnreachable, InvalidTokenAPIException
 
 # Necessary to avoid a dependency in provd
 try:

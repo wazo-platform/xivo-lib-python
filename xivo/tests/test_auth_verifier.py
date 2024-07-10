@@ -23,7 +23,7 @@ from ..auth_verifier import (
     required_acl,
     required_tenant,
 )
-from ..http.exceptions import (
+from ..http_exceptions import (
     InvalidTokenAPIException,
     MissingPermissionsTokenAPIException,
 )
