@@ -7,16 +7,18 @@ from typing import TYPE_CHECKING, Any, TypeVar
 import requests
 
 from xivo import rest_api_helpers
-from xivo.auth_verifier import AuthServerUnreachable, extract_token_id_from_header
+from xivo.http_exceptions import AuthServerUnreachable, InvalidTokenAPIException
 
 # Necessary to avoid a dependency in provd
 try:
     from flask import request
+
+    from .flask.headers import extract_token_id_from_header
 except ImportError:
     pass
 
 if TYPE_CHECKING:
-    from .auth_verifier import Client as AuthClient
+    from wazo_auth_client import Client as AuthClient
 
 
 class InvalidTenant(Exception):
@@ -24,14 +26,6 @@ class InvalidTenant(Exception):
         message = "Invalid tenant"
         if tenant_uuid:
             message = f'{message} "{tenant_uuid}"'
-        super().__init__(message)
-
-
-class InvalidToken(Exception):
-    def __init__(self, token_id: str | None = None) -> None:
-        message = "Invalid token"
-        if token_id:
-            message = f'{message} "{token_id}"'
         super().__init__(message)
 
 
@@ -113,7 +107,7 @@ class Token:
     def from_headers(cls: type[SelfToken], auth: AuthClient) -> SelfToken:
         token_id = extract_token_id_from_header()
         if not token_id:
-            raise InvalidToken()
+            raise InvalidTokenAPIException('')
         return cls(token_id, auth)
 
     def __init__(self, uuid: str, auth: AuthClient) -> None:
@@ -140,7 +134,7 @@ class Token:
             try:
                 self.__token_dict = self._auth.token.get(self.uuid)
             except requests.HTTPError:
-                raise InvalidToken(self.uuid)
+                raise InvalidTokenAPIException(self.uuid)
             except requests.RequestException as e:
                 raise AuthServerUnreachable(self._auth.host, self._auth.port, e)
 
@@ -187,7 +181,5 @@ class Token:
 
 
 class User:
-    def __init__(self, auth: AuthClient, uuid: str | None, **kwargs: Any) -> None:
-        self._auth = auth
-        self._uuid = uuid
-        self._tenants = None
+    def __init__(self, uuid: str | None) -> None:
+        self.uuid = uuid
