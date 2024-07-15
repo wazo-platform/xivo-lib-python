@@ -7,6 +7,7 @@ import re
 from typing import TYPE_CHECKING, Any, Callable, NamedTuple, TypeVar
 
 import requests
+from wazo_auth_client import exceptions
 
 from .http_exceptions import (
     AuthServerUnreachable,
@@ -14,13 +15,6 @@ from .http_exceptions import (
     MissingPermissionsTokenAPIException,
     Unauthorized,
 )
-
-# Necessary to avoid a dependency in wazo-auth
-# FIXME: move flask logic to its own module
-try:
-    from wazo_auth_client import exceptions
-except ImportError:
-    pass
 
 if TYPE_CHECKING:
     from wazo_auth_client import Client as AuthClient
