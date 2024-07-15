@@ -86,11 +86,6 @@ class AuthVerifier:
     def __init__(self) -> None:
         self.helpers = AuthVerifierHelpers()
 
-    def set_config(self, auth_config: dict[str, Any]) -> None:
-        logger.warning(
-            'Deprecated AuthVerifier.set_config(). You can safely remove this line'
-        )
-
     def set_token_extractor(self, func: Callable[..., R]) -> None:
         endpoint_extract_token = self.helpers.extract_acl_check(func).extract_token_id
         service_extract_token = extract_token_id_from_header
