@@ -78,6 +78,11 @@ class Tenant(tenant_helpers.Tenant):
             else:
                 logger.debug('Found tenant "%s" from header', tenant.uuid)
 
+        verified_tenant_uuid = g.get('verified_tenant_uuid')
+        if verified_tenant_uuid and tenant and verified_tenant_uuid == tenant.uuid:
+            logger.debug('Tenant already validated by Flask verify_token')
+            return cls(uuid=tenant.uuid)
+
         if not tenant:
             tenant = cls.from_token(token)
             logger.debug('Found tenant "%s" from token', tenant.uuid)

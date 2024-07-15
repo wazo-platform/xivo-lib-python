@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import Mock, patch
 from unittest.mock import sentinel as s
 
+from ..tenant_flask_helpers import Tenant
 from ..tenant_flask_helpers import auth_client as auth_client_proxy
 
 
@@ -27,3 +28,20 @@ class TestAuthClient(unittest.TestCase):
 
         expected_config = {'host': s.host}
         auth_client.assert_called_once_with(**expected_config)
+
+
+class TestTenant(unittest.TestCase):
+    @patch('xivo.tenant_flask_helpers.AuthClient')
+    def test_autodetect_when_verified_tenant_uuid(self, auth_client):
+        g_mock = Mock()
+        g_data = {'verified_tenant_uuid': s.tenant}
+        g_mock.get.side_effect = lambda x: g_data[x]
+        request_mock = Mock()
+        request_mock.headers.get.return_value = s.tenant
+        request_mock.args = []
+
+        with patch('xivo.tenant_flask_helpers.g', g_mock):
+            with patch('xivo.flask.headers.request', request_mock):
+                tenant = Tenant.autodetect()
+
+        assert tenant.uuid == s.tenant
