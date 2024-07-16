@@ -25,15 +25,20 @@ class TestAuthVerifierFlask(unittest.TestCase):
             'token_extractor': None,
         }
         mock_g.get.side_effect = lambda x: g_data[x]
+        tenant_extractor = Mock(return_value=s.tenant)
 
         @auth_verifier.verify_token
         @required_acl('foo')
         def decorated():
             return s.result
 
-        with patch('xivo.flask.auth_verifier.g', mock_g):
-            with patch('xivo.tenant_flask_helpers.g', mock_g):
-                result = decorated()
+        with patch(
+            'xivo.flask.auth_verifier.extract_tenant_id_from_header',
+            tenant_extractor,
+        ):
+            with patch('xivo.flask.auth_verifier.g', mock_g):
+                with patch('xivo.tenant_flask_helpers.g', mock_g):
+                    result = decorated()
 
         assert result == s.result
 
