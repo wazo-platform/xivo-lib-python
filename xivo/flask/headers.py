@@ -15,3 +15,7 @@ def extract_token_id_from_query_string() -> str:
 
 def extract_token_id_from_query_or_header() -> str:
     return extract_token_id_from_query_string() or extract_token_id_from_header()
+
+
+def extract_tenant_id_from_header() -> str:
+    return request.headers.get('Wazo-Tenant', '')

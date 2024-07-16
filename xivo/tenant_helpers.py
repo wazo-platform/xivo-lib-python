@@ -13,7 +13,10 @@ from xivo.http_exceptions import AuthServerUnreachable, InvalidTokenAPIException
 try:
     from flask import request
 
-    from .flask.headers import extract_token_id_from_header
+    from .flask.headers import (
+        extract_tenant_id_from_header,
+        extract_token_id_from_header,
+    )
 except ImportError:
     pass
 
@@ -71,9 +74,8 @@ class Tenant:
 
     @classmethod
     def from_headers(cls: type[Self]) -> Self:
-        try:
-            tenant_uuid = request.headers['Wazo-Tenant']
-        except KeyError:
+        tenant_uuid = extract_tenant_id_from_header()
+        if not tenant_uuid:
             raise InvalidTenant()
         return cls(uuid=tenant_uuid)
 
