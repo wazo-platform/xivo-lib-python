@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import logging
 import re
-from functools import wraps
 from typing import TYPE_CHECKING, Any, Callable, NamedTuple, TypeVar
 
 import requests
+from wazo_auth_client import exceptions
 
 from .http_exceptions import (
     AuthServerUnreachable,
@@ -15,33 +15,6 @@ from .http_exceptions import (
     MissingPermissionsTokenAPIException,
     Unauthorized,
 )
-
-# Necessary to avoid a dependency in wazo-provd
-# FIXME: move flask logic to its own module
-try:
-    from flask import g
-
-    from .flask.headers import (
-        extract_token_id_from_header,
-        extract_token_id_from_query_or_header,
-        extract_token_id_from_query_string,
-    )
-    from .tenant_flask_helpers import auth_client, token
-
-    # Compatibility with old import
-    __all__ = [
-        'extract_token_id_from_query_string',
-        'extract_token_id_from_query_or_header',
-    ]
-except ImportError:
-    pass
-
-# Necessary to avoid a dependency in wazo-auth
-# FIXME: move flask logic to its own module
-try:
-    from wazo_auth_client import exceptions
-except ImportError:
-    pass
 
 if TYPE_CHECKING:
     from wazo_auth_client import Client as AuthClient
@@ -78,63 +51,6 @@ def required_tenant(tenant_uuid: str) -> Callable[[F], F]:
         return func
 
     return wrapper
-
-
-class AuthVerifier:
-    # Using Flask dependancy
-
-    def __init__(self) -> None:
-        self.helpers = AuthVerifierHelpers()
-
-    def set_config(self, auth_config: dict[str, Any]) -> None:
-        logger.warning(
-            'Deprecated AuthVerifier.set_config(). You can safely remove this line'
-        )
-
-    def set_token_extractor(self, func: Callable[..., R]) -> None:
-        endpoint_extract_token = self.helpers.extract_acl_check(func).extract_token_id
-        service_extract_token = extract_token_id_from_header
-        g.token_extractor = endpoint_extract_token or service_extract_token
-
-    def verify_token(self, func: Callable[..., R]) -> Callable[..., R | None]:
-        @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> R | None:
-            if self.helpers.extract_no_auth(func):
-                return func(*args, **kwargs)
-
-            self.set_token_extractor(func)
-            token_uuid = token.uuid
-            required_acl = self.helpers.extract_required_acl(func, kwargs)
-            tenant_uuid = None  # FIXME: Logic not implemented
-
-            self.helpers.validate_token(
-                auth_client,
-                token_uuid,
-                required_acl,
-                tenant_uuid,
-            )
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    def verify_tenant(self, func: Callable[..., R]) -> Callable[..., R]:
-        @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            required_tenant = self.helpers.extract_required_tenant(func)
-            if not required_tenant:
-                return func(*args, **kwargs)
-
-            self.set_token_extractor(func)
-
-            try:
-                tenant_uuid = token.tenant_uuid
-            except InvalidTokenAPIException:
-                raise Unauthorized(token.uuid)
-
-            self.helpers.validate_tenant(required_tenant, tenant_uuid, token.uuid)
-            return func(*args, **kwargs)
-
-        return wrapper
 
 
 class AuthVerifierHelpers:
