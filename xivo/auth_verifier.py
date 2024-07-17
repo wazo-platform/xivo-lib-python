@@ -82,7 +82,11 @@ class AuthVerifierHelpers:
         except exceptions.InvalidTokenException:
             raise InvalidTokenAPIException(token_uuid, required_acl)
         except exceptions.MissingPermissionsTokenException:
-            raise MissingPermissionsTokenAPIException(token_uuid, required_acl)
+            raise MissingPermissionsTokenAPIException(
+                token_uuid,
+                required_acl,
+                tenant_uuid,
+            )
         except requests.RequestException as error:
             raise AuthServerUnreachable(auth_client.host, auth_client.port, error)
 
