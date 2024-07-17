@@ -35,10 +35,18 @@ class InvalidTokenAPIException(rest_api_helpers.APIException):
 
 
 class MissingPermissionsTokenAPIException(rest_api_helpers.APIException):
-    def __init__(self, token: str, required_access: str | None = None) -> None:
-        details = {'invalid_token': token, 'reason': 'missing_permission'}
-        if required_access:
-            details['required_access'] = required_access
+    def __init__(
+        self,
+        token: str,
+        required_access: str | None,
+        tenant_uuid: str | None,
+    ) -> None:
+        details = {
+            'invalid_token': token,
+            'reason': 'missing_permission_or_invalid_tenant',
+            'required_access': required_access,
+            'tenant_uuid': tenant_uuid,
+        }
         super().__init__(
             status_code=401,
             message='Unauthorized',
