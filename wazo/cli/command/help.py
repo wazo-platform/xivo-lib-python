@@ -1,12 +1,12 @@
-# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 from operator import attrgetter
 from typing import TYPE_CHECKING
 
-from xivo.cli.command.base import BaseCommand
-from xivo.cli.exception import NoMatchingCommandError
+from wazo.cli.command.base import BaseCommand
+from wazo.cli.exception import NoMatchingCommandError
 
 if TYPE_CHECKING:
     from ..registry import CommandRegistry

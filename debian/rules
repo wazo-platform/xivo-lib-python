@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
-export PYBUILD_NAME=xivo
+export PYBUILD_NAME=wazo
 export PYBUILD_DESTDIR_python3=debian/xivo-lib-python-python3/
 export PYBUILD_DISABLE=test
 

@@ -1,4 +1,4 @@
-# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
@@ -6,8 +6,9 @@ import unittest
 from unittest.mock import Mock
 
 from hamcrest import assert_that, contains_inanyorder, equal_to
-from xivo.cli.exception import CommandAlreadyRegisteredError, NoMatchingCommandError
-from xivo.cli.registry import CommandRegistry
+
+from wazo.cli.exception import CommandAlreadyRegisteredError, NoMatchingCommandError
+from wazo.cli.registry import CommandRegistry
 
 
 class TestCommandRegistry(unittest.TestCase):

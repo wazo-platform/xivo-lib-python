@@ -1,4 +1,4 @@
-# Copyright 2016-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from unittest import TestCase
@@ -90,7 +90,7 @@ class TestRestApiHelpers(TestCase):
             ),
         )
 
-    @patch('xivo.rest_api_helpers.logger')
+    @patch('wazo.rest_api_helpers.logger')
     def test_given_api_exception_when_handle_api_exception_then_logs_error(
         self, logger
     ):

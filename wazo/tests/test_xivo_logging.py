@@ -1,4 +1,4 @@
-# Copyright 2014-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -17,7 +17,8 @@ from hamcrest import (
     is_,
     is_not,
 )
-from xivo.xivo_logging import (
+
+from wazo.xivo_logging import (
     DEFAULT_LOG_FORMAT,
     DEFAULT_LOG_LEVEL,
     excepthook,
@@ -27,7 +28,7 @@ from xivo.xivo_logging import (
 )
 
 
-@patch('xivo.xivo_logging.logging')
+@patch('wazo.xivo_logging.logging')
 class TestLogging(TestCase):
     def test_setup_logging_with_log_file_then_setup_logging_in_log_file(self, logging):
         log_file = 'my_log_file.log'
@@ -172,7 +173,7 @@ class TestLogLevelByName(TestCase):
 
 
 class TestSilenceLoggers(TestCase):
-    @patch('xivo.xivo_logging.logging')
+    @patch('wazo.xivo_logging.logging')
     def test_that_loggers_are_leveled_down(self, mocked_logging):
         loggers = {}
         to_silence = ['one', 'two', 'three']

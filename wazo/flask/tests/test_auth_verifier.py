@@ -6,8 +6,9 @@ from unittest.mock import Mock, PropertyMock, patch
 from unittest.mock import sentinel as s
 
 import pytest
-from xivo.auth_verifier import Unauthorized, no_auth, required_acl, required_tenant
-from xivo.http_exceptions import InvalidTokenAPIException
+
+from wazo.auth_verifier import Unauthorized, no_auth, required_acl, required_tenant
+from wazo.http_exceptions import InvalidTokenAPIException
 
 from ..auth_verifier import AuthVerifierFlask
 
@@ -32,11 +33,11 @@ class TestAuthVerifierFlask(unittest.TestCase):
             return s.result
 
         with patch(
-            'xivo.flask.auth_verifier.extract_tenant_id_from_header',
+            'wazo.flask.auth_verifier.extract_tenant_id_from_header',
             tenant_extractor,
         ):
-            with patch('xivo.flask.auth_verifier.g', mock_g):
-                with patch('xivo.tenant_flask_helpers.g', mock_g):
+            with patch('wazo.flask.auth_verifier.g', mock_g):
+                with patch('wazo.tenant_flask_helpers.g', mock_g):
                     result = decorated()
 
         assert result == s.result
@@ -70,8 +71,8 @@ class TestAuthVerifierFlask(unittest.TestCase):
         def decorated():
             return s.result
 
-        with patch('xivo.flask.auth_verifier.g', mock_g):
-            with patch('xivo.tenant_flask_helpers.g', mock_g):
+        with patch('wazo.flask.auth_verifier.g', mock_g):
+            with patch('wazo.tenant_flask_helpers.g', mock_g):
                 result = decorated()
 
         assert result == s.result
@@ -107,8 +108,8 @@ class TestAuthVerifierFlask(unittest.TestCase):
         def decorated():
             return s.result
 
-        with patch('xivo.flask.auth_verifier.g', mock_g):
-            with patch('xivo.tenant_flask_helpers.g', mock_g):
+        with patch('wazo.flask.auth_verifier.g', mock_g):
+            with patch('wazo.tenant_flask_helpers.g', mock_g):
                 with pytest.raises(Unauthorized) as exc_info:
                     decorated()
 

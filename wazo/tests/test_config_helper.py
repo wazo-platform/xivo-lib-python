@@ -1,4 +1,4 @@
-# Copyright 2014-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os.path
@@ -332,11 +332,11 @@ class TestReadConfigFileHierarchyAccumulatingList(unittest.TestCase):
 
 
 class TestGetXiVOUUID(unittest.TestCase):
-    @patch('xivo.config_helper.os.getenv', return_value=False)
+    @patch('wazo.config_helper.os.getenv', return_value=False)
     def test_given_no_uuid_then_raise_error(self, getenv):
         assert_that(calling(get_xivo_uuid).with_args(Mock()), raises(UUIDNotFound))
 
-    @patch('xivo.config_helper.os.getenv', return_value=XIVO_UUID)
+    @patch('wazo.config_helper.os.getenv', return_value=XIVO_UUID)
     def test_given_uuid_then_return_uuid(self, getenv):
         result = get_xivo_uuid(Mock())
 
@@ -344,11 +344,11 @@ class TestGetXiVOUUID(unittest.TestCase):
 
 
 class TestSetXiVOUUID(unittest.TestCase):
-    @patch('xivo.config_helper.os.getenv', return_value=False)
+    @patch('wazo.config_helper.os.getenv', return_value=False)
     def test_given_no_uuid_then_raise_error(self, getenv):
         assert_that(calling(set_xivo_uuid).with_args({}, Mock()), raises(UUIDNotFound))
 
-    @patch('xivo.config_helper.os.getenv', return_value=XIVO_UUID)
+    @patch('wazo.config_helper.os.getenv', return_value=XIVO_UUID)
     def test_given_uuid_then_set_uuid(self, getenv):
         config: dict[str, str] = {}
         set_xivo_uuid(config, Mock())

@@ -1,4 +1,4 @@
-# Copyright 2016-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
@@ -6,7 +6,8 @@ import unittest
 from unittest.mock import ANY, Mock, patch
 
 from hamcrest import assert_that, equal_to
-from xivo.http_helpers import (
+
+from wazo.http_helpers import (
     BodyFormatter,
     LazyHeaderFormatter,
     log_request,
@@ -20,7 +21,7 @@ def _assert_json_equals(result, expected):
 
 
 class TestLogRequest(unittest.TestCase):
-    @patch('xivo.http_helpers.g', spec={})
+    @patch('wazo.http_helpers.g', spec={})
     def test_log_request(self, g):
         del g.request_time
         mock_request = Mock()
@@ -28,8 +29,8 @@ class TestLogRequest(unittest.TestCase):
         response = Mock(data=None, status_code=200)
 
         with (
-            patch('xivo.http_helpers.request', mock_request),
-            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
+            patch('wazo.http_helpers.request', mock_request),
+            patch('wazo.http_helpers.current_app', Mock()) as mock_current_app,
         ):
             log_request(response)
 
@@ -42,7 +43,7 @@ class TestLogRequest(unittest.TestCase):
                 200,
             )
 
-    @patch('xivo.http_helpers.g', spec={})
+    @patch('wazo.http_helpers.g', spec={})
     def test_log_request_hide_token(self, g):
         del g.request_time
         mock_request = Mock()
@@ -50,8 +51,8 @@ class TestLogRequest(unittest.TestCase):
         response = Mock(data=None, status_code=200)
 
         with (
-            patch('xivo.http_helpers.request', mock_request),
-            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
+            patch('wazo.http_helpers.request', mock_request),
+            patch('wazo.http_helpers.current_app', Mock()) as mock_current_app,
         ):
             log_request_hide_token(response)
 
@@ -65,7 +66,7 @@ class TestLogRequest(unittest.TestCase):
                 200,
             )
 
-    @patch('xivo.http_helpers.g', spec={})
+    @patch('wazo.http_helpers.g', spec={})
     def test_log_with_duration(self, g):
         g.request_time = 1667410149.0782132
         mock_request = Mock()
@@ -73,8 +74,8 @@ class TestLogRequest(unittest.TestCase):
         response = Mock(data=None, status_code=200)
 
         with (
-            patch('xivo.http_helpers.request', mock_request),
-            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
+            patch('wazo.http_helpers.request', mock_request),
+            patch('wazo.http_helpers.current_app', Mock()) as mock_current_app,
         ):
             log_request(response)
 

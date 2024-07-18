@@ -10,7 +10,7 @@ from ..tenant_flask_helpers import auth_client as auth_client_proxy
 
 
 class TestAuthClient(unittest.TestCase):
-    @patch('xivo.tenant_flask_helpers.AuthClient')
+    @patch('wazo.tenant_flask_helpers.AuthClient')
     def test_config_deleted(self, auth_client):
         g_mock = Mock()
         g_mock.get.return_value = None
@@ -22,8 +22,8 @@ class TestAuthClient(unittest.TestCase):
         }
         current_app_mock = Mock(config={'auth': config})
 
-        with patch('xivo.tenant_flask_helpers.current_app', current_app_mock):
-            with patch('xivo.tenant_flask_helpers.g', g_mock):
+        with patch('wazo.tenant_flask_helpers.current_app', current_app_mock):
+            with patch('wazo.tenant_flask_helpers.g', g_mock):
                 auth_client_proxy.host
 
         expected_config = {'host': s.host}
@@ -31,7 +31,7 @@ class TestAuthClient(unittest.TestCase):
 
 
 class TestTenant(unittest.TestCase):
-    @patch('xivo.tenant_flask_helpers.AuthClient')
+    @patch('wazo.tenant_flask_helpers.AuthClient')
     def test_autodetect_when_verified_tenant_uuid(self, auth_client):
         g_mock = Mock()
         g_data = {'verified_tenant_uuid': s.tenant}
@@ -40,8 +40,8 @@ class TestTenant(unittest.TestCase):
         request_mock.headers.get.return_value = s.tenant
         request_mock.args = []
 
-        with patch('xivo.tenant_flask_helpers.g', g_mock):
-            with patch('xivo.flask.headers.request', request_mock):
+        with patch('wazo.tenant_flask_helpers.g', g_mock):
+            with patch('wazo.flask.headers.request', request_mock):
                 tenant = Tenant.autodetect()
 
         assert tenant.uuid == s.tenant

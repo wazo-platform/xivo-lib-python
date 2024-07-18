@@ -1,4 +1,4 @@
-# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """More comprehensive traceback formatting for AGI in Python.
@@ -53,7 +53,7 @@ import types
 from typing import TYPE_CHECKING, Any, Callable, NamedTuple, NewType, TextIO
 
 if TYPE_CHECKING:
-    from xivo.agi import AGI
+    from wazo.agi import AGI
 
 Undefined = NewType('Undefined', list[str])
 

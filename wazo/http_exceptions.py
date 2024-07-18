@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import requests
-from xivo import rest_api_helpers
+
+from wazo import rest_api_helpers
 
 
 class Unauthorized(rest_api_helpers.APIException):

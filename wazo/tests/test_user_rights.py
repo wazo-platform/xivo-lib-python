@@ -1,4 +1,4 @@
-# Copyright 2014-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
@@ -12,7 +12,7 @@ USER_ID = 12
 GROUP_ID = 42
 
 
-@patch('xivo.user_rights.getpwnam')
+@patch('wazo.user_rights.getpwnam')
 @patch('os.setuid')
 @patch('os.setgid')
 @patch('os.initgroups')

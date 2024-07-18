@@ -1,4 +1,4 @@
-# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
@@ -6,17 +6,17 @@ import os.path
 import sys
 from typing import TYPE_CHECKING
 
-from xivo.cli import history
-from xivo.cli.command.exit import ExitCommand
-from xivo.cli.command.help import HelpCommand
-from xivo.cli.command.unknown import PrintingUnknownCommand, _BaseUnknownCommand
-from xivo.cli.completion.completer import CommandLineCompleter
-from xivo.cli.completion.readline import ReadlineCompletionHelper
-from xivo.cli.errorhandler import PrintTracebackErrorHandler, ReRaiseErrorHandler
-from xivo.cli.executor import Executor
-from xivo.cli.parser import RawCommandLineParser
-from xivo.cli.registry import CommandRegistry
-from xivo.cli.source.input import InputRawCommandLineSource
+from wazo.cli import history
+from wazo.cli.command.exit import ExitCommand
+from wazo.cli.command.help import HelpCommand
+from wazo.cli.command.unknown import PrintingUnknownCommand, _BaseUnknownCommand
+from wazo.cli.completion.completer import CommandLineCompleter
+from wazo.cli.completion.readline import ReadlineCompletionHelper
+from wazo.cli.errorhandler import PrintTracebackErrorHandler, ReRaiseErrorHandler
+from wazo.cli.executor import Executor
+from wazo.cli.parser import RawCommandLineParser
+from wazo.cli.registry import CommandRegistry
+from wazo.cli.source.input import InputRawCommandLineSource
 
 if TYPE_CHECKING:
     from .command.base import BaseCommand

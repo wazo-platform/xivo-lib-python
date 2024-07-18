@@ -1,11 +1,11 @@
-# Copyright 2014-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import os
 from pwd import getpwnam
 
-from xivo.xivo_helpers import abort
+from wazo.xivo_helpers import abort
 
 
 def change_user(user: str) -> None:

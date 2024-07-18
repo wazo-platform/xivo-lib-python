@@ -5,8 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, TypeVar
 
 import requests
-from xivo import rest_api_helpers
-from xivo.http_exceptions import AuthServerUnreachable, InvalidTokenAPIException
+
+from wazo import rest_api_helpers
+from wazo.http_exceptions import AuthServerUnreachable, InvalidTokenAPIException
 
 # Necessary to avoid a dependency in provd
 try:

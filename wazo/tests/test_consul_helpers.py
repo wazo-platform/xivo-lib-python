@@ -31,7 +31,7 @@ BUS_CONFIG = {
 
 class TestFindIpAddress(unittest.TestCase):
     def test_that_the_main_iface_is_used_if_it_has_an_ip_address(self):
-        with patch('xivo.consul_helpers.netifaces') as netifaces:
+        with patch('wazo.consul_helpers.netifaces') as netifaces:
             netifaces.interfaces.return_value = ['lo', 'eth0', 'eth1', 'eth3']
             netifaces.ifaddresses.return_value = {
                 netifaces.AF_INET: [{'addr': s.eth3_ip}]
@@ -52,7 +52,7 @@ class TestFindIpAddress(unittest.TestCase):
             elif iface == 'eth0':
                 return {netifaces.AF_INET: [{'broadcast': '255.255.255.0'}]}
 
-        with patch('xivo.consul_helpers.netifaces') as netifaces:
+        with patch('wazo.consul_helpers.netifaces') as netifaces:
             netifaces.interfaces.return_value = ['lo', 'eth0', 'eth1', 'eth3']
             netifaces.ifaddresses.side_effect = return_values
 
@@ -71,7 +71,7 @@ class TestFindIpAddress(unittest.TestCase):
             else:
                 return {}
 
-        with patch('xivo.consul_helpers.netifaces') as netifaces:
+        with patch('wazo.consul_helpers.netifaces') as netifaces:
             netifaces.interfaces.return_value = ['lo', 'ens1', 'eno3', 'enp0s1']
             netifaces.ifaddresses.side_effect = return_values
 
@@ -90,7 +90,7 @@ class TestFindIpAddress(unittest.TestCase):
             else:
                 return {}
 
-        with patch('xivo.consul_helpers.netifaces') as netifaces:
+        with patch('wazo.consul_helpers.netifaces') as netifaces:
             netifaces.interfaces.return_value = ['lo', 'eth0', 'eth1', 'eth2', 'eth3']
             netifaces.ifaddresses.side_effect = return_values
 
@@ -103,7 +103,7 @@ class TestFindIpAddress(unittest.TestCase):
         assert_that(result, equal_to(s.lo_ip))
 
     def test_that_127001_is_returned_if_all_else_fails(self):
-        with patch('xivo.consul_helpers.netifaces') as netifaces:
+        with patch('wazo.consul_helpers.netifaces') as netifaces:
             netifaces.interfaces.return_value = ['lo', 'eth0', 'eth1']
             netifaces.ifaddresses.return_value = {}
 
@@ -114,7 +114,7 @@ class TestFindIpAddress(unittest.TestCase):
         assert_that(result, equal_to('127.0.0.1'))
 
     def test_that_an_invalid_iface_does_not_raise(self):
-        with patch('xivo.consul_helpers.netifaces') as netifaces:
+        with patch('wazo.consul_helpers.netifaces') as netifaces:
             netifaces.interfaces.return_value = ['lo', 'eth0', 'eth1']
             netifaces.ifaddresses.side_effect = ValueError
 
@@ -148,7 +148,7 @@ class TestNotifyingRegisterer(unittest.TestCase):
         )
         self.service_id = self.registerer._service_id
 
-    @patch('xivo.consul_helpers.Consul', Mock())
+    @patch('wazo.consul_helpers.Consul', Mock())
     def test_that_register_sends_a_service_registered_event_when_registered(self):
         with patch.object(self.registerer, '_notify') as send_msg:
             self.registerer.register()
@@ -163,7 +163,7 @@ class TestNotifyingRegisterer(unittest.TestCase):
 
             send_msg.assert_called_once_with(expected_message)
 
-    @patch('xivo.consul_helpers.Consul')
+    @patch('wazo.consul_helpers.Consul')
     def test_that_deregister_sends_a_service_deregistered_event_when_registered(
         self, Consul
     ):
@@ -179,7 +179,7 @@ class TestNotifyingRegisterer(unittest.TestCase):
 
         send_msg.assert_called_once_with(expected_message)
 
-    @patch('xivo.consul_helpers.Consul')
+    @patch('wazo.consul_helpers.Consul')
     def test_that_deregister_sends_a_service_deregistered_event_when_not_registered(
         self, Consul
     ):
@@ -209,7 +209,7 @@ class TestConsulRegisterer(unittest.TestCase):
             self.service_name, UUID, consul_config, service_discovery_config
         )
 
-    @patch('xivo.consul_helpers.Consul')
+    @patch('wazo.consul_helpers.Consul')
     def test_that_register_calls_agent_register(self, Consul):
         consul_client = Consul.return_value
 
@@ -227,7 +227,7 @@ class TestConsulRegisterer(unittest.TestCase):
             tags=[UUID, self.service_name],
         )
 
-    @patch('xivo.consul_helpers.Consul')
+    @patch('wazo.consul_helpers.Consul')
     def test_that_register_raises_if_register_fails(self, Consul):
         consul_client = Consul.return_value
         consul_client.agent.service.register.return_value = False
@@ -243,7 +243,7 @@ class TestConsulRegisterer(unittest.TestCase):
             tags=[UUID, self.service_name],
         )
 
-    @patch('xivo.consul_helpers.Consul')
+    @patch('wazo.consul_helpers.Consul')
     def test_that_deregister_calls_agent_deregister_service_and_check(self, Consul):
         consul_client = Consul.return_value
 
@@ -271,7 +271,7 @@ class BaseFinderTestCase(unittest.TestCase):
         }
 
 
-@patch('xivo.consul_helpers.requests')
+@patch('wazo.consul_helpers.requests')
 class TestRemoteServiceFinderGetDatacenters(BaseFinderTestCase):
     def test_that_the_url_matches_the_config(self, requests):
         requests.get.return_value = Mock(status_code=200)
@@ -318,7 +318,7 @@ class TestRemoteServiceFinderGetDatacenters(BaseFinderTestCase):
             requests.reset_mock()
 
 
-@patch('xivo.consul_helpers.requests')
+@patch('wazo.consul_helpers.requests')
 class TestRemoteServiceFinderListRunningServices(BaseFinderTestCase):
     def test_that_the_health_url_matches_the_config(self, requests):
         requests.get.return_value = Mock(status_code=200, json=Mock(return_value=[]))

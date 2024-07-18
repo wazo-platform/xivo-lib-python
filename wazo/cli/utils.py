@@ -1,11 +1,11 @@
-# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import functools
 from typing import Any, Callable, TypeVar
 
-from xivo.cli.exception import UsageError
+from wazo.cli.exception import UsageError
 
 R = TypeVar('R')
 

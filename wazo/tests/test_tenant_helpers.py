@@ -14,14 +14,15 @@ from hamcrest import (
 )
 from requests import HTTPError, RequestException
 from wazo_test_helpers.hamcrest.raises import raises
-from xivo.auth_verifier import AuthServerUnreachable, InvalidTokenAPIException
+
+from wazo.auth_verifier import AuthServerUnreachable, InvalidTokenAPIException
 
 from ..tenant_helpers import InvalidTenant, Tenant, Token, UnauthorizedTenant
 
 
 class TestTenantAutodetect(TestCase):
-    @patch('xivo.tenant_helpers.Token')
-    @patch('xivo.flask.headers.request', spec={})
+    @patch('wazo.tenant_helpers.Token')
+    @patch('wazo.flask.headers.request', spec={})
     def test_given_no_token_when_autodetect_then_raise(self, request, Token):
         auth = Mock()
         Token.from_headers = Mock()
@@ -33,8 +34,8 @@ class TestTenantAutodetect(TestCase):
             calling(Tenant.autodetect).with_args(auth), raises(InvalidTokenAPIException)
         )
 
-    @patch('xivo.tenant_helpers.Token')
-    @patch('xivo.flask.headers.request', spec={})
+    @patch('wazo.tenant_helpers.Token')
+    @patch('wazo.flask.headers.request', spec={})
     def test_given_token_no_tenant_when_autodetect_then_return_tenant_from_token(
         self, request, Token
     ):
@@ -49,8 +50,8 @@ class TestTenantAutodetect(TestCase):
 
         assert_that(result.uuid, equal_to(tenant))
 
-    @patch('xivo.tenant_helpers.Token')
-    @patch('xivo.flask.headers.request', spec={})
+    @patch('wazo.tenant_helpers.Token')
+    @patch('wazo.flask.headers.request', spec={})
     def test_given_token_and_tenant_when_autodetect_then_return_given_tenant(
         self, request, Token
     ):
@@ -65,8 +66,8 @@ class TestTenantAutodetect(TestCase):
 
         assert_that(result.uuid, equal_to(tenant))
 
-    @patch('xivo.tenant_helpers.Token')
-    @patch('xivo.flask.headers.request', spec={})
+    @patch('wazo.tenant_helpers.Token')
+    @patch('wazo.flask.headers.request', spec={})
     def test_given_token_unknown_tenant_and_user_in_tenant_when_autodetect_then_return_tenant(
         self, request, Token
     ):
@@ -83,8 +84,8 @@ class TestTenantAutodetect(TestCase):
 
         assert_that(result.uuid, equal_to(tenant))
 
-    @patch('xivo.tenant_helpers.Token')
-    @patch('xivo.flask.headers.request', spec={})
+    @patch('wazo.tenant_helpers.Token')
+    @patch('wazo.flask.headers.request', spec={})
     def test_given_token_unknown_tenant_and_user_not_in_tenant_when_autodetect_then_raise(
         self, request, Token
     ):
@@ -111,13 +112,13 @@ class TestTenantAutodetect(TestCase):
 
 
 class TestTenantFromHeaders(TestCase):
-    @patch('xivo.flask.headers.request', spec={})
+    @patch('wazo.flask.headers.request', spec={})
     def test_given_no_tenant_when_from_headers_then_raise(self, request):
         request.headers = {}
 
         assert_that(calling(Tenant.from_headers), raises(InvalidTenant))
 
-    @patch('xivo.flask.headers.request', spec={})
+    @patch('wazo.flask.headers.request', spec={})
     def test_given_tenant_when_from_headers_then_return_tenant(self, request):
         tenant = 'tenant'
         request.headers = {'Wazo-Tenant': tenant}
@@ -128,13 +129,13 @@ class TestTenantFromHeaders(TestCase):
 
 
 class TestTenantFromQuery(TestCase):
-    @patch('xivo.tenant_helpers.request', spec={})
+    @patch('wazo.tenant_helpers.request', spec={})
     def test_given_no_tenant_when_from_query_then_raise(self, mock_request):
         mock_request.args = {}
 
         assert_that(calling(Tenant.from_query), raises(InvalidTenant))
 
-    @patch('xivo.tenant_helpers.request', spec={})
+    @patch('wazo.tenant_helpers.request', spec={})
     def test_given_tenant_when_from_query_then_return_tenant(self, mock_request):
         tenant = 'tenant'
         mock_request.args = {'tenant': tenant}
@@ -199,7 +200,7 @@ class TestTenantCheckAgainstToken(TestCase):
 
 
 class TestTokenFromHeaders(TestCase):
-    @patch('xivo.tenant_helpers.extract_token_id_from_header')
+    @patch('wazo.tenant_helpers.extract_token_id_from_header')
     def test_given_valid_header(self, extract):
         token_id = 'my-valid-uuid'
         extract.return_value = token_id
@@ -209,7 +210,7 @@ class TestTokenFromHeaders(TestCase):
 
         assert_that(token.uuid, equal_to(token_id))
 
-    @patch('xivo.tenant_helpers.extract_token_id_from_header')
+    @patch('wazo.tenant_helpers.extract_token_id_from_header')
     def test_given_no_header_when_get_then_raise(self, extract):
         extract.return_value = ''
         auth = Mock()

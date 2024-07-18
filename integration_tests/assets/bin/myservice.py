@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2016-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from typing import Any, NoReturn
 import requests
 from flask import Flask, Response, jsonify
 
-from xivo.consul_helpers import ServiceCatalogRegistration
+from wazo.consul_helpers import ServiceCatalogRegistration
 
 UUID = 'foobar'
 
