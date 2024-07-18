@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, TypeVar
 
 import requests
-
 from xivo import rest_api_helpers
 from xivo.http_exceptions import AuthServerUnreachable, InvalidTokenAPIException
 

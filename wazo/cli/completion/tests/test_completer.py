@@ -6,7 +6,6 @@ import unittest
 from unittest.mock import Mock
 
 from hamcrest import assert_that, equal_to
-
 from xivo.cli.completion.completer import CommandLineCompleter
 from xivo.cli.registry import CommandRegistry
 

@@ -17,7 +17,6 @@ from hamcrest import (
     is_,
     is_not,
 )
-
 from xivo.xivo_logging import (
     DEFAULT_LOG_FORMAT,
     DEFAULT_LOG_LEVEL,

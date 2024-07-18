@@ -6,7 +6,6 @@ import unittest
 from unittest.mock import Mock
 
 from hamcrest import assert_that, contains_inanyorder, equal_to
-
 from xivo.cli.exception import CommandAlreadyRegisteredError, NoMatchingCommandError
 from xivo.cli.registry import CommandRegistry
 

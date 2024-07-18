@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import requests
-
 from xivo import rest_api_helpers
 
 

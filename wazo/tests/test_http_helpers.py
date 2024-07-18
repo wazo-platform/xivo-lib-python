@@ -6,7 +6,6 @@ import unittest
 from unittest.mock import ANY, Mock, patch
 
 from hamcrest import assert_that, equal_to
-
 from xivo.http_helpers import (
     BodyFormatter,
     LazyHeaderFormatter,

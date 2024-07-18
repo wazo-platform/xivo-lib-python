@@ -14,7 +14,6 @@ from hamcrest import (
 )
 from requests import HTTPError, RequestException
 from wazo_test_helpers.hamcrest.raises import raises
-
 from xivo.auth_verifier import AuthServerUnreachable, InvalidTokenAPIException
 
 from ..tenant_helpers import InvalidTenant, Tenant, Token, UnauthorizedTenant

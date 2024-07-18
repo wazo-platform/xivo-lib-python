@@ -4,7 +4,6 @@
 import unittest
 
 from hamcrest import assert_that, equal_to
-
 from xivo import caller_id
 from xivo.caller_id import extract_displayname, extract_number, is_complete_caller_id
 

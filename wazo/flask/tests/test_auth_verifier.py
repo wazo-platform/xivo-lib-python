@@ -6,7 +6,6 @@ from unittest.mock import Mock, PropertyMock, patch
 from unittest.mock import sentinel as s
 
 import pytest
-
 from xivo.auth_verifier import Unauthorized, no_auth, required_acl, required_tenant
 from xivo.http_exceptions import InvalidTokenAPIException
 

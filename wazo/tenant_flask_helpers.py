@@ -8,7 +8,6 @@ from typing import TypeVar
 from flask import current_app, g
 from wazo_auth_client import Client as AuthClient
 from werkzeug.local import LocalProxy
-
 from xivo.tenant_helpers import Token, User
 
 from . import tenant_helpers

@@ -6,7 +6,6 @@ import unittest
 from unittest.mock import Mock
 
 from hamcrest import assert_that, equal_to, none
-
 from xivo.cli.exception import NoMatchingCommandError
 from xivo.cli.parser import RawCommandLineParser
 from xivo.cli.registry import CommandRegistry
