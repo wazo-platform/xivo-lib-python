@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from collections.abc import Collection
 import itertools
 import logging
 import threading
 import types
+from collections.abc import Collection
 from typing import TYPE_CHECKING, Callable, TypedDict, TypeVar
 
 import requests
@@ -29,7 +29,6 @@ Self = TypeVar('Self', bound='TokenRenewer')
 
 
 class TokenRenewer:
-
     DEFAULT_EXPIRATION = 6 * 3_600
     _RENEW_TIME_COEFFICIENT = 0.8
 

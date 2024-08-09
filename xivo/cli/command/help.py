@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 
 
 class HelpCommand(BaseCommand):
-
     help = 'Display help about commands'
     usage = '[<command_name>]'
 

@@ -1,4 +1,4 @@
-# Copyright 2018-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from flask import current_app, g
 from wazo_auth_client import Client as AuthClient
 from werkzeug.local import LocalProxy
 
-from xivo.tenant_helpers import Token, Tokens, User, Users
+from xivo.tenant_helpers import Token, User
 
 from . import tenant_helpers
 
@@ -17,20 +17,28 @@ logger = logging.getLogger(__name__)
 
 
 def get_auth_client() -> AuthClient:
+    # NOTE: It's possible to inject its own client (ex: wazo-auth)
     auth_client = g.get('auth_client')
     if not auth_client:
-        auth_client = g.auth_client = AuthClient(**current_app.config['auth'])
+        auth_config = dict(current_app.config['auth'])
+        auth_config.pop('username', None)
+        auth_config.pop('password', None)
+        auth_config.pop('key_file', None)
+        auth_client = g.auth_client = AuthClient(**auth_config)
     return auth_client
 
 
-# TODO: When werkzeug is updated it the ignore can be removed.
 auth_client: AuthClient = LocalProxy(get_auth_client)
 
 
 def get_token() -> Token:
     token = g.get('token')
     if not token:
-        token = g.token = Tokens(auth_client).from_headers()
+        if g.get('token_extractor'):
+            _token = Token(g.token_extractor(), auth_client)
+        else:
+            _token = Token.from_headers(auth_client)
+        token = g.token = _token
         auth_client.set_token(token.uuid)
     return token
 
@@ -38,23 +46,21 @@ def get_token() -> Token:
 token: Token = LocalProxy(get_token)  # type: ignore[assignment]
 
 
-def get_current_user() -> User:
-    current_user = g.get('current_user')
-    if not current_user:
-        auth_client.set_token(token.uuid)
-        current_user = g.current_user = Users(auth_client).get(token.user_uuid)
-    return current_user
+def get_user() -> User:
+    user = g.get('user')
+    if not user:
+        user = g.user = User(token.user_uuid)
+    return user
 
 
-current_user: User = LocalProxy(get_current_user)  # type: ignore[assignment]
+user: User = LocalProxy(get_user)  # type: ignore[assignment]
 
 Self = TypeVar('Self', bound='Tenant')
 
 
 class Tenant(tenant_helpers.Tenant):
-    # It's true we shouldn't be changing the signature here...
     @classmethod
-    def autodetect(cls: type[Self], include_query: bool = False) -> Self:  # type: ignore[override]
+    def autodetect(cls: type[Self], include_query: bool = False) -> Self:
         tenant = None
         if include_query:
             try:
@@ -71,6 +77,11 @@ class Tenant(tenant_helpers.Tenant):
                 logger.debug('Invalid tenant from header, using token...')
             else:
                 logger.debug('Found tenant "%s" from header', tenant.uuid)
+
+        verified_tenant_uuid = g.get('verified_tenant_uuid')
+        if verified_tenant_uuid and tenant and verified_tenant_uuid == tenant.uuid:
+            logger.debug('Tenant already validated by Flask verify_token')
+            return cls(uuid=tenant.uuid)
 
         if not tenant:
             tenant = cls.from_token(token)

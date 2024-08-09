@@ -12,7 +12,7 @@ xivo-lib-python (15.15~20150820.181932.e0c7a7b-2) xivo-dev; urgency=low
 
 xivo-lib-python (12.22~20121107.160154.caae793-1) squeeze-xivo-skaro-dev; urgency=low
 
-  * rename package 
+  * rename package
 
  -- Nicolas HICHER (atarakt) <nhicher@proformatique.com>  Wed, 07 Nov 2012 11:04:04 -0500
 
@@ -47,7 +47,7 @@ pf-xivo-lib-python (17:1.1~svn7436-2) etch-xivo-gallifrey-dev; urgency=low
  -- Adrien DELLE CAVE (Decryptus) <decryptus@proformatique.com>  Tue, 12 Jan 2010 19:37:34 +0100
 
 pf-xivo-lib-python (0.4~svn4138-0) etch-xivo-k-9-dev; urgency=low
- 
+
   * Preparing new development snapshot.
   * In control, build-dep on python-all-dev (>= 2.4.4-2) instead of
     (>= 2.3.5-11) because we are targeting Python 2.4.
@@ -103,13 +103,13 @@ pf-xivo-lib-python (0.4~svn3335-0) etch-xivo-k-9-dev; urgency=low
 
 pf-xivo-lib-python (0.4~svn3207-0) etch-xivo-k-9-dev; urgency=low
 
-  * Updated a copyright year 
+  * Updated a copyright year
 
  -- Guillaume Knispel <gknispel@proformatique.com>  Thu,  5 Jun 2008 18:38:49 +0200
 
 pf-xivo-lib-python (0.4~svn3115-1) etch-xivo-k-9-dev; urgency=low
 
-  * Added dependency on python-yaml 
+  * Added dependency on python-yaml
 
  -- Guillaume Knispel <gknispel@proformatique.com>  Wed, 28 May 2008 14:51:05 +0200
 
@@ -127,7 +127,7 @@ pf-xivo-lib-python (0.4~svn3082-0) etch-xivo-k-9-dev; urgency=low
 
 pf-xivo-lib-python (0.4~svn3070) etch-xivo-k-9-dev; urgency=low
 
-  * Licensing update. 
+  * Licensing update.
 
  -- Guillaume Knispel <gknispel@proformatique.com>  Thu, 22 May 2008 20:15:08 +0200
 
@@ -139,7 +139,7 @@ pf-xivo-lib-python (0.4~svn2527) etch-xivo-k-9-dev; urgency=low
 
 pf-xivo-lib-python (0.4~svn2454) etch-xivo-k-9-dev; urgency=low
 
-  * Licensing update. 
+  * Licensing update.
 
  -- Guillaume Knispel <gknispel@proformatique.com>  Thu, 21 Feb 2008 02:59:09 +0100
 
@@ -182,4 +182,3 @@ pf-xivo-lib-python (0.1~svn600-1) etch; urgency=low
   * Initial release.
 
  -- Corentin Le Gall <corentin@proformatique.com>  Tue, 15 May 2007 16:01:29 +0200
-

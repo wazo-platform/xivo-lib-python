@@ -15,8 +15,8 @@ import logging
 import os
 import shutil
 import subprocess
-from typing import TextIO
 from collections.abc import Sequence
+from typing import TextIO
 
 log = logging.getLogger("xivo.system")
 

@@ -8,7 +8,6 @@ from xivo.cli.command.base import BaseCommand
 
 
 class ExitCommand(BaseCommand):
-
     help = 'Exit the interpreter'
     usage = None
 

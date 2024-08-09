@@ -1,4 +1,4 @@
-# Copyright 2015-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -7,7 +7,7 @@ from unittest.mock import ANY, Mock, call, patch
 from unittest.mock import sentinel as s
 
 from hamcrest import assert_that, calling, contains_exactly, equal_to, raises
-from xivo_bus.resources.services import event
+from wazo_bus.resources.services import event
 
 from ..consul_helpers import (
     NotifyingRegisterer,

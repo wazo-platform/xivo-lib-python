@@ -8,7 +8,6 @@ from xivo.cli.command.base import BaseCommand
 
 
 class _BaseUnknownCommand(BaseCommand):
-
     help = 'Handler for unknown commands'
     usage = None
     _error_msg = None

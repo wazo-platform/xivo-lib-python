@@ -10,7 +10,6 @@ import marshmallow  # noqa: E402
 from .mallow import fields, validate  # noqa: E402
 from .rest_api_helpers import APIException  # noqa: E402
 
-
 R = TypeVar('R')
 
 

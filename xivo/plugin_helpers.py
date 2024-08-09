@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 from abc import abstractmethod
+from collections.abc import Sequence
 from functools import partial
 from typing import Any, Protocol, TypeVar
-from collections.abc import Sequence
 
 from stevedore.extension import Extension
 from stevedore.named import NamedExtensionManager

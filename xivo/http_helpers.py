@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 import re
 import time
+from collections.abc import Iterable
 from json.decoder import JSONDecodeError
 from logging import Logger
 from typing import TYPE_CHECKING, Any
-from collections.abc import Iterable
 from urllib.parse import unquote
 
 from cheroot.ssl.builtin import BuiltinSSLAdapter
@@ -55,7 +55,6 @@ def add_logger(app: Flask, logger: Logger) -> None:
 
 
 class BodyFormatter:
-
     _HIDDEN_VALUE = '<hidden>'
 
     def __init__(self, raw_body: bytes, hidden_fields: list[str] | None) -> None:
@@ -87,7 +86,6 @@ class BodyFormatter:
 
 
 class LazyHeaderFormatter:
-
     VISIBLE_TOKEN_SIZE = 8
 
     def __init__(self, raw_headers: Headers | dict[str, str]) -> None:

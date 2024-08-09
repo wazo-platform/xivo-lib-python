@@ -1,52 +1,23 @@
-# Copyright 2015-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import logging
 import re
-from functools import wraps
-from typing import TYPE_CHECKING, Any, Callable, NamedTuple, NoReturn, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, NamedTuple, TypeVar
 
 import requests
+from wazo_auth_client import exceptions
 
-# Postpone the raise to the first use of the Client constructor.
-# wazo-auth uses its own version of the client to avoid using its own
-# rest-api to call itself.
-try:
-    from wazo_auth_client import Client, exceptions
-except ImportError as e:
-
-    class Client:  # type: ignore[no-redef]
-        _exc: Exception = e
-
-        def __init__(self, *args: Any, **kwargs: Any) -> None:
-            raise self._exc
-
+from .http_exceptions import (
+    AuthServerUnreachable,
+    InvalidTokenAPIException,
+    MissingPermissionsTokenAPIException,
+    Unauthorized,
+)
 
 if TYPE_CHECKING:
-    # Workaround to attempt to type `request` until we have Protocols to type properly.
-    from flask import Request as _Request
-    from flask import request as _request
-
-    class Request(_Request):
-        token_id: str
-        token_content: dict[str, Any]
-        _token_content: dict[str, Any]
-        user_uuid: str
-        _get_token_content: Callable[[], dict[str, Any]]
-        _get_user_uuid: Callable[[], str | None]
-
-    request: Request = _request  # type: ignore[assignment]
-
-else:
-    # Necessary to avoid a dependency in provd
-    try:
-        from flask import request
-    except ImportError:
-        pass
-
-from xivo import rest_api_helpers
-
+    from wazo_auth_client import Client as AuthClient
 
 logger = logging.getLogger(__name__)
 
@@ -82,218 +53,65 @@ def required_tenant(tenant_uuid: str) -> Callable[[F], F]:
     return wrapper
 
 
-class Unauthorized(rest_api_helpers.APIException):
-    def __init__(self, token: str, required_access: str | None = None) -> None:
-        details = {'invalid_token': token}
-        if required_access:
-            details['required_access'] = required_access
+class AuthVerifierHelpers:
+    def extract_acl_check(self, func: Callable[..., R]) -> _ACLCheck:
+        # backward compatibility: when func.acl is not defined, it should
+        # probably just raise an AttributeError
+        return getattr(func, 'acl', _ACLCheck('', None))
 
-        super().__init__(
-            status_code=401,
-            message='Unauthorized',
-            error_id='unauthorized',
-            details=details,
-        )
+    def extract_no_auth(self, func: Callable[..., R]) -> bool:
+        return getattr(func, 'no_auth', False)
 
+    def extract_required_acl(self, func: Callable[..., R], func_kwargs: Any) -> str:
+        acl_check = self.extract_acl_check(func)
+        return self._required_acl(acl_check, func_kwargs)
 
-class InvalidTokenAPIException(rest_api_helpers.APIException):
-    def __init__(self, token: str, required_access: str | None = None) -> None:
-        details = {'invalid_token': token, 'reason': 'not_found_or_expired'}
-        if required_access:
-            details['required_access'] = required_access
-        super().__init__(
-            status_code=401,
-            message='Unauthorized',
-            error_id='unauthorized',
-            details=details,
-        )
-
-
-class MissingPermissionsTokenAPIException(rest_api_helpers.APIException):
-    def __init__(self, token: str, required_access: str | None = None) -> None:
-        details = {'invalid_token': token, 'reason': 'missing_permission'}
-        if required_access:
-            details['required_access'] = required_access
-        super().__init__(
-            status_code=401,
-            message='Unauthorized',
-            error_id='unauthorized',
-            details=details,
-        )
-
-
-class AuthServerUnreachable(rest_api_helpers.APIException):
-    def __init__(
-        self, host: str | None, port: int | None, error: requests.RequestException
-    ) -> None:
-        super().__init__(
-            status_code=503,
-            message='Authentication server unreachable',
-            error_id='authentication-server-unreachable',
-            details={
-                'auth_server_host': host,
-                'auth_server_port': port,
-                'original_error': str(error),
-            },
-        )
-
-
-class AuthVerifier:
-    def __init__(
+    def validate_token(
         self,
-        auth_config: dict[str, Any] | None = None,
-        extract_token_id: Callable[[], str] | None = None,
+        auth_client: AuthClient,
+        token_uuid: str,
+        required_acl: str,
+        tenant_uuid: str | None,
     ) -> None:
-        if extract_token_id is None:
-            extract_token_id = extract_token_id_from_header
-        self._auth_client: Client | None = None
-        self._auth_config = auth_config
-        self._extract_token_id = extract_token_id
-        self._fallback_acl_check = _ACLCheck('', None)
+        try:
+            token_is_valid = auth_client.token.check(
+                token_uuid,
+                required_acl,
+                tenant=tenant_uuid,
+            )
+        except exceptions.InvalidTokenException:
+            raise InvalidTokenAPIException(token_uuid, required_acl)
+        except exceptions.MissingPermissionsTokenException:
+            raise MissingPermissionsTokenAPIException(
+                token_uuid,
+                required_acl,
+                tenant_uuid,
+            )
+        except requests.RequestException as error:
+            raise AuthServerUnreachable(auth_client.host, auth_client.port, error)
 
-    def set_config(self, auth_config: dict[str, Any]) -> None:
-        self._auth_config = dict(auth_config)
-        self._auth_config.pop('username', None)
-        self._auth_config.pop('password', None)
-        self._auth_config.pop('key_file', None)
+        if not token_is_valid:
+            raise NotImplementedError('Invalid token without exception')
 
-    def set_client(self, auth_client: Client) -> None:
-        self._auth_client = auth_client
+        return None
 
-    def verify_token(self, func: Callable[..., R]) -> Callable[..., R | None]:
-        @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> R | None:
-            no_auth: bool = getattr(func, 'no_auth', False)
-            if no_auth:
-                return func(*args, **kwargs)
+    def extract_required_tenant(self, func: Callable[..., R]) -> str | None:
+        return getattr(func, 'tenant_uuid', None)
 
-            # backward compatibility: when func.acl is not defined, it should
-            # probably just raise an AttributeError
-            acl_check = getattr(func, 'acl', self._fallback_acl_check)
-            self._add_request_properties((acl_check.extract_token_id or self.token)())
-            required_acl = self._required_acl(acl_check, args, kwargs)
-            try:
-                token_is_valid = self.client().token.check(
-                    request.token_id, required_acl
-                )
-            except exceptions.InvalidTokenException:
-                return self._handle_invalid_token_exception(
-                    request.token_id, required_access=required_acl
-                )
-            except exceptions.MissingPermissionsTokenException:
-                return self._handle_missing_permissions_token_exception(
-                    request.token_id, required_access=required_acl
-                )
-            except requests.RequestException as e:
-                return self.handle_unreachable(e)
-
-            if token_is_valid:
-                return func(*args, **kwargs)
-
-            # NOTE(pc-m): This "should" be unreachable. is_valid can only return True or raise
-            # I've left this logger to avoid debugging for hours if I'm mistaken and a resource
-            # returns doing nothing silently
-            logger.warning("This is a bug")
+    def validate_tenant(
+        self,
+        required_tenant: str | None,
+        tenant_uuid: str | None,
+        token_uuid: str,
+    ) -> None:
+        if required_tenant == tenant_uuid:
             return None
 
-        return wrapper
+        raise Unauthorized(token_uuid)
 
-    def _add_request_properties(self, token_id: str) -> None:
-        request.token_id = token_id
-        request._get_token_content = self._get_token_content
-        request._get_user_uuid = self._get_user_uuid
-        request.__class__.token_content = property(  # type: ignore[assignment]
-            lambda this: this._get_token_content()
-        )
-        request.__class__.user_uuid = property(  # type: ignore[assignment]
-            lambda this: this._get_user_uuid()
-        )
-
-    def _get_token_content(self) -> dict[str, Any]:
-        if not hasattr(request, '_token_content'):
-            token_content = self.client().token.get(request.token_id)
-            request._token_content = token_content
-        return request._token_content
-
-    def _get_user_uuid(self) -> str | None:
-        return request.token_content.get('metadata', {}).get('uuid')
-
-    def verify_tenant(self, func: Callable[..., R]) -> Callable[..., R]:
-        @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            required_tenant = getattr(func, 'tenant_uuid', None)
-            if not required_tenant:
-                return func(*args, **kwargs)
-            self._add_request_properties(self.token())
-
-            try:
-                token = request.token_content
-            except requests.RequestException as e:
-                if e.response is not None and e.response.status_code == 404:
-                    return self.handle_unauthorized(request.token_id)
-                return self.handle_unreachable(e)
-
-            tenant_uuid = token.get('metadata', {}).get('tenant_uuid')
-            if required_tenant == tenant_uuid:
-                return func(*args, **kwargs)
-
-            return self.handle_unauthorized(request.token_id)
-
-        return wrapper
-
-    def token(self) -> str:
-        return self._extract_token_id()
-
-    def _required_acl(
-        self, acl_check: _ACLCheck, args: Any, kwargs: dict[str, str]
-    ) -> str:
-        escaped_kwargs = {
-            key: str(value).replace('.', '_') for key, value in kwargs.items()
-        }
+    def _required_acl(self, acl_check: _ACLCheck, kwargs: dict[str, str]) -> str:
+        escaped_kwargs = {k: str(v).replace('.', '_') for k, v in kwargs.items()}
         return str(acl_check.pattern).format(**escaped_kwargs)
-
-    def handle_unreachable(self, error: requests.RequestException) -> NoReturn:
-        host: str | None = None
-        port: int | None = None
-
-        if self._auth_config:
-            host, port = self._auth_config['host'], self._auth_config['port']
-        raise AuthServerUnreachable(host, port, error)
-
-    def handle_unauthorized(
-        self, token: str, required_access: str | None = None
-    ) -> NoReturn:
-        raise Unauthorized(token, required_access)
-
-    def _handle_invalid_token_exception(
-        self, token: str, required_access: str | None = None
-    ) -> NoReturn:
-        raise InvalidTokenAPIException(token, required_access)
-
-    def _handle_missing_permissions_token_exception(
-        self, token: str, required_access: str | None = None
-    ) -> NoReturn:
-        raise MissingPermissionsTokenAPIException(token, required_access)
-
-    def client(self) -> Client:
-        if not (self._auth_config or self._auth_client):
-            raise RuntimeError('AuthVerifier is not configured')
-
-        if not self._auth_client:
-            self._auth_client = Client(**self._auth_config)
-        return self._auth_client
-
-
-def extract_token_id_from_header() -> str:
-    return request.headers.get('X-Auth-Token', '')
-
-
-def extract_token_id_from_query_string() -> str:
-    return request.args.get('token', '')
-
-
-def extract_token_id_from_query_or_header() -> str:
-    return extract_token_id_from_query_string() or extract_token_id_from_header()
 
 
 class AccessCheck:

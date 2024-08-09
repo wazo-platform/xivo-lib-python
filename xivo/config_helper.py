@@ -5,10 +5,10 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from collections.abc import Generator
 from functools import partial
 from logging import Logger
 from typing import Any
-from collections.abc import Generator
 
 import yaml
 
@@ -20,7 +20,6 @@ class _YAMLExecLoader(yaml.SafeLoader):
 
 
 class _YAMLExecTag(yaml.YAMLObject):
-
     yaml_tag = '!exec'
     yaml_loader = _YAMLExecLoader
 

@@ -1,9 +1,9 @@
-# Copyright 2017-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import ipaddress
-from typing import Any, Union, TypedDict
+from typing import Any, TypedDict, Union
 
 from marshmallow.fields import URL as _URL
 from marshmallow.fields import UUID as _UUID
@@ -192,7 +192,6 @@ class Constant(_Constant):
 
 
 class IP(_String):
-
     default_error_messages: DefaultErrorMessages = Field.default_error_messages | {
         'invalid': {
             'message': 'Not a valid IP address.',
@@ -214,3 +213,13 @@ class IP(_String):
             return str(ipaddress.ip_address(value))
         except ValueError:
             raise self.make_error("invalid")
+
+
+# Copied from https://github.com/marshmallow-code/marshmallow/issues/133
+class MultiDictAwareList(List):
+    def _deserialize(
+        self, value: Any, attr: str | None, data: dict[str, Any], **kwargs: Any
+    ) -> dict[str, list]:
+        if isinstance(data, dict) and hasattr(data, 'getlist'):
+            value = data.getlist(attr)
+        return super()._deserialize(value, attr, data, **kwargs)
