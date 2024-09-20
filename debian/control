@@ -11,7 +11,8 @@ Architecture: all
 Depends: ${python3:Depends},
          ${misc:Depends},
          python3-consul,
-         python3-yaml
+         python3-yaml,
+         python3-typing-extensions
 Description: Wazo Python libraries - Python 3
  Wazo is a system based on a powerful IPBX, to bring an easy to
  install solution for telephony and related services.
