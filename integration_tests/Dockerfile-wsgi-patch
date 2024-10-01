@@ -1,0 +1,18 @@
+FROM python:3.9-slim-bullseye
+
+# gcc is needed for 'netifaces'
+RUN apt update && apt install --assume-yes gcc
+
+COPY integration_tests/assets/bin/simple-wsgi-server.py /usr/local/bin
+COPY . /usr/local/src/xivo-lib-python
+
+RUN cd /usr/local/src/xivo-lib-python && \
+    python3 -m pip install -r requirements.txt && \
+    python3 -m pip install 'flask-restful==0.3.8' && \
+    python setup.py install
+
+# Allow 0 workes for cheroot server
+# RUN sed -i 's/numthreads or 1/numthreads/' /usr/local/lib/python3.9/site-packages/cheroot/wsgi.py
+
+EXPOSE 8080
+CMD python3 /usr/local/bin/simple-wsgi-server.py
