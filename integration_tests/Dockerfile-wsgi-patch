@@ -12,7 +12,6 @@ RUN cd /usr/local/src/xivo-lib-python && \
     python setup.py install
 
 # Allow 0 workes for cheroot server
-# RUN sed -i 's/numthreads or 1/numthreads/' /usr/local/lib/python3.9/site-packages/cheroot/wsgi.py
 
 EXPOSE 8080
 CMD python3 /usr/local/bin/simple-wsgi-server.py
