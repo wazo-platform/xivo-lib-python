@@ -1,0 +1,6 @@
+services:
+  sync:
+    depends_on:
+      - wsgi-patch
+    environment:
+      TARGETS: ''
