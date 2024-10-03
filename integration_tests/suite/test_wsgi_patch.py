@@ -18,7 +18,6 @@ class _BaseTest(AssetLaunchingTestCase):
     def test_wsgi_patch(self) -> None:
         server_ip = '127.0.0.1'
         service_port = self.service_port(8080, 'wsgi-patch')
-        print(service_port)
         url = f'http://{server_ip}:{service_port}/resource'
 
         for i in range(150):
