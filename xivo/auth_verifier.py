@@ -145,6 +145,13 @@ class AccessCheck:
     def may_add_access(self, new_access: str) -> bool:
         return new_access.startswith('!') or self.matches_required_access(new_access)
 
+    def may_remove_access(self, access_to_remove: str) -> bool:
+        return self.matches_required_access(
+            access_to_remove
+            if not access_to_remove.startswith('!')
+            else access_to_remove[1:]
+        )
+
     @staticmethod
     def _transform_access_to_regex(
         auth_id: str, session_id: str, access: str
