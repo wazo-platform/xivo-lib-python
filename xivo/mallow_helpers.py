@@ -43,9 +43,9 @@ class ListSchema(marshmallow.Schema):
 
     direction = fields.String(validate=validate.OneOf(['asc', 'desc']))
     order = fields.String()
-    limit = fields.Integer(validate=validate.Range(min=0), missing=None)
-    offset = fields.Integer(validate=validate.Range(min=0), missing=0)
-    search = fields.String(missing=None)
+    limit = fields.Integer(validate=validate.Range(min=0), load_default=None)
+    offset = fields.Integer(validate=validate.Range(min=0), load_default=0)
+    search = fields.String(load_default=None)
 
     class Meta:
         unknown = marshmallow.EXCLUDE
