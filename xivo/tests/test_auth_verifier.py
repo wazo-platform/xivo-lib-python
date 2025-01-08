@@ -1,4 +1,4 @@
-# Copyright 2015-2024 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -381,5 +381,15 @@ class TestAccessCheck:
         assert_that(check.matches_required_access('foo.my_session'))
         assert_that(
             check.matches_required_access('foo.another-session-uuid'),
+            equal_to(False),
+        )
+
+    def test_matches_edit(self):
+        check = AccessCheck('123', 'session-uuid', ['foo.edit'])
+
+        assert_that(check.matches_required_access('foo.edit'))
+        assert_that(check.matches_required_access('foo.update'))
+        assert_that(
+            check.matches_required_access('foo.edit.update'),
             equal_to(False),
         )
