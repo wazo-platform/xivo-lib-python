@@ -43,7 +43,10 @@ class AuthVerifierFlask:
                 tenant_uuid,
             )
 
+            # NOTE: Used to efficiently retrieve endpoint's required ACL directly
+            #       in request context, useful for hooks and plugins
             g.verified_acl = required_acl
+
             g.verified_tenant_uuid = tenant_uuid
 
             return func(*args, **kwargs)
