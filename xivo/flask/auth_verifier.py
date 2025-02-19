@@ -1,4 +1,4 @@
-# Copyright 2024 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2024-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
@@ -42,6 +42,10 @@ class AuthVerifierFlask:
                 required_acl,
                 tenant_uuid,
             )
+
+            # NOTE: Used to efficiently retrieve endpoint's required ACL directly
+            #       in request context, useful for hooks and plugins
+            g.verified_acl = required_acl
 
             g.verified_tenant_uuid = tenant_uuid
 
