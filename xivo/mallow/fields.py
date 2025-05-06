@@ -1,4 +1,4 @@
-# Copyright 2017-2024 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
@@ -6,6 +6,7 @@ from __future__ import annotations
 import ipaddress
 from typing import Any, TypedDict, Union
 
+from marshmallow.exceptions import ValidationError
 from marshmallow.fields import URL as _URL
 from marshmallow.fields import UUID as _UUID
 from marshmallow.fields import Boolean as _Boolean  # noqa: E402
@@ -14,6 +15,7 @@ from marshmallow.fields import Date as _Date
 from marshmallow.fields import DateTime as _DateTime
 from marshmallow.fields import Dict as _Dict
 from marshmallow.fields import Email as _Email
+from marshmallow.fields import Enum as _Enum
 from marshmallow.fields import Field as _Field
 from marshmallow.fields import Float as _Float
 from marshmallow.fields import Integer as _Integer
@@ -101,6 +103,22 @@ class Email(_Email):
             constraint='email',
         )
     }
+
+
+class Enum(_Enum):
+    default_error_messages: DefaultErrorMessages = Field.default_error_messages | {
+        'unknown': _StringifiedDict(
+            message=_Enum.default_error_messages['unknown'],
+            constraint_id='type',
+            constraint='enum',
+        )
+    }
+
+    def make_error(self, key: str, **kwargs: Any) -> ValidationError:
+        error = super().make_error(key, **kwargs)
+        stringified_dict: _StringifiedDict = error.messages
+        stringified_dict.format(**kwargs)
+        return error
 
 
 class Integer(_Integer):
