@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 
 import phonenumbers
-from phonenumbers import NumberParseException, PhoneNumberFormat, is_valid_number
+from phonenumbers import NumberParseException, PhoneNumberFormat, is_possible_number
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +60,6 @@ def _format_phone_number(
             f'Could not parse number {number} with country code {country_code}'
         )
 
-    if parsed_number is None or not is_valid_number(parsed_number):
+    if parsed_number is None or not is_possible_number(parsed_number):
         return None
     return phonenumbers.format_number(parsed_number, number_format)
