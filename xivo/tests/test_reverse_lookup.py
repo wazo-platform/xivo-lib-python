@@ -31,6 +31,7 @@ class TestReverseLookup(unittest.TestCase):
 
         num3 = '0511223344'
         num4 = '2507771234'
+        num5 = '07771234'
 
         assert_that(format_phone_number_e164(num1, 'FR'), equal_to(None))
         assert_that(format_phone_number_e164(num1, 'CA'), equal_to(None))
@@ -41,7 +42,7 @@ class TestReverseLookup(unittest.TestCase):
         assert_that(format_phone_number_e164(num2, None), equal_to(None))
 
         assert_that(format_phone_number_e164(num3, None), equal_to(None))
-        assert_that(format_phone_number_e164(num3, 'CA'), equal_to(None))
+        assert_that(format_phone_number_e164(num5, 'CA'), equal_to(None))
 
         assert_that(format_phone_number_e164(num4, None), equal_to(None))
         assert_that(format_phone_number_e164(num4, 'FR'), equal_to(None))
