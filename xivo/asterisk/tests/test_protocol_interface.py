@@ -1,4 +1,4 @@
-# Copyright 2013-2024 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -157,6 +157,15 @@ class TestProtocolInterface(unittest.TestCase):
         channel = 'Local/##42@default-00005df6;1'
 
         expected_result = ProtocolInterface('Local', '##42@default')
+
+        result = protocol_interface_from_channel(channel)
+
+        self.assertEqual(result, expected_result)
+
+    def test_pipe_sign_in_interface(self):
+        channel = 'Local/123|*42@default-00005df6;1'
+
+        expected_result = ProtocolInterface('Local', '123|*42@default')
 
         result = protocol_interface_from_channel(channel)
 
