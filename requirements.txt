@@ -2,14 +2,14 @@ https://github.com/wazo-platform/wazo-lib-rest-client/archive/master.zip
 https://github.com/wazo-platform/wazo-auth-client/archive/master.zip
 https://github.com/wazo-platform/wazo-bus/archive/master.zip
 cheroot==9.0.0
-flask==1.1.2
-itsdangerous==1.1.0  # from flask
-jinja2==3.0.3  # from flask
-markupsafe==2.0.1 # from flask
-werkzeug==1.0.1 # from flask
+flask==2.2.2
+itsdangerous==2.1.2  # from flask
+jinja2==3.1.2  # from flask
+markupsafe==2.1.2 # from flask
+werkzeug==2.2.2 # from flask
 marshmallow==3.18.0
-netifaces==0.10.9
-phonenumbers==8.12.1
-python-consul==1.1.0
-pyyaml==5.3.1
+netifaces==0.11.0
+phonenumbers==8.12.57
+python-consul==1.1.0 # not a debian dependency
+pyyaml==6.0
 stevedore==4.0.2
