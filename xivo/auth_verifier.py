@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import TYPE_CHECKING, Any, Callable, NamedTuple, TypeVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 
 import requests
 from wazo_auth_client import exceptions

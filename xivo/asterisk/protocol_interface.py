@@ -1,4 +1,4 @@
-# Copyright 2013-2024 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ def protocol_interface_from_channel(channel: str) -> ProtocolInterface:
 
 def protocol_interfaces_from_hint(
     hint: str, ignore_invalid: bool = True
-) -> Generator[ProtocolInterface, None, None]:
+) -> Generator[ProtocolInterface]:
     for device in hint.split('&'):
         if protocol_interface := _protocol_interface_from_device(device):
             yield protocol_interface
