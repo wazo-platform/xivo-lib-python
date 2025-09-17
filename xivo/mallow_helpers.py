@@ -1,10 +1,11 @@
-# Copyright 2016-2024 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import wraps  # noqa: E402
-from typing import Any, Callable, Literal, TypeVar
+from typing import Any, Literal, TypeVar
 
 import marshmallow  # noqa: E402
 

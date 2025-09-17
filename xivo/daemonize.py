@@ -1,4 +1,4 @@
-# Copyright 2007-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2007-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Transforms a process into a daemon from hell
@@ -200,7 +200,7 @@ def unlock_pidfile(pidfile: str) -> None:
 
 
 @contextmanager
-def pidfile_context(pid_file_name: str) -> Generator[None, None, None]:
+def pidfile_context(pid_file_name: str) -> Generator[None]:
     log.debug("Locking PID file...")
     lock_pidfile_or_die(pid_file_name)
     log.debug("PID file locked.")

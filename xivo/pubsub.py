@@ -1,4 +1,4 @@
-# Copyright 2007-2024 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2007-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
@@ -7,8 +7,9 @@ import logging
 import threading
 import uuid
 from collections import defaultdict
+from collections.abc import Callable
 from functools import partial
-from typing import Any, Callable, DefaultDict, Union
+from typing import Any, DefaultDict, Union
 
 logger = logging.getLogger(__name__)
 

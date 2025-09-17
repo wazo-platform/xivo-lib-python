@@ -1,4 +1,4 @@
-# Copyright 2014-2024 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
@@ -95,7 +95,7 @@ class ConfigParser:
             self._error_handler.on_parse_config_dir_env_error(directory_name, e)
             return []
 
-        def _config_generator() -> Generator[dict[str, Any], None, None]:
+        def _config_generator() -> Generator[dict[str, Any]]:
             for filename in sorted(extra_config_filenames):
                 if filename.startswith('.'):
                     continue

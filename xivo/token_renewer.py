@@ -1,4 +1,4 @@
-# Copyright 2015-2024 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
@@ -7,8 +7,8 @@ import itertools
 import logging
 import threading
 import types
-from collections.abc import Collection
-from typing import TYPE_CHECKING, Callable, TypedDict, TypeVar
+from collections.abc import Callable, Collection
+from typing import TYPE_CHECKING, TypedDict, TypeVar
 
 import requests
 

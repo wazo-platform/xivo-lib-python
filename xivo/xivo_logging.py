@@ -1,4 +1,4 @@
-# Copyright 2014-2024 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
@@ -6,8 +6,7 @@ from __future__ import annotations
 import logging
 import sys
 import types
-from collections.abc import Sequence
-from typing import Callable
+from collections.abc import Callable, Sequence
 
 DEFAULT_LOG_FORMAT = '%(asctime)s [%(process)d] (%(levelname)s) (%(name)s): %(message)s'
 DEFAULT_LOG_LEVEL = logging.INFO
@@ -82,12 +81,8 @@ def setup_logging(
         log_level = logging.DEBUG
     root_logger.setLevel(log_level)
 
-    sys.stdout = _StreamToLogger(  # type: ignore[assignment]
-        logging.getLogger('STDOUT'), logging.INFO
-    )
-    sys.stderr = _StreamToLogger(  # type: ignore[assignment]
-        logging.getLogger('STDERR'), logging.ERROR
-    )
+    sys.stdout = _StreamToLogger(logging.getLogger('STDOUT'), logging.INFO)
+    sys.stderr = _StreamToLogger(logging.getLogger('STDERR'), logging.ERROR)
 
     sys.excepthook = excepthook
 
