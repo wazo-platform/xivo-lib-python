@@ -11,7 +11,7 @@ Running unit tests
 ```
 apt-get install libpq-dev libffi-dev libyaml-dev python3-dev
 pip install tox
-tox --recreate -e py39
+tox --recreate -e py311
 ```
 
 
