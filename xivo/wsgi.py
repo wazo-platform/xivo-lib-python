@@ -1,4 +1,4 @@
-# Copyright 2024 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2024-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # Stopping the service when such error occurs avoid flooding the log files.
 #
 # Check upstream package for any change in the 'serve' function when migrating
-# from bullseye to bookworm (and subsequent)
+# from bookworm to trixie (and subsequent)
 
 
 class PatchedWSGIServer(Server):  # noqa

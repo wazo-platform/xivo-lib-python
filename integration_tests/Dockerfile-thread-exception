@@ -1,8 +1,8 @@
-FROM python:3.9-slim-bullseye
+FROM python:3.11-slim-bookworm
 
 COPY integration_tests/assets/bin/thread-exception.py /usr/local/bin
 COPY . /usr/local/src/xivo-lib-python
 
 RUN cd /usr/local/src/xivo-lib-python && python3 -m pip install -e .
 
-CMD python3 /usr/local/bin/thread-exception.py
+CMD ["python3", "/usr/local/bin/thread-exception.py"]
