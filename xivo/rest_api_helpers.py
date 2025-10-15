@@ -1,13 +1,13 @@
-# Copyright 2016-2024 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 import yaml
 from pkg_resources import iter_entry_points, resource_string
@@ -34,7 +34,7 @@ class APIException(Exception):
 
 
 def handle_api_exception(
-    func: Callable[..., R]
+    func: Callable[..., R],
 ) -> Callable[..., R | tuple[dict[str, Any], int]]:
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> R | tuple[dict[str, Any], int]:
@@ -57,7 +57,7 @@ def handle_api_exception(
 
 def load_all_api_specs(
     entry_point_group: str, spec_filename: str
-) -> Generator[dict[str, Any], None, None]:
+) -> Generator[dict[str, Any]]:
     for module in iter_entry_points(group=entry_point_group):
         try:
             spec = yaml.safe_load(resource_string(module.module_name, spec_filename))

@@ -1,4 +1,4 @@
-# Copyright 2013-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2013-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """More comprehensive traceback formatting for AGI in Python.
@@ -50,7 +50,8 @@ import time
 import tokenize
 import traceback
 import types
-from typing import TYPE_CHECKING, Any, Callable, NamedTuple, NewType, TextIO
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, NamedTuple, NewType, TextIO
 
 if TYPE_CHECKING:
     from xivo.agi import AGI
@@ -137,7 +138,7 @@ def get_frames_from_traceback(
                     varargs,
                     varkw,
                     lcals,
-                    formatvalue=lambda v: '=' + pydoc.text.repr(v),  # type: ignore[call-arg]
+                    formatvalue=lambda v: '=' + pydoc.text.repr(v),
                 )
             )
 
@@ -171,7 +172,7 @@ def get_frames_from_traceback(
                     name = name
                 else:
                     name = (where or '') + name.split('.')[-1]
-                dump.append(f'{name} = {pydoc.text.repr(value)}')  # type: ignore[call-arg]
+                dump.append(f'{name} = {pydoc.text.repr(value)}')
             else:
                 dump.append(name + ' undefined')
 
@@ -201,7 +202,7 @@ function calls leading up to the error, in the order they occurred.
     exception = [f'{str(etype)}: {str(evalue)}']
     if isinstance(evalue, type):
         for name in dir(evalue):
-            value_repr = pydoc.text.repr(getattr(evalue, name))  # type: ignore[call-arg]
+            value_repr = pydoc.text.repr(getattr(evalue, name))
             exception.append(f'\n{" " * 4}{name} = {value_repr}')
 
     return (
