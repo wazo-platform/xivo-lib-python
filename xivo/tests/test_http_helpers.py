@@ -144,7 +144,6 @@ class TestHeaderFormatter(unittest.TestCase):
 
 
 class TestParseContentDispositionFilename(unittest.TestCase):
-    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Disposition
     CONTENT_DISPOSITION_FILENAMES = [
         ('inline', None),
         ('attachment', None),
