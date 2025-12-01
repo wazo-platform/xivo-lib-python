@@ -13,6 +13,7 @@ from xivo.http_helpers import (
     log_request,
     log_request_hide_token,
     parse_content_disposition_filename,
+    parse_content_type,
 )
 
 
@@ -155,3 +156,22 @@ class TestParseContentDispositionFilename(unittest.TestCase):
         for header, expected_filename in self.CONTENT_DISPOSITION_FILENAMES:
             filename = parse_content_disposition_filename(header)
             assert filename == expected_filename
+
+
+class TestParseContentType(unittest.TestCase):
+    CONTENT_TYPES = [
+        (
+            'text/html; charset=utf-8',
+            ('text/html', {'charset': 'utf-8'}),
+        ),
+        (
+            'multipart/form-data; boundary=ExampleBoundaryString',
+            ('multipart/form-data', {'boundary': 'ExampleBoundaryString'}),
+        ),
+    ]
+
+    def test_parse_content_type(self):
+        for header, (expected_content_type, expected_params) in self.CONTENT_TYPES:
+            content_type, params = parse_content_type(header)
+            assert content_type == expected_content_type
+            assert params == expected_params

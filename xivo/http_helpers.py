@@ -211,3 +211,22 @@ def parse_content_disposition_filename(content_disposition: str) -> str | None:
     msg = Message()
     msg['content-disposition'] = content_disposition
     return msg.get_filename()
+
+
+def parse_content_type(content_type: str) -> tuple[str, dict[str, str]]:
+    """
+    parse a content-type header
+    and return the media type value and any parameters
+    https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Type
+    """
+    # parse content type using email.message.Message
+    msg = Message()
+    msg['content-type'] = content_type
+    media_type = msg.get_content_type()
+    if _params := msg.get_params():
+        params = dict(_params)
+        # the media type value is also included as a value-less key by get_params
+        params.pop(media_type)
+    else:
+        params = {}
+    return (media_type, params)
