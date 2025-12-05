@@ -9,12 +9,12 @@ import uuid
 from collections import defaultdict
 from collections.abc import Callable
 from functools import partial
-from typing import Any, DefaultDict, Union
+from typing import Any, DefaultDict
 
 logger = logging.getLogger(__name__)
 
-Callback = Callable[[Union[str, None]], None]
-ExceptionHandler = Callable[[Callback, Union[str, None], Exception], None]
+Callback = Callable[[str | None], None]
+ExceptionHandler = Callable[[Callback, str | None, Exception], None]
 
 
 class Pubsub:

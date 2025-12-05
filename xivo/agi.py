@@ -34,7 +34,7 @@ from __future__ import annotations
 
 __version__ = "$Revision$ $Date$"
 __license__ = """
-    Copyright 2007-2023 The Wazo Authors  (see the AUTHORS file)
+    Copyright 2007-2025 The Wazo Authors  (see the AUTHORS file)
     Copyright (C) 2004 Karl Putland
     Upstream Original Author: Karl Putland <kputland@users.sourceforge.net>
 
@@ -66,13 +66,13 @@ import re
 import signal
 import sys
 from types import FrameType
-from typing import TYPE_CHECKING, TextIO, Union
+from typing import TYPE_CHECKING, TextIO
 
 if TYPE_CHECKING:
     from typing import Literal
 
 
-Digits = Union[list[Union[str, int]], str]
+Digits = list[str | int] | str
 Result = dict[str, tuple[str, str]]
 
 DEFAULT_TIMEOUT = 2000  # 2sec timeout used as default for functions that take timeouts

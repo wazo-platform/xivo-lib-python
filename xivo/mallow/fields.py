@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import ipaddress
-from typing import Any, TypedDict, Union
+from typing import Any, TypedDict
 
 from marshmallow.exceptions import ValidationError
 from marshmallow.fields import URL as _URL
@@ -31,13 +31,13 @@ class ErrorMessages(TypedDict):
     constraint: str
 
 
-DefaultErrorMessages = dict[str, Union[ErrorMessages, "_StringifiedDict"]]
-
-
 class _StringifiedDict(dict):
     def format(self, *args: Any, **kwargs: Any) -> _StringifiedDict:
         self['message'] = self.get('message', '').format(*args, **kwargs)
         return self
+
+
+DefaultErrorMessages = dict[str, ErrorMessages | _StringifiedDict]
 
 
 class Field(_Field):
