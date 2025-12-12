@@ -58,11 +58,11 @@ class ListSchema(marshmallow.Schema):
             self._set_direction_parameters(field_obj)
 
     def _set_direction_parameters(self, field_obj: fields.Field) -> None:
-        field_obj.missing = self.default_direction
+        field_obj.load_default = self.default_direction
 
     def _set_order_parameters(self, field_obj: fields.Field) -> None:
         field_obj.validators = [validate.OneOf(self.sort_columns)]
-        field_obj.missing = self.default_sort_column
+        field_obj.load_default = self.default_sort_column
         if self.default_sort_column is None:
             field_obj.allow_none = True
         else:
