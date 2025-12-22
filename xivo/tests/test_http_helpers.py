@@ -1,4 +1,4 @@
-# Copyright 2016-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
@@ -117,6 +117,27 @@ class TestBodyFormatter(unittest.TestCase):
         formatter = BodyFormatter(body, hidden_fields=['four'])
 
         assert_that(f'{formatter}', equal_to('{"one": 1, "two": 2, "three": 3,}'))
+
+    def test_valid_json_but_integer(self):
+        body = b'1'
+
+        formatter = BodyFormatter(body, hidden_fields=['four'])
+
+        assert_that(f'{formatter}', equal_to('1'))
+
+    def test_valid_json_but_string(self):
+        body = b'"hello world"'
+
+        formatter = BodyFormatter(body, None)
+
+        assert_that(f'{formatter}', equal_to('"hello world"'))
+
+    def test_valid_json_but_array(self):
+        body = b'[1,2,3]'
+
+        formatter = BodyFormatter(body, None)
+
+        assert_that(f'{formatter}', equal_to('[1,2,3]'))
 
 
 class TestHeaderFormatter(unittest.TestCase):
