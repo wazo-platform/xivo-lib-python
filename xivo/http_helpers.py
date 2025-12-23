@@ -1,4 +1,4 @@
-# Copyright 2016-2024 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
@@ -79,9 +79,10 @@ class BodyFormatter:
                     return self._HIDDEN_VALUE
             return printable_body
 
-        for field in self._hidden_fields:
-            if field in serialized_body:
-                serialized_body[field] = self._HIDDEN_VALUE
+        if isinstance(serialized_body, dict):
+            for field in self._hidden_fields:
+                if field in serialized_body:
+                    serialized_body[field] = self._HIDDEN_VALUE
 
         return json.dumps(serialized_body)
 
