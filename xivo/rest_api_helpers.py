@@ -1,16 +1,17 @@
-# Copyright 2016-2025 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
+import importlib.resources
 import logging
 import time
 from collections.abc import Callable, Generator
 from functools import wraps
+from importlib.metadata import entry_points
 from typing import Any, TypeVar
 
 import yaml
-from pkg_resources import iter_entry_points, resource_string
 
 logger = logging.getLogger(__name__)
 
@@ -58,11 +59,16 @@ def handle_api_exception(
 def load_all_api_specs(
     entry_point_group: str, spec_filename: str
 ) -> Generator[dict[str, Any]]:
-    for module in iter_entry_points(group=entry_point_group):
+    for ep in entry_points(group=entry_point_group):
+        package_name = ep.value.split(':')[0].rsplit('.', 1)[0]
         try:
-            spec = yaml.safe_load(resource_string(module.module_name, spec_filename))
+            spec = yaml.safe_load(
+                importlib.resources.files(package_name)
+                .joinpath(spec_filename)
+                .read_bytes()
+            )
             yield spec
         except OSError:
-            logger.debug('API spec for module "%s" does not exist', module.module_name)
+            logger.debug('API spec for package "%s" does not exist', package_name)
         except ImportError as e:
-            logger.warning('Could not load module %s: %s', module.module_name, e)
+            logger.warning('Could not load package %s: %s', package_name, e)
