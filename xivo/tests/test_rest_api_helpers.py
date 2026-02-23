@@ -1,13 +1,15 @@
-# Copyright 2016-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from importlib.metadata import EntryPoint
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import create_autospec, patch
 from unittest.mock import sentinel as s
 
 from hamcrest import (
     assert_that,
     contains_exactly,
+    empty,
     equal_to,
     has_entries,
     instance_of,
@@ -15,7 +17,7 @@ from hamcrest import (
     raises,
 )
 
-from ..rest_api_helpers import APIException, handle_api_exception
+from ..rest_api_helpers import APIException, handle_api_exception, load_all_api_specs
 
 
 class TestRestApiHelpers(TestCase):
@@ -101,3 +103,73 @@ class TestRestApiHelpers(TestCase):
         decorated()
 
         assert_that(logger.error.called, is_(True))
+
+
+def _make_entry_point(value):
+    return create_autospec(spec=EntryPoint, value=value)
+
+
+@patch('xivo.rest_api_helpers.importlib.resources.files')
+@patch('xivo.rest_api_helpers.entry_points')
+class TestLoadAllApiSpecs(TestCase):
+    def _set_spec_content(self, resources_files, content):
+        resources_files.return_value.joinpath.return_value.read_bytes.return_value = (
+            content
+        )
+
+    def test_yields_parsed_specs(self, entry_points, resources_files):
+        entry_points.return_value = [
+            _make_entry_point('my_pkg.plugins.foo.http:ViewPlugin')
+        ]
+        self._set_spec_content(resources_files, b'info:\n  title: test')
+
+        result = list(load_all_api_specs('my_group', 'api.yml'))
+
+        assert_that(
+            result,
+            contains_exactly(has_entries(info=has_entries(title='test'))),
+        )
+
+    def test_package_name_derivation(self, entry_points, resources_files):
+        cases = [
+            ('wazo_dird.plugins.api.http:ApiViewPlugin', 'wazo_dird.plugins.api'),
+            ('my_pkg.module:Class', 'my_pkg'),
+            ('a.b.c.d.e:F', 'a.b.c.d'),
+        ]
+        for ep_value, expected_package in cases:
+            resources_files.reset_mock()
+            entry_points.return_value = [_make_entry_point(ep_value)]
+            self._set_spec_content(resources_files, b'info: {}')
+
+            list(load_all_api_specs('group', 'api.yml'))
+
+            resources_files.assert_called_with(expected_package)
+
+    def test_skips_missing_spec_file(self, entry_points, resources_files):
+        entry_points.return_value = [
+            _make_entry_point('my_pkg.plugins.foo.http:Plugin')
+        ]
+        resources_files.return_value.joinpath.return_value.read_bytes.side_effect = (
+            OSError('file not found')
+        )
+
+        result = list(load_all_api_specs('group', 'api.yml'))
+
+        assert_that(result, is_(empty()))
+
+    def test_skips_unloadable_package(self, entry_points, resources_files):
+        entry_points.return_value = [
+            _make_entry_point('bad_pkg.plugins.foo.http:Plugin')
+        ]
+        resources_files.side_effect = ImportError('no module')
+
+        result = list(load_all_api_specs('group', 'api.yml'))
+
+        assert_that(result, is_(empty()))
+
+    def test_empty_group(self, entry_points, resources_files):
+        entry_points.return_value = []
+
+        result = list(load_all_api_specs('group', 'api.yml'))
+
+        assert_that(result, is_(empty()))
