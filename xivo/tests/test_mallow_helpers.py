@@ -1,4 +1,4 @@
-# Copyright 2018-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2018-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -99,3 +99,35 @@ class TestListSchema(unittest.TestCase):
             result,
             has_entries(direction='asc', order=None, limit=None, offset=0, search=None),
         )
+
+    def test_order_insensitive_default_is_false(self):
+        result = ListSchema().load({})
+
+        assert_that(result, has_entries(order_insensitive=False))
+
+    def test_order_insensitive_when_order_in_sort_insensitive_columns(self):
+        class Schema(ListSchema):
+            sort_columns = ['name', 'email']
+            sort_insensitive_columns = ['name']
+
+        result = Schema().load({'order': 'name'})
+
+        assert_that(result, has_entries(order_insensitive=True))
+
+    def test_order_insensitive_when_order_not_in_sort_insensitive_columns(self):
+        class Schema(ListSchema):
+            sort_columns = ['name', 'email']
+            sort_insensitive_columns = ['name']
+
+        result = Schema().load({'order': 'email'})
+
+        assert_that(result, has_entries(order_insensitive=False))
+
+    def test_order_insensitive_when_sort_insensitive_columns_is_empty(self):
+        class Schema(ListSchema):
+            sort_columns = ['name']
+            sort_insensitive_columns = []
+
+        result = Schema().load({'order': 'name'})
+
+        assert_that(result, has_entries(order_insensitive=False))

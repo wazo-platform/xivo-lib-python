@@ -1,4 +1,4 @@
-# Copyright 2016-2025 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
@@ -41,6 +41,7 @@ class ListSchema(marshmallow.Schema):
     sort_columns: list[str] = []
     searchable_columns: list[str] = []
     default_direction: Literal['asc', 'desc'] = 'asc'
+    sort_insensitive_columns: list[str] = []
 
     direction = fields.String(validate=validate.OneOf(['asc', 'desc']))
     order = fields.String()
@@ -76,6 +77,13 @@ class ListSchema(marshmallow.Schema):
             if key in self.searchable_columns:
                 data.setdefault(key, value)
 
+        return data
+
+    @marshmallow.post_load()
+    def add_order_insensitive_field(
+        self, data: dict[str, Any], **kwargs: Any
+    ) -> dict[str, Any]:
+        data['order_insensitive'] = data['order'] in self.sort_insensitive_columns
         return data
 
 
