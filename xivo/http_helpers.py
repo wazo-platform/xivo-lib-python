@@ -1,4 +1,4 @@
-# Copyright 2016-2025 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import re
 import time
+import uuid
 from collections.abc import Iterable
 from json.decoder import JSONDecodeError
 from logging import Logger
@@ -127,7 +128,7 @@ def _log_request(
     url: str, response: Response, hidden_fields: list[str] | None = None
 ) -> None:
     current_app.logger.info(
-        'response to %s%s: %s %s %s',
+        'response to %s%s: %s %s %s [request_id=%s]',
         request.remote_addr,
         (
             f' in {time.time() - g.request_time:.2f}s'
@@ -137,6 +138,7 @@ def _log_request(
         request.method,
         url,
         response.status_code,
+        getattr(g, 'request_id', '-'),
     )
     if response.headers.get('Content-Type') not in PRINTABLE_CONTENT_TYPES:
         content_type = response.headers.get('Content-Type')
@@ -157,12 +159,21 @@ def log_before_request(hidden_fields: list[str] | None = None) -> None:
         'headers': LazyHeaderFormatter(request.headers),
     }
 
+    _trace_id = (
+        (request.headers.get('Wazo-Trace-ID') or '').replace('\r', '').replace('\n', '')
+    )
+    g.request_id = _trace_id or str(uuid.uuid4())
+
     if request.data and request.headers.get('Content-Type') in PRINTABLE_CONTENT_TYPES:
         params['data'] = BodyFormatter(request.data, hidden_fields)
-        fmt = "request: %(method)s %(url)s %(headers)s with data %(data)s"
+        fmt = (
+            "request: %(method)s %(url)s %(headers)s with data %(data)s"
+            "[request_id=%(request_id)s]"
+        )
     else:
-        fmt = "request: %(method)s %(url)s %(headers)s"
+        fmt = "request: %(method)s %(url)s %(headers)s [request_id=%(request_id)s]"
 
+    params['request_id'] = g.request_id
     current_app.logger.info(fmt, params)
     g.request_time = time.time()
 

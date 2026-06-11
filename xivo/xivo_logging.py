@@ -1,4 +1,4 @@
-# Copyright 2014-2025 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
@@ -8,7 +8,11 @@ import sys
 import types
 from collections.abc import Callable, Sequence
 
-DEFAULT_LOG_FORMAT = '%(asctime)s [%(process)d] (%(levelname)s) (%(name)s): %(message)s'
+DEFAULT_LOG_FORMAT = (
+    '%(asctime)s [pid %(process)d] [tid %(thread)d] (%(levelname)s)'
+    ' (%(name)s): %(message)s'
+)
+DEFAULT_LOG_DATEFMT = '%Y-%m-%d %H:%M:%S %Z'
 DEFAULT_LOG_LEVEL = logging.INFO
 
 
@@ -52,6 +56,7 @@ def setup_logging(
     debug: bool = False,
     log_level: int = DEFAULT_LOG_LEVEL,
     log_format: str = DEFAULT_LOG_FORMAT,
+    log_datefmt: str = DEFAULT_LOG_DATEFMT,
 ) -> None:
     """
     logger.*  ------------------------ v
@@ -61,7 +66,7 @@ def setup_logging(
     """
     root_logger = logging.getLogger()
 
-    formatter = logging.Formatter(log_format)
+    formatter = logging.Formatter(log_format, datefmt=log_datefmt)
 
     handler = logging.FileHandler(log_file)
     handler.setFormatter(formatter)
