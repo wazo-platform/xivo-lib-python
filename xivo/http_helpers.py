@@ -127,8 +127,9 @@ class LazyHeaderFormatter:
 def _log_request(
     url: str, response: Response, hidden_fields: list[str] | None = None
 ) -> None:
+    trace_id = getattr(g, 'trace_id', None)
     current_app.logger.info(
-        'response to %s%s: %s %s %s [request_id=%s]',
+        'response to %s%s: %s %s %s [request_id=%s]%s',
         request.remote_addr,
         (
             f' in {time.time() - g.request_time:.2f}s'
@@ -139,6 +140,7 @@ def _log_request(
         url,
         response.status_code,
         getattr(g, 'request_id', '-'),
+        f' [trace_id={trace_id}]' if trace_id else '',
     )
     if response.headers.get('Content-Type') not in PRINTABLE_CONTENT_TYPES:
         content_type = response.headers.get('Content-Type')
@@ -159,21 +161,25 @@ def log_before_request(hidden_fields: list[str] | None = None) -> None:
         'headers': LazyHeaderFormatter(request.headers),
     }
 
-    _trace_id = (
-        (request.headers.get('Wazo-Trace-ID') or '').replace('\r', '').replace('\n', '')
-    )
-    g.request_id = _trace_id or str(uuid.uuid4())
+    g.request_id = str(uuid.uuid4())
+    g.trace_id = request.headers.get('Wazo-Trace-ID') or None
+
+    params['request_id'] = g.request_id
+    if g.trace_id:
+        params['trace_id'] = g.trace_id
 
     if request.data and request.headers.get('Content-Type') in PRINTABLE_CONTENT_TYPES:
         params['data'] = BodyFormatter(request.data, hidden_fields)
         fmt = (
             "request: %(method)s %(url)s %(headers)s with data %(data)s"
-            "[request_id=%(request_id)s]"
+            " [request_id=%(request_id)s]"
         )
     else:
         fmt = "request: %(method)s %(url)s %(headers)s [request_id=%(request_id)s]"
 
-    params['request_id'] = g.request_id
+    if g.trace_id:
+        fmt += ' [trace_id=%(trace_id)s]'
+
     current_app.logger.info(fmt, params)
     g.request_time = time.time()
 
