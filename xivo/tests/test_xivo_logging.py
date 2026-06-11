@@ -1,4 +1,4 @@
-# Copyright 2014-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -19,6 +19,7 @@ from hamcrest import (
 )
 
 from xivo.xivo_logging import (
+    DEFAULT_LOG_DATEFMT,
     DEFAULT_LOG_FORMAT,
     DEFAULT_LOG_LEVEL,
     excepthook,
@@ -92,15 +93,19 @@ class TestLogging(TestCase):
 
         setup_logging(log_file)
 
-        logging.Formatter.assert_called_once_with(DEFAULT_LOG_FORMAT)
+        logging.Formatter.assert_called_once_with(
+            DEFAULT_LOG_FORMAT, datefmt=DEFAULT_LOG_DATEFMT
+        )
 
     def test_setup_logging_with_format_then_log_format_is_not_default(self, logging):
         log_file = Mock()
-        log_format = Mock()
+        log_format = '%(message)s'
 
         setup_logging(log_file, log_format=log_format)
 
-        logging.Formatter.assert_called_once_with(log_format)
+        logging.Formatter.assert_called_once_with(
+            log_format, datefmt=DEFAULT_LOG_DATEFMT
+        )
 
     def test_that_setup_logging_adds_excepthook(self, logging):
         log_file = Mock()

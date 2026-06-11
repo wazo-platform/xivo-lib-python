@@ -1,15 +1,16 @@
-# Copyright 2016-2025 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
 import unittest
 from unittest.mock import ANY, Mock, patch
 
-from hamcrest import assert_that, equal_to
+from hamcrest import assert_that, equal_to, matches_regexp
 
 from xivo.http_helpers import (
     BodyFormatter,
     LazyHeaderFormatter,
+    log_before_request,
     log_request,
     log_request_hide_token,
 )
@@ -41,6 +42,7 @@ class TestLogRequest(unittest.TestCase):
                 mock_request.method,
                 mock_request.url,
                 200,
+                '-',
             )
 
     @patch('xivo.http_helpers.g', spec={})
@@ -64,6 +66,7 @@ class TestLogRequest(unittest.TestCase):
                 mock_request.method,
                 expected_url,
                 200,
+                '-',
             )
 
     @patch('xivo.http_helpers.g', spec={})
@@ -86,6 +89,86 @@ class TestLogRequest(unittest.TestCase):
                 mock_request.method,
                 mock_request.url,
                 200,
+                '-',
+            )
+
+    @patch('xivo.http_helpers.g', spec={})
+    def test_log_before_request_uses_wazo_trace_id_as_request_id(self, g):
+        wazo_trace_id = 'a06f7f341db5b95a-AMS'
+        mock_request = Mock(data=b'', method='GET')
+        mock_request.headers.get.side_effect = (
+            lambda k, *a: wazo_trace_id if k == 'Wazo-Trace-ID' else None
+        )
+        mock_request.url = '/foo/bar'
+
+        with (
+            patch('xivo.http_helpers.request', mock_request),
+            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
+        ):
+            log_before_request()
+
+            assert_that(g.request_id, equal_to(wazo_trace_id))
+            params = mock_current_app.logger.info.call_args[0][-1]
+            assert_that(params['request_id'], equal_to(wazo_trace_id))
+
+    @patch('xivo.http_helpers.g', spec={})
+    def test_log_before_request_generates_uuid_when_no_cf_ray(self, g):
+        mock_request = Mock(data=b'', method='GET')
+        mock_request.headers.get = Mock(return_value=None)
+        mock_request.url = '/foo/bar'
+
+        with (
+            patch('xivo.http_helpers.request', mock_request),
+            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
+        ):
+            log_before_request()
+
+            assert_that(
+                g.request_id,
+                matches_regexp(
+                    r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+                ),
+            )
+            params = mock_current_app.logger.info.call_args[0][-1]
+            assert_that(params['request_id'], equal_to(g.request_id))
+
+    @patch('xivo.http_helpers.g', spec={})
+    def test_log_before_request_sanitizes_newlines_in_wazo_trace_id(self, g):
+        mock_request = Mock(data=b'', method='GET')
+        mock_request.headers.get.side_effect = (
+            lambda k, *a: 'trace-id\nforged log line' if k == 'Wazo-Trace-ID' else None
+        )
+        mock_request.url = '/foo/bar'
+
+        with (
+            patch('xivo.http_helpers.request', mock_request),
+            patch('xivo.http_helpers.current_app', Mock()),
+        ):
+            log_before_request()
+
+            assert_that(g.request_id, equal_to('trace-idforged log line'))
+
+    @patch('xivo.http_helpers.g', spec={})
+    def test_log_request_includes_request_id(self, g):
+        g.request_id = 'test-id-123'
+        mock_request = Mock()
+        mock_request.url = '/foo/bar'
+        response = Mock(data=None, status_code=200)
+
+        with (
+            patch('xivo.http_helpers.request', mock_request),
+            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
+        ):
+            log_request(response)
+
+            mock_current_app.logger.info.assert_called_once_with(
+                ANY,
+                mock_request.remote_addr,
+                ANY,
+                mock_request.method,
+                mock_request.url,
+                200,
+                'test-id-123',
             )
 
 
