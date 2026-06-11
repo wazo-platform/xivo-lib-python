@@ -43,6 +43,7 @@ class TestLogRequest(unittest.TestCase):
                 mock_request.url,
                 200,
                 '-',
+                '',
             )
 
     @patch('xivo.http_helpers.g', spec={})
@@ -67,6 +68,7 @@ class TestLogRequest(unittest.TestCase):
                 expected_url,
                 200,
                 '-',
+                '',
             )
 
     @patch('xivo.http_helpers.g', spec={})
@@ -90,10 +92,11 @@ class TestLogRequest(unittest.TestCase):
                 mock_request.url,
                 200,
                 '-',
+                '',
             )
 
     @patch('xivo.http_helpers.g', spec={})
-    def test_log_before_request_uses_wazo_trace_id_as_request_id(self, g):
+    def test_log_before_request_sets_trace_id_from_wazo_trace_id_header(self, g):
         wazo_trace_id = 'a06f7f341db5b95a-AMS'
         mock_request = Mock(data=b'', method='GET')
         mock_request.headers.get.side_effect = (
@@ -107,12 +110,20 @@ class TestLogRequest(unittest.TestCase):
         ):
             log_before_request()
 
-            assert_that(g.request_id, equal_to(wazo_trace_id))
+            assert_that(g.trace_id, equal_to(wazo_trace_id))
+            assert_that(
+                g.request_id,
+                matches_regexp(
+                    r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+                ),
+            )
             params = mock_current_app.logger.info.call_args[0][-1]
-            assert_that(params['request_id'], equal_to(wazo_trace_id))
+            assert_that(params['trace_id'], equal_to(wazo_trace_id))
 
     @patch('xivo.http_helpers.g', spec={})
-    def test_log_before_request_generates_uuid_when_no_cf_ray(self, g):
+    def test_log_before_request_generates_uuid_and_omits_trace_id_when_no_header(
+        self, g
+    ):
         mock_request = Mock(data=b'', method='GET')
         mock_request.headers.get = Mock(return_value=None)
         mock_request.url = '/foo/bar'
@@ -129,24 +140,29 @@ class TestLogRequest(unittest.TestCase):
                     r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
                 ),
             )
+            assert_that(g.trace_id, equal_to(None))
             params = mock_current_app.logger.info.call_args[0][-1]
             assert_that(params['request_id'], equal_to(g.request_id))
+            assert_that('trace_id' in params, equal_to(False))
 
     @patch('xivo.http_helpers.g', spec={})
-    def test_log_before_request_sanitizes_newlines_in_wazo_trace_id(self, g):
+    def test_log_before_request_percent_and_brace_in_trace_id_are_safe(self, g):
+        trace_id = '100%complete{json}'
         mock_request = Mock(data=b'', method='GET')
         mock_request.headers.get.side_effect = (
-            lambda k, *a: 'trace-id\nforged log line' if k == 'Wazo-Trace-ID' else None
+            lambda k, *a: trace_id if k == 'Wazo-Trace-ID' else None
         )
         mock_request.url = '/foo/bar'
 
         with (
             patch('xivo.http_helpers.request', mock_request),
-            patch('xivo.http_helpers.current_app', Mock()),
+            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
         ):
             log_before_request()
 
-            assert_that(g.request_id, equal_to('trace-idforged log line'))
+            assert_that(g.trace_id, equal_to(trace_id))
+            params = mock_current_app.logger.info.call_args[0][-1]
+            assert_that(params['trace_id'], equal_to(trace_id))
 
     @patch('xivo.http_helpers.g', spec={})
     def test_log_request_includes_request_id(self, g):
@@ -169,6 +185,32 @@ class TestLogRequest(unittest.TestCase):
                 mock_request.url,
                 200,
                 'test-id-123',
+                '',
+            )
+
+    @patch('xivo.http_helpers.g', spec={})
+    def test_log_request_includes_trace_id_when_set(self, g):
+        g.request_id = 'some-uuid-1234'
+        g.trace_id = 'a06f7f341db5b95a-AMS'
+        mock_request = Mock()
+        mock_request.url = '/foo/bar'
+        response = Mock(data=None, status_code=200)
+
+        with (
+            patch('xivo.http_helpers.request', mock_request),
+            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
+        ):
+            log_request(response)
+
+            mock_current_app.logger.info.assert_called_once_with(
+                ANY,
+                mock_request.remote_addr,
+                ANY,
+                mock_request.method,
+                mock_request.url,
+                200,
+                'some-uuid-1234',
+                ' [trace_id=a06f7f341db5b95a-AMS]',
             )
 
 
