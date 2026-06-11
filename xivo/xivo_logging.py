@@ -9,7 +9,8 @@ import types
 from collections.abc import Callable, Sequence
 
 DEFAULT_LOG_FORMAT = (
-    '%(asctime)s [%(process)d] [%(thread)d] (%(levelname)s) (%(name)s): %(message)s'
+    '%(asctime)s [pid %(process)d] [tid %(thread)d] (%(levelname)s)'
+    ' (%(name)s): %(message)s'
 )
 DEFAULT_LOG_DATEFMT = '%Y-%m-%d %H:%M:%S %Z'
 DEFAULT_LOG_LEVEL = logging.INFO
