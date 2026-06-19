@@ -1,4 +1,4 @@
-# Copyright 2015-2025 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -65,6 +65,40 @@ class TestAuthVerifierHelpers(unittest.TestCase):
                 required_acl,
                 tenant_uuid,
             )
+
+    def test_validate_token_with_no_acl_permission_raises_403(self):
+        mock_client = Mock()
+        mock_client.token.check.side_effect = MissingPermissionsTokenException
+        token_uuid = s.token
+        tenant_uuid = s.tenant
+        required_acl = s.acl
+
+        with pytest.raises(MissingPermissionsTokenAPIException) as exc_info:
+            self.helpers.validate_token(
+                mock_client,
+                token_uuid,
+                required_acl,
+                tenant_uuid,
+            )
+
+        assert exc_info.value.status_code == 403
+
+    def test_validate_invalid_token_raises_401(self):
+        mock_client = Mock()
+        mock_client.token.check.side_effect = InvalidTokenException
+        token_uuid = s.token
+        tenant_uuid = s.tenant
+        required_acl = s.acl
+
+        with pytest.raises(InvalidTokenAPIException) as exc_info:
+            self.helpers.validate_token(
+                mock_client,
+                token_uuid,
+                required_acl,
+                tenant_uuid,
+            )
+
+        assert exc_info.value.status_code == 401
 
     def test_validate_token_raise_unreachable(self):
         mock_client = Mock()
