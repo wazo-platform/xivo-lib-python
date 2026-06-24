@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import json
 import re
+import secrets
 import time
-import uuid
 from collections.abc import Iterable, MutableMapping
 from json.decoder import JSONDecodeError
 from logging import Logger
@@ -124,12 +124,48 @@ class LazyHeaderFormatter:
         return dict(headers)
 
 
+_TRACEPARENT_REGEX = re.compile(
+    r'^(?P<version>[0-9a-f]{2})'
+    r'-(?P<trace_id>[0-9a-f]{32})'
+    r'-(?P<parent_id>[0-9a-f]{16})'
+    r'-(?P<flags>[0-9a-f]{2})$',
+    re.IGNORECASE,
+)
+
+
+def _parse_traceparent(value: str | None) -> str | None:
+    """Extract the W3C trace-id from a `traceparent` header value.
+
+    Returns the 32-hex-char trace-id (lowercased) or None if the header is
+    absent or invalid per https://www.w3.org/TR/trace-context/.
+    """
+    if not value:
+        return None
+    match = _TRACEPARENT_REGEX.match(value)
+    if not match:
+        return None
+    if match.group('version') == 'ff':
+        return None
+    trace_id = match.group('trace_id').lower()
+    parent_id = match.group('parent_id').lower()
+    if trace_id == '0' * 32 or parent_id == '0' * 16:
+        return None
+    return trace_id
+
+
+def _generate_trace_id() -> str:
+    return secrets.token_hex(16)
+
+
+def _generate_request_id() -> str:
+    return secrets.token_hex(8)
+
+
 def _log_request(
     url: str, response: Response, hidden_fields: list[str] | None = None
 ) -> None:
-    trace_id = getattr(g, 'trace_id', None)
     current_app.logger.info(
-        'response to %s%s: %s %s %s [request_id=%s]%s',
+        'response to %s%s: %s %s %s [request_id=%s] [trace_id=%s]',
         request.remote_addr,
         (
             f' in {time.time() - g.request_time:.2f}s'
@@ -140,7 +176,7 @@ def _log_request(
         url,
         response.status_code,
         getattr(g, 'request_id', '-'),
-        f' [trace_id={trace_id}]' if trace_id else '',
+        getattr(g, 'trace_id', '-'),
     )
     if response.headers.get('Content-Type') not in PRINTABLE_CONTENT_TYPES:
         content_type = response.headers.get('Content-Type')
@@ -161,24 +197,27 @@ def log_before_request(hidden_fields: list[str] | None = None) -> None:
         'headers': LazyHeaderFormatter(request.headers),
     }
 
-    g.request_id = str(uuid.uuid4())
-    g.trace_id = request.headers.get('Wazo-Trace-ID') or None
+    g.request_id = _generate_request_id()
+    g.trace_id = (
+        _parse_traceparent(request.headers.get('traceparent'))
+        or request.headers.get('Wazo-Trace-ID')
+        or _generate_trace_id()
+    )
 
     params['request_id'] = g.request_id
-    if g.trace_id:
-        params['trace_id'] = g.trace_id
+    params['trace_id'] = g.trace_id
 
     if request.data and request.headers.get('Content-Type') in PRINTABLE_CONTENT_TYPES:
         params['data'] = BodyFormatter(request.data, hidden_fields)
         fmt = (
             "request: %(method)s %(url)s %(headers)s with data %(data)s"
-            " [request_id=%(request_id)s]"
+            " [request_id=%(request_id)s] [trace_id=%(trace_id)s]"
         )
     else:
-        fmt = "request: %(method)s %(url)s %(headers)s [request_id=%(request_id)s]"
-
-    if g.trace_id:
-        fmt += ' [trace_id=%(trace_id)s]'
+        fmt = (
+            "request: %(method)s %(url)s %(headers)s"
+            " [request_id=%(request_id)s] [trace_id=%(trace_id)s]"
+        )
 
     current_app.logger.info(fmt, params)
     g.request_time = time.time()
