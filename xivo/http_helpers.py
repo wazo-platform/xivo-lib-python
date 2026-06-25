@@ -10,7 +10,7 @@ import time
 from collections.abc import Iterable, MutableMapping
 from json.decoder import JSONDecodeError
 from logging import Logger
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NamedTuple
 from urllib.parse import unquote
 
 from cheroot.ssl.builtin import BuiltinSSLAdapter
@@ -133,31 +133,37 @@ _TRACEPARENT_REGEX = re.compile(
 )
 
 
-def _parse_traceparent(value: str | None) -> str | None:
-    """Extract the W3C trace-id from a `traceparent` header value.
+class TraceContext(NamedTuple):
+    trace_id: str
+    parent_id: str
 
-    Returns the 32-hex-char trace-id (lowercased) or None if the header is
-    absent or invalid per https://www.w3.org/TR/trace-context/.
+
+def _parse_traceparent(value: str | None) -> TraceContext | None:
+    """Extract the W3C trace context from a `traceparent` header value.
+
+    Returns the (trace-id, parent-id) pair (lowercased hex) or None if the
+    header is absent or invalid per https://www.w3.org/TR/trace-context/.
+    The parent-id is the span-id of the calling service.
     """
     if not value:
         return None
     match = _TRACEPARENT_REGEX.match(value)
     if not match:
         return None
-    if match.group('version') == 'ff':
+    if match.group('version').lower() == 'ff':
         return None
     trace_id = match.group('trace_id').lower()
     parent_id = match.group('parent_id').lower()
     if trace_id == '0' * 32 or parent_id == '0' * 16:
         return None
-    return trace_id
+    return TraceContext(trace_id, parent_id)
 
 
 def _generate_trace_id() -> str:
     return secrets.token_hex(16)
 
 
-def _generate_request_id() -> str:
+def _generate_span_id() -> str:
     return secrets.token_hex(8)
 
 
@@ -165,7 +171,7 @@ def _log_request(
     url: str, response: Response, hidden_fields: list[str] | None = None
 ) -> None:
     current_app.logger.info(
-        'response to %s%s: %s %s %s [request_id=%s] [trace_id=%s]',
+        'response to %s%s: %s %s %s [span_id=%s parent_id=%s trace_id=%s]',
         request.remote_addr,
         (
             f' in {time.time() - g.request_time:.2f}s'
@@ -175,7 +181,8 @@ def _log_request(
         request.method,
         url,
         response.status_code,
-        getattr(g, 'request_id', '-'),
+        getattr(g, 'span_id', '-'),
+        getattr(g, 'parent_id', None) or '-',
         getattr(g, 'trace_id', '-'),
     )
     if response.headers.get('Content-Type') not in PRINTABLE_CONTENT_TYPES:
@@ -197,27 +204,25 @@ def log_before_request(hidden_fields: list[str] | None = None) -> None:
         'headers': LazyHeaderFormatter(request.headers),
     }
 
-    g.request_id = _generate_request_id()
-    g.trace_id = (
-        _parse_traceparent(request.headers.get('traceparent'))
-        or request.headers.get('Wazo-Trace-ID')
-        or _generate_trace_id()
-    )
+    g.span_id = _generate_span_id()
+    trace_context = _parse_traceparent(request.headers.get('traceparent'))
+    if trace_context:
+        g.trace_id = trace_context.trace_id
+        g.parent_id = trace_context.parent_id
+    else:
+        g.trace_id = request.headers.get('Wazo-Trace-ID') or _generate_trace_id()
+        g.parent_id = None
 
-    params['request_id'] = g.request_id
+    params['span_id'] = g.span_id
+    params['parent_id'] = g.parent_id or '-'
     params['trace_id'] = g.trace_id
 
+    ids = '[span_id=%(span_id)s parent_id=%(parent_id)s trace_id=%(trace_id)s]'
     if request.data and request.headers.get('Content-Type') in PRINTABLE_CONTENT_TYPES:
         params['data'] = BodyFormatter(request.data, hidden_fields)
-        fmt = (
-            "request: %(method)s %(url)s %(headers)s with data %(data)s"
-            " [request_id=%(request_id)s] [trace_id=%(trace_id)s]"
-        )
+        fmt = f"request: %(method)s %(url)s %(headers)s with data %(data)s {ids}"
     else:
-        fmt = (
-            "request: %(method)s %(url)s %(headers)s"
-            " [request_id=%(request_id)s] [trace_id=%(trace_id)s]"
-        )
+        fmt = f"request: %(method)s %(url)s %(headers)s {ids}"
 
     current_app.logger.info(fmt, params)
     g.request_time = time.time()

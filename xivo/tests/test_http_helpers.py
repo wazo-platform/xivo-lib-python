@@ -45,6 +45,7 @@ class TestLogRequest(unittest.TestCase):
                 200,
                 '-',
                 '-',
+                '-',
             )
 
     @patch('xivo.http_helpers.g', spec={})
@@ -68,6 +69,7 @@ class TestLogRequest(unittest.TestCase):
                 mock_request.method,
                 expected_url,
                 200,
+                '-',
                 '-',
                 '-',
             )
@@ -94,6 +96,7 @@ class TestLogRequest(unittest.TestCase):
                 200,
                 '-',
                 '-',
+                '-',
             )
 
     @patch('xivo.http_helpers.g', spec={})
@@ -112,11 +115,14 @@ class TestLogRequest(unittest.TestCase):
             log_before_request()
 
             assert_that(g.trace_id, equal_to('4bf92f3577b34da6a3ce929d0e0e4736'))
-            assert_that(g.request_id, matches_regexp(r'^[0-9a-f]{16}$'))
+            assert_that(g.parent_id, equal_to('00f067aa0ba902b7'))
+            assert_that(g.span_id, matches_regexp(r'^[0-9a-f]{16}$'))
             params = mock_current_app.logger.info.call_args[0][-1]
             assert_that(
                 params['trace_id'], equal_to('4bf92f3577b34da6a3ce929d0e0e4736')
             )
+            assert_that(params['parent_id'], equal_to('00f067aa0ba902b7'))
+            assert_that(params['span_id'], equal_to(g.span_id))
 
     @patch('xivo.http_helpers.g', spec={})
     def test_log_before_request_falls_back_to_wazo_trace_id_header(self, g):
@@ -134,9 +140,11 @@ class TestLogRequest(unittest.TestCase):
             log_before_request()
 
             assert_that(g.trace_id, equal_to(wazo_trace_id))
-            assert_that(g.request_id, matches_regexp(r'^[0-9a-f]{16}$'))
+            assert_that(g.parent_id, equal_to(None))
+            assert_that(g.span_id, matches_regexp(r'^[0-9a-f]{16}$'))
             params = mock_current_app.logger.info.call_args[0][-1]
             assert_that(params['trace_id'], equal_to(wazo_trace_id))
+            assert_that(params['parent_id'], equal_to('-'))
 
     @patch('xivo.http_helpers.g', spec={})
     def test_log_before_request_mints_trace_id_when_no_header(self, g):
@@ -150,11 +158,13 @@ class TestLogRequest(unittest.TestCase):
         ):
             log_before_request()
 
-            assert_that(g.request_id, matches_regexp(r'^[0-9a-f]{16}$'))
+            assert_that(g.span_id, matches_regexp(r'^[0-9a-f]{16}$'))
             assert_that(g.trace_id, matches_regexp(r'^[0-9a-f]{32}$'))
+            assert_that(g.parent_id, equal_to(None))
             params = mock_current_app.logger.info.call_args[0][-1]
-            assert_that(params['request_id'], equal_to(g.request_id))
+            assert_that(params['span_id'], equal_to(g.span_id))
             assert_that(params['trace_id'], equal_to(g.trace_id))
+            assert_that(params['parent_id'], equal_to('-'))
 
     @patch('xivo.http_helpers.g', spec={})
     def test_log_before_request_percent_and_brace_in_trace_id_are_safe(self, g):
@@ -176,8 +186,9 @@ class TestLogRequest(unittest.TestCase):
             assert_that(params['trace_id'], equal_to(trace_id))
 
     @patch('xivo.http_helpers.g', spec={})
-    def test_log_request_includes_request_id_and_trace_id(self, g):
-        g.request_id = '0123456789abcdef'
+    def test_log_request_includes_span_parent_and_trace_id(self, g):
+        g.span_id = '0123456789abcdef'
+        g.parent_id = '00f067aa0ba902b7'
         g.trace_id = '4bf92f3577b34da6a3ce929d0e0e4736'
         mock_request = Mock()
         mock_request.url = '/foo/bar'
@@ -197,22 +208,25 @@ class TestLogRequest(unittest.TestCase):
                 mock_request.url,
                 200,
                 '0123456789abcdef',
+                '00f067aa0ba902b7',
                 '4bf92f3577b34da6a3ce929d0e0e4736',
             )
 
 
 class TestParseTraceparent(unittest.TestCase):
-    def test_valid_traceparent_returns_trace_id(self):
+    def test_valid_traceparent_returns_trace_and_parent_id(self):
         value = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01'
-        assert_that(
-            _parse_traceparent(value), equal_to('4bf92f3577b34da6a3ce929d0e0e4736')
-        )
+        result = _parse_traceparent(value)
+        assert result is not None
+        assert_that(result.trace_id, equal_to('4bf92f3577b34da6a3ce929d0e0e4736'))
+        assert_that(result.parent_id, equal_to('00f067aa0ba902b7'))
 
     def test_mixed_case_traceparent_is_lowercased(self):
         value = '00-4BF92F3577B34DA6A3CE929D0E0E4736-00F067AA0BA902B7-01'
-        assert_that(
-            _parse_traceparent(value), equal_to('4bf92f3577b34da6a3ce929d0e0e4736')
-        )
+        result = _parse_traceparent(value)
+        assert result is not None
+        assert_that(result.trace_id, equal_to('4bf92f3577b34da6a3ce929d0e0e4736'))
+        assert_that(result.parent_id, equal_to('00f067aa0ba902b7'))
 
     def test_none_returns_none(self):
         assert_that(_parse_traceparent(None), equal_to(None))
