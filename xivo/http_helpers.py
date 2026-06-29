@@ -7,7 +7,7 @@ import json
 import re
 import time
 import uuid
-from collections.abc import Iterable
+from collections.abc import Iterable, MutableMapping
 from json.decoder import JSONDecodeError
 from logging import Logger
 from typing import TYPE_CHECKING, Any
@@ -43,7 +43,7 @@ class ReverseProxied:
         return self.app(environ, start_response)
 
 
-def reverse_proxy_fix_api_spec(api_spec: dict[str, Any]) -> None:
+def reverse_proxy_fix_api_spec(api_spec: MutableMapping[str, Any]) -> None:
     prefix = request.headers.get('X-Script-Name')
     if prefix:
         api_spec['schemes'] = ['https']
