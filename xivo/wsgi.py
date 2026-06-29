@@ -1,9 +1,11 @@
-# Copyright 2024-2025 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2024-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
 import os
 import time
+from collections.abc import Callable
+from typing import Any
 
 from cheroot.wsgi import PathInfoDispatcher, Server
 
@@ -53,4 +55,6 @@ class PatchedWSGIServer(Server):  # noqa
 
 
 WSGIServer = PatchedWSGIServer
-WSGIPathInfoDispatcher = PathInfoDispatcher
+# cheroot ships no type information, so annotate the re-export to give callers a
+# typed callable instead of an untyped-call error.
+WSGIPathInfoDispatcher: Callable[..., Any] = PathInfoDispatcher
