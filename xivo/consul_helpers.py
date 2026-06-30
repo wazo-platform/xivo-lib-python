@@ -95,8 +95,8 @@ class ServiceCatalogRegistration:
 
     def __exit__(
         self,
-        type: type[BaseException],
-        value: BaseException,
+        type: type[BaseException] | None,
+        value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
         if type:
