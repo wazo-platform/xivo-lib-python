@@ -62,9 +62,9 @@ class ServiceCatalogRegistration:
         self,
         service_name: str,
         uuid: str,
-        consul_config: dict[str, Any],
-        service_discovery_config: dict[str, Any],
-        bus_config: dict[str, Any],
+        consul_config: Mapping[str, Any],
+        service_discovery_config: Mapping[str, Any],
+        bus_config: Mapping[str, Any],
         check: Callable[[], bool] | None = None,
     ) -> None:
         self._enabled = service_discovery_config.get('enabled', True)
@@ -156,8 +156,8 @@ class Registerer:
         self,
         name: str,
         uuid: str,
-        consul_config: dict[str, Any],
-        service_discovery_config: dict[str, Any],
+        consul_config: Mapping[str, Any],
+        service_discovery_config: Mapping[str, Any],
     ) -> None:
         self._service_id = str(uuid4())
         self._service_name = name
@@ -230,11 +230,11 @@ class Registerer:
         except (ConnectionError, ConsulException) as e:
             raise RegistererError(str(e))
 
-    def _find_address(self, service_discovery_config: dict[str, Any]) -> str:
+    def _find_address(self, service_discovery_config: Mapping[str, Any]) -> str:
         return address_from_config(service_discovery_config)
 
 
-def address_from_config(service_discovery_config: dict[str, Any]) -> str:
+def address_from_config(service_discovery_config: Mapping[str, Any]) -> str:
     advertise_address = service_discovery_config['advertise_address']
     if advertise_address != 'auto':
         return advertise_address
@@ -269,9 +269,9 @@ class NotifyingRegisterer(Registerer):
         self,
         name: str,
         uuid: str,
-        consul_config: dict[str, Any],
-        service_discovery_config: dict[str, Any],
-        bus_config: dict[str, Any],
+        consul_config: Mapping[str, Any],
+        service_discovery_config: Mapping[str, Any],
+        bus_config: Mapping[str, Any],
     ) -> None:
         super().__init__(name, uuid, consul_config, service_discovery_config)
         self._publisher = BusPublisher(
