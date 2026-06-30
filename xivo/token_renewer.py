@@ -136,8 +136,8 @@ class TokenRenewer:
 
     def __exit__(
         self,
-        exc_type: type[BaseException],
-        exc_value: BaseException,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
         traceback: types.TracebackType | None,
     ) -> None:
         self.stop()
