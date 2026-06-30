@@ -61,7 +61,7 @@ class ServiceCatalogRegistration:
     def __init__(
         self,
         service_name: str,
-        uuid: str,
+        uuid: str | None,
         consul_config: Mapping[str, Any],
         service_discovery_config: Mapping[str, Any],
         bus_config: Mapping[str, Any],
@@ -72,6 +72,7 @@ class ServiceCatalogRegistration:
             logger.debug('service discovery has been disabled')
             return
 
+        assert uuid is not None
         self._check = check or self._default_check
         self._registerer = NotifyingRegisterer(
             service_name, uuid, consul_config, service_discovery_config, bus_config
