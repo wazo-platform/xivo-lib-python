@@ -1,13 +1,13 @@
-# Copyright 2016-2025 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2016-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Callable, Collection
-from typing import DefaultDict
+from typing import Any, DefaultDict
 
-StatusDict = DefaultDict[str, DefaultDict[str, str]]
+StatusDict = DefaultDict[str, Any]
 StatusProvider = Callable[[StatusDict], None]
 
 
