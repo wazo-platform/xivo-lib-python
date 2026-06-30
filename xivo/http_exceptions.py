@@ -1,9 +1,7 @@
-# Copyright 2015-2024 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
-
-import requests
 
 from xivo import rest_api_helpers
 
@@ -57,9 +55,7 @@ class MissingPermissionsTokenAPIException(rest_api_helpers.APIException):
 
 
 class AuthServerUnreachable(rest_api_helpers.APIException):
-    def __init__(
-        self, host: str | None, port: int | None, error: requests.RequestException
-    ) -> None:
+    def __init__(self, host: str | None, port: int | None, error: Exception) -> None:
         super().__init__(
             status_code=503,
             message='Authentication server unreachable',

@@ -1,4 +1,4 @@
-# Copyright 2014-2025 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2014-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
@@ -6,7 +6,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from collections.abc import Generator
+from collections.abc import Generator, Mapping, MutableMapping
 from functools import partial
 from logging import Logger
 from typing import Any
@@ -111,7 +111,7 @@ class ConfigParser:
 
     def read_config_file_hierarchy(
         self,
-        original_config: dict[str, Any],
+        original_config: Mapping[str, Any],
         config_file_key: str = 'config_file',
         extra_config_dir_key: str = 'extra_config_files',
     ) -> ChainMap:
@@ -138,7 +138,7 @@ class ConfigParser:
         return ChainMap(*configs)
 
     def read_config_file_hierarchy_accumulating_list(
-        self, original_config: dict[str, Any]
+        self, original_config: Mapping[str, Any]
     ) -> AccumulatingListChainMap:
         main_config_filename = original_config['config_file']
         main_config = self.parse_config_file(main_config_filename)
@@ -164,7 +164,7 @@ def get_xivo_uuid(logger: Logger) -> str:
     return xivo_uuid
 
 
-def set_xivo_uuid(config: dict[str, Any], logger: Logger) -> None:
+def set_xivo_uuid(config: MutableMapping[str, Any], logger: Logger) -> None:
     config['uuid'] = get_xivo_uuid(logger)
 
 

@@ -1,11 +1,11 @@
-# Copyright 2015-2025 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
 import logging
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from types import TracebackType
 from typing import Any, TypedDict, TypeVar
 from uuid import uuid4
@@ -313,7 +313,7 @@ class NotifyingRegisterer(Registerer):
 
 
 class ServiceFinder:
-    def __init__(self, consul_config: dict[str, Any]) -> None:
+    def __init__(self, consul_config: Mapping[str, Any]) -> None:
         self._dc_url = '{scheme}://{host}:{port}/v1/catalog/datacenters'.format(
             **consul_config
         )

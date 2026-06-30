@@ -1,4 +1,4 @@
-# Copyright 2015-2025 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
@@ -7,7 +7,7 @@ import itertools
 import logging
 import threading
 import types
-from collections.abc import Callable, Collection
+from collections.abc import Callable
 from typing import TYPE_CHECKING, TypedDict, TypeVar
 
 import requests
@@ -18,7 +18,9 @@ if TYPE_CHECKING:
     from wazo_auth_client.client import AuthClient
 
 
-Callback = Callable[[Collection[str]], None]
+# a token-change callback receives token['token'] while a details callback
+# receives the full token dict, so the argument shape varies by subscription.
+Callback = Callable[..., None]
 
 
 class CallbackDict(TypedDict):
