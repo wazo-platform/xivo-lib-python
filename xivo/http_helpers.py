@@ -210,7 +210,7 @@ def log_before_request(hidden_fields: list[str] | None = None) -> None:
         g.trace_id = trace_context.trace_id
         g.parent_id = trace_context.parent_id
     else:
-        g.trace_id = request.headers.get('Wazo-Trace-ID') or _generate_trace_id()
+        g.trace_id = _generate_trace_id()
         g.parent_id = None
 
     params['span_id'] = g.span_id

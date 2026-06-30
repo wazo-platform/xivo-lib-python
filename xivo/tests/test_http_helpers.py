@@ -125,28 +125,6 @@ class TestLogRequest(unittest.TestCase):
             assert_that(params['span_id'], equal_to(g.span_id))
 
     @patch('xivo.http_helpers.g', spec={})
-    def test_log_before_request_falls_back_to_wazo_trace_id_header(self, g):
-        wazo_trace_id = 'a06f7f341db5b95a-AMS'
-        mock_request = Mock(data=b'', method='GET')
-        mock_request.headers.get.side_effect = (
-            lambda k, *a: wazo_trace_id if k == 'Wazo-Trace-ID' else None
-        )
-        mock_request.url = '/foo/bar'
-
-        with (
-            patch('xivo.http_helpers.request', mock_request),
-            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
-        ):
-            log_before_request()
-
-            assert_that(g.trace_id, equal_to(wazo_trace_id))
-            assert_that(g.parent_id, equal_to(None))
-            assert_that(g.span_id, matches_regexp(r'^[0-9a-f]{16}$'))
-            params = mock_current_app.logger.info.call_args[0][-1]
-            assert_that(params['trace_id'], equal_to(wazo_trace_id))
-            assert_that(params['parent_id'], equal_to('-'))
-
-    @patch('xivo.http_helpers.g', spec={})
     def test_log_before_request_mints_trace_id_when_no_header(self, g):
         mock_request = Mock(data=b'', method='GET')
         mock_request.headers.get = Mock(return_value=None)
@@ -165,25 +143,6 @@ class TestLogRequest(unittest.TestCase):
             assert_that(params['span_id'], equal_to(g.span_id))
             assert_that(params['trace_id'], equal_to(g.trace_id))
             assert_that(params['parent_id'], equal_to('-'))
-
-    @patch('xivo.http_helpers.g', spec={})
-    def test_log_before_request_percent_and_brace_in_trace_id_are_safe(self, g):
-        trace_id = '100%complete{json}'
-        mock_request = Mock(data=b'', method='GET')
-        mock_request.headers.get.side_effect = (
-            lambda k, *a: trace_id if k == 'Wazo-Trace-ID' else None
-        )
-        mock_request.url = '/foo/bar'
-
-        with (
-            patch('xivo.http_helpers.request', mock_request),
-            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
-        ):
-            log_before_request()
-
-            assert_that(g.trace_id, equal_to(trace_id))
-            params = mock_current_app.logger.info.call_args[0][-1]
-            assert_that(params['trace_id'], equal_to(trace_id))
 
     @patch('xivo.http_helpers.g', spec={})
     def test_log_request_includes_span_parent_and_trace_id(self, g):
