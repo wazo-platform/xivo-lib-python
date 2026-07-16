@@ -1,0 +1,15 @@
+FROM python:3.11-slim-bookworm
+
+# gcc is needed for 'netifaces'
+RUN apt update && apt install --assume-yes gcc
+
+COPY integration_tests/assets/bin/dynamic-wsgi-server.py /usr/local/bin
+COPY . /usr/local/src/xivo-lib-python
+
+RUN cd /usr/local/src/xivo-lib-python && \
+    python3 -m pip install -r requirements.txt && \
+    python3 -m pip install 'flask-restful==0.3.9' && \
+    python setup.py install
+
+EXPOSE 8080
+CMD ["python3", "/usr/local/bin/dynamic-wsgi-server.py"]
