@@ -154,6 +154,12 @@ class DynamicWSGIServer(PatchedWSGIServer):
                 pool.min,
                 pool.max,
             )
+        else:
+            logger.info(
+                'Dynamic thread pool scaling enabled (min %d -> max %d)',
+                pool.min,
+                pool.max,
+            )
 
     def prepare(self) -> None:
         super().prepare()
