@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
+from unittest.mock import patch
 
 from cheroot.workers.threadpool import ThreadPool
-from hamcrest import assert_that, equal_to
+from cheroot.wsgi import Server
+from hamcrest import assert_that, equal_to, none, not_none
 
 from ..wsgi import _REQUIRED_POOL_INTERNALS, DynamicWSGIServer, _compute_adjustment
 
@@ -130,6 +132,52 @@ class TestDynamicWSGIServerEnablement(unittest.TestCase):
             self._new_server(resize_interval=0)
         with self.assertRaises(ValueError):
             self._new_server(resize_interval=-5.0)
+
+
+class TestPrepareStartsMonitor(unittest.TestCase):
+    # cheroot's Server.prepare() binds a socket; it is mocked out so these
+    # tests only exercise the monitor thread startup logic layered on top.
+
+    def _new_server(self, **kwargs):
+        def app(environ, start_response):
+            return []
+
+        return DynamicWSGIServer(('127.0.0.1', 0), app, **kwargs)
+
+    def _stop_monitor(self, server):
+        server._monitor_stopped.set()
+        if server._monitor_thread is not None:
+            server._monitor_thread.join()
+
+    def test_prepare_does_not_start_monitor_when_scaling_disabled(self):
+        with self.assertLogs('xivo.wsgi', level='INFO'):
+            server = self._new_server(numthreads=10, max=10)
+
+        with patch.object(Server, 'prepare'):
+            server.prepare()
+
+        assert_that(server._monitor_thread, none())
+
+    def test_prepare_starts_monitor_when_scaling_enabled(self):
+        server = self._new_server(numthreads=2, max=10)
+
+        with patch.object(Server, 'prepare'):
+            server.prepare()
+        self.addCleanup(self._stop_monitor, server)
+
+        assert_that(server._monitor_thread, not_none())
+        assert_that(server._monitor_thread.is_alive(), equal_to(True))
+
+    def test_prepare_restarts_monitor_after_a_previous_stop(self):
+        server = self._new_server(numthreads=2, max=10)
+        server._monitor_stopped.set()
+
+        with patch.object(Server, 'prepare'):
+            server.prepare()
+        self.addCleanup(self._stop_monitor, server)
+
+        assert_that(server._monitor_stopped.is_set(), equal_to(False))
+        assert_that(server._monitor_thread.is_alive(), equal_to(True))
 
 
 class FakePool:

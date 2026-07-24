@@ -90,6 +90,11 @@ def _compute_adjustment(
         # queue shutdown requests ahead of incoming connections.
         return -1
 
+    # Unlike dynpool's reference algorithm, there is no explicit
+    # ``min_threads - threads`` regrow term: cheroot workers only die outside
+    # shrink() in exceptional cases, and a depleted pool regrows on demand
+    # through the minspare branch above.
+
     return 0
 
 
@@ -154,6 +159,9 @@ class DynamicWSGIServer(PatchedWSGIServer):
         super().prepare()
         if not self._dynamic_enabled:
             return
+        # cheroot servers may be restarted after stop(); reset the flag so
+        # the new monitor does not exit on its first tick.
+        self._monitor_stopped.clear()
         # Non-daemon: grown workers inherit this thread's daemon flag, and
         # daemon workers would be killed mid-request at interpreter exit.
         self._monitor_thread = threading.Thread(
@@ -176,7 +184,10 @@ class DynamicWSGIServer(PatchedWSGIServer):
             try:
                 self._resize_pool()
             except Exception:
-                # Best-effort: a stale pool size beats a dead monitor.
+                # Best-effort: a stale pool size beats a dead monitor. A
+                # persistent failure (e.g. thread limit reached) retries and
+                # logs one traceback per tick — bounded by resize_interval,
+                # unlike the fd flood PatchedWSGIServer guards against.
                 logger.exception('Error while resizing the WSGI thread pool')
 
     def _resize_pool(self) -> None:
