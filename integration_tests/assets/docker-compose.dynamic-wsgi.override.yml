@@ -1,0 +1,6 @@
+services:
+  sync:
+    depends_on:
+      - dynamic-wsgi
+    environment:
+      TARGETS: ''

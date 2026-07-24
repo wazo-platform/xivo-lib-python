@@ -4,7 +4,7 @@ egg-info:
 myservice:
 	docker build -t myservice -f Dockerfile-myservice ..
 
-test-setup: myservice thread-exception wsgi-patch egg-info
+test-setup: myservice thread-exception wsgi-patch dynamic-wsgi egg-info
 
 test:
 	pytest suite
@@ -15,4 +15,7 @@ thread-exception:
 wsgi-patch:
 	docker build -t wsgi-patch -f Dockerfile-wsgi-patch ..
 
-.PHONY: egg-info test-setup test myservice thread-exception
+dynamic-wsgi:
+	docker build -t dynamic-wsgi -f Dockerfile-dynamic-wsgi ..
+
+.PHONY: egg-info test-setup test myservice thread-exception dynamic-wsgi
