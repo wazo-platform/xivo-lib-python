@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
+import os
 import sys
 import tempfile
+import time
 from io import StringIO
 from unittest import TestCase
 from unittest.mock import Mock, patch
@@ -16,10 +18,10 @@ from hamcrest import (
     has_length,
     is_,
     is_not,
+    matches_regexp,
 )
 
 from xivo.xivo_logging import (
-    DEFAULT_LOG_DATEFMT,
     DEFAULT_LOG_FORMAT,
     DEFAULT_LOG_LEVEL,
     excepthook,
@@ -35,23 +37,21 @@ class TestLogging(TestCase):
         log_file = 'my_log_file.log'
         root_logger = logging.getLogger.return_value
         file_handler = logging.FileHandler.return_value
-        formatter = logging.Formatter.return_value
 
         setup_logging(log_file)
 
         logging.FileHandler.assert_called_once_with(log_file)
-        file_handler.setFormatter.assert_called_once_with(formatter)
+        file_handler.setFormatter.assert_called_once()
         root_logger.addHandler.assert_any_call(file_handler)
 
     def test_setup_logging_then_stream_logging(self, logging):
         log_file = Mock()
         root_logger = logging.getLogger.return_value
         stream_handler = logging.StreamHandler.return_value
-        formatter = logging.Formatter.return_value
 
         setup_logging(log_file)
 
-        stream_handler.setFormatter.assert_any_call(formatter)
+        stream_handler.setFormatter.assert_called()
         root_logger.addHandler.assert_any_call(stream_handler)
 
     def test_setup_logging_with_no_flags_then_log_level_is_default(self, logging):
@@ -90,22 +90,22 @@ class TestLogging(TestCase):
 
     def test_setup_logging_with_no_format_then_log_format_is_default(self, logging):
         log_file = Mock()
+        file_handler = logging.FileHandler.return_value
 
         setup_logging(log_file)
 
-        logging.Formatter.assert_called_once_with(
-            DEFAULT_LOG_FORMAT, datefmt=DEFAULT_LOG_DATEFMT
-        )
+        formatter = file_handler.setFormatter.call_args.args[0]
+        assert_that(formatter._fmt, equal_to(DEFAULT_LOG_FORMAT))
 
     def test_setup_logging_with_format_then_log_format_is_not_default(self, logging):
         log_file = Mock()
         log_format = '%(message)s'
+        file_handler = logging.FileHandler.return_value
 
         setup_logging(log_file, log_format=log_format)
 
-        logging.Formatter.assert_called_once_with(
-            log_format, datefmt=DEFAULT_LOG_DATEFMT
-        )
+        formatter = file_handler.setFormatter.call_args.args[0]
+        assert_that(formatter._fmt, equal_to(log_format))
 
     def test_that_setup_logging_adds_excepthook(self, logging):
         log_file = Mock()
@@ -115,6 +115,40 @@ class TestLogging(TestCase):
 
             assert_that(sys.excepthook, is_not(new_hook))
             assert_that(sys.excepthook, is_(excepthook))
+
+
+class TestLoggingFormat(TestCase):
+    def setUp(self):
+        _, self.file_name = tempfile.mkstemp()
+        self._previous_tz = os.environ.get('TZ')
+        os.environ['TZ'] = 'UTC'
+        time.tzset()
+
+    def tearDown(self):
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers[:]:
+            root_logger.removeHandler(handler)
+
+        if self._previous_tz is None:
+            os.environ.pop('TZ', None)
+        else:
+            os.environ['TZ'] = self._previous_tz
+        time.tzset()
+
+    def test_setup_logging_default_format_has_timezone_and_microsecond_timestamp(self):
+        setup_logging(self.file_name)
+        logging.getLogger('test').info('message')
+
+        with open(self.file_name) as log_file:
+            log_line = log_file.readline()
+
+        assert_that(
+            log_line,
+            matches_regexp(
+                r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} UTC'
+                r' \[pid \d+\] \[tid \d+\] \(INFO\) \(test\): message\n$'
+            ),
+        )
 
 
 @patch('sys.stderr', new_callable=StringIO)

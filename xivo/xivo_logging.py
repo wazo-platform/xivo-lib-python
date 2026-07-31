@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import logging
 import sys
+import time
 import types
 from collections.abc import Callable, Sequence
 
@@ -12,8 +13,20 @@ DEFAULT_LOG_FORMAT = (
     '%(asctime)s [pid %(process)d] [tid %(thread)d] (%(levelname)s)'
     ' (%(name)s): %(message)s'
 )
-DEFAULT_LOG_DATEFMT = '%Y-%m-%d %H:%M:%S %Z'
+DEFAULT_LOG_DATEFMT = '%Y-%m-%d %H:%M:%S'
 DEFAULT_LOG_LEVEL = logging.INFO
+
+
+# need a custom Formatter to get around default formatter quirks w.r.t. timestamp format
+class _Formatter(logging.Formatter):
+    def formatTime(self, record: logging.LogRecord, datefmt: str | None = None) -> str:
+        ct = self.converter(record.created)
+        assert datefmt is None
+        date = time.strftime(DEFAULT_LOG_DATEFMT, ct)
+        tz = time.strftime('%Z', ct)
+        # need to replicate stdlib default logic to get milisecond precision
+        # and still include timezone info
+        return f'{date},{int(record.msecs):03d} {tz}'
 
 
 class _StreamToLogger:
@@ -56,7 +69,6 @@ def setup_logging(
     debug: bool = False,
     log_level: int = DEFAULT_LOG_LEVEL,
     log_format: str = DEFAULT_LOG_FORMAT,
-    log_datefmt: str = DEFAULT_LOG_DATEFMT,
 ) -> None:
     """
     logger.*  ------------------------ v
@@ -66,7 +78,7 @@ def setup_logging(
     """
     root_logger = logging.getLogger()
 
-    formatter = logging.Formatter(log_format, datefmt=log_datefmt)
+    formatter = _Formatter(log_format)
 
     handler = logging.FileHandler(log_file)
     handler.setFormatter(formatter)
