@@ -139,7 +139,7 @@ def _compile_access(access: str) -> re.Pattern:
 
 
 @lru_cache(maxsize=ACL_CACHE_SIZE)
-def compile_acl(acl: tuple[str, ...]) -> _CompiledACL:
+def compile_acl(acl: frozenset[str]) -> _CompiledACL:
     positive: list[re.Pattern] = []
     negative: list[re.Pattern] = []
     positive_reserved: list[re.Pattern] = []
@@ -177,7 +177,7 @@ class AccessCheck:
         self._auth_id = str(auth_id)
         self._session_id = str(session_id)
 
-        compiled = compile_acl(tuple(acl))
+        compiled = compile_acl(frozenset(acl))
         if compiled.literal_ids & {self._auth_id, self._session_id}:
             compiled = self._compile_per_caller(auth_id, session_id, acl)
 

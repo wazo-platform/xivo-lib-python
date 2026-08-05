@@ -421,6 +421,27 @@ class TestAccessCheckSharedCompilation:
 
         assert compile_acl.cache_info().misses == 2
 
+    def test_acl_is_compiled_once_regardless_of_order_and_duplicates(self):
+        acl = ['confd.users.me.read', 'events.calls.me', '!events.calls.me.private']
+        compile_acl.cache_clear()
+
+        AccessCheck(ALICE_UUID, ALICE_SESSION_UUID, acl)
+        AccessCheck(ALICE_UUID, ALICE_SESSION_UUID, list(reversed(acl)))
+        AccessCheck(ALICE_UUID, ALICE_SESSION_UUID, acl + acl)
+
+        assert compile_acl.cache_info().misses == 1
+        assert compile_acl.cache_info().hits == 2
+
+    def test_order_and_duplicates_do_not_change_the_verdict(self):
+        acl = ['foo.#', '!foo.me.bar.#', 'foo.me.bar.123', 'foo.*.baz']
+        reordered = AccessCheck('123', 'session-uuid', list(reversed(acl)) + acl)
+        original = AccessCheck('123', 'session-uuid', acl)
+
+        for access in ('foo.me.bar.123', 'foo.anything', 'foo.x.baz', 'foo.me.bar.x'):
+            assert original.matches_required_access(
+                access
+            ) == reordered.matches_required_access(access)
+
 
 class TestAccessCheckUserIsolation:
     def test_me_does_not_grant_access_to_another_user(self):
