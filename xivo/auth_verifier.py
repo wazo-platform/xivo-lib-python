@@ -30,6 +30,7 @@ R = TypeVar('R')
 RESERVED_IDENTITY_WORDS = frozenset(('me', 'my_session'))
 ACCESS_CACHE_SIZE = 4096
 ACL_CACHE_SIZE = 2048
+CACHE_SATURATION_LOG_INTERVAL = 1000
 
 
 class _ACLCheck(NamedTuple):
@@ -129,8 +130,24 @@ class _CompiledACL(NamedTuple):
     literal_ids: frozenset[str]
 
 
+def _log_cache_saturation(cached: Any) -> None:
+    info = cached.cache_info()
+    if info.currsize < info.maxsize:
+        return
+    evictions = info.misses - info.currsize
+    if evictions % CACHE_SATURATION_LOG_INTERVAL == 1:
+        logger.warning(
+            '%s is full (%s entries) and evicting (%s times so far): ACLs are '
+            'recompiled on every eviction, its cache size may need raising',
+            cached.__name__,
+            info.maxsize,
+            evictions,
+        )
+
+
 @lru_cache(maxsize=ACCESS_CACHE_SIZE)
 def _compile_access(access: str) -> re.Pattern:
+    _log_cache_saturation(_compile_access)
     access_regex = re.escape(access).replace('\\*', '[^.#]*?').replace('\\#', '.*?')
     access_regex = AccessCheck._replace_reserved_words(
         access_regex, ReservedWord('edit', 'update')
@@ -140,6 +157,7 @@ def _compile_access(access: str) -> re.Pattern:
 
 @lru_cache(maxsize=ACL_CACHE_SIZE)
 def compile_acl(acl: frozenset[str]) -> _CompiledACL:
+    _log_cache_saturation(compile_acl)
     positive: list[re.Pattern] = []
     negative: list[re.Pattern] = []
     positive_reserved: list[re.Pattern] = []
