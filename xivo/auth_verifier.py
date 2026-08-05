@@ -1,4 +1,4 @@
-# Copyright 2015-2025 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
@@ -6,6 +6,7 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Callable
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 
 import requests
@@ -25,6 +26,10 @@ logger = logging.getLogger(__name__)
 
 F = TypeVar('F', bound=Callable[..., Any])
 R = TypeVar('R')
+
+RESERVED_IDENTITY_WORDS = frozenset(('me', 'my_session'))
+ACCESS_CACHE_SIZE = 4096
+ACL_CACHE_SIZE = 2048
 
 
 class _ACLCheck(NamedTuple):
@@ -116,31 +121,132 @@ class AuthVerifierHelpers:
         return str(acl_check.pattern).format(**escaped_kwargs)
 
 
+class _CompiledACL(NamedTuple):
+    positive: tuple[re.Pattern, ...]
+    negative: tuple[re.Pattern, ...]
+    positive_reserved: tuple[re.Pattern, ...]
+    negative_reserved: tuple[re.Pattern, ...]
+    literal_ids: frozenset[str]
+
+
+@lru_cache(maxsize=ACCESS_CACHE_SIZE)
+def _compile_access(access: str) -> re.Pattern:
+    access_regex = re.escape(access).replace('\\*', '[^.#]*?').replace('\\#', '.*?')
+    access_regex = AccessCheck._replace_reserved_words(
+        access_regex, ReservedWord('edit', 'update')
+    )
+    return re.compile(f'^{access_regex}$')
+
+
+@lru_cache(maxsize=ACL_CACHE_SIZE)
+def compile_acl(acl: tuple[str, ...]) -> _CompiledACL:
+    positive: list[re.Pattern] = []
+    negative: list[re.Pattern] = []
+    positive_reserved: list[re.Pattern] = []
+    negative_reserved: list[re.Pattern] = []
+    literal_ids: set[str] = set()
+
+    for entry in acl:
+        negated = entry.startswith('!')
+        access = entry[1:] if negated else entry
+        segments = access.split('.')
+        literal_ids.update(segments)
+        regex = _compile_access(access)
+        uses_reserved_word = bool(RESERVED_IDENTITY_WORDS.intersection(segments))
+        if negated:
+            negative.append(regex)
+            if uses_reserved_word:
+                negative_reserved.append(regex)
+        else:
+            positive.append(regex)
+            if uses_reserved_word:
+                positive_reserved.append(regex)
+
+    return _CompiledACL(
+        positive=tuple(positive),
+        negative=tuple(negative),
+        positive_reserved=tuple(positive_reserved),
+        negative_reserved=tuple(negative_reserved),
+        literal_ids=frozenset(literal_ids),
+    )
+
+
 class AccessCheck:
     def __init__(self, auth_id: str, session_id: str, acl: list[str]) -> None:
         self.auth_id = auth_id
-        self._positive_access_regexes = [
-            self._transform_access_to_regex(auth_id, session_id, access)
-            for access in acl
-            if not access.startswith('!')
-        ]
-        self._negative_access_regexes = [
-            self._transform_access_to_regex(auth_id, session_id, access[1:])
-            for access in acl
-            if access.startswith('!')
-        ]
+        self._auth_id = str(auth_id)
+        self._session_id = str(session_id)
+
+        compiled = compile_acl(tuple(acl))
+        if compiled.literal_ids & {self._auth_id, self._session_id}:
+            compiled = self._compile_per_caller(auth_id, session_id, acl)
+
+        self._positive_access_regexes = compiled.positive
+        self._negative_access_regexes = compiled.negative
+        self._positive_reserved_regexes = compiled.positive_reserved
+        self._negative_reserved_regexes = compiled.negative_reserved
+
+    @classmethod
+    def _compile_per_caller(
+        cls, auth_id: str, session_id: str, acl: list[str]
+    ) -> _CompiledACL:
+        return _CompiledACL(
+            positive=tuple(
+                cls._transform_access_to_regex(auth_id, session_id, access)
+                for access in acl
+                if not access.startswith('!')
+            ),
+            negative=tuple(
+                cls._transform_access_to_regex(auth_id, session_id, access[1:])
+                for access in acl
+                if access.startswith('!')
+            ),
+            positive_reserved=(),
+            negative_reserved=(),
+            literal_ids=frozenset(),
+        )
+
+    def _generalize_identity(self, required_access: str) -> str | None:
+        if (
+            self._auth_id not in required_access
+            and self._session_id not in required_access
+        ):
+            return None
+        generalized = '.'.join(
+            'me'
+            if segment == self._auth_id
+            else 'my_session'
+            if segment == self._session_id
+            else segment
+            for segment in required_access.split('.')
+        )
+        return generalized if generalized != required_access else None
 
     def matches_required_access(self, required_access: str | None) -> bool:
         if required_access is None:
             return True
 
+        generalized = (
+            self._generalize_identity(required_access)
+            if self._positive_reserved_regexes or self._negative_reserved_regexes
+            else None
+        )
+
         for access_regex in self._negative_access_regexes:
             if access_regex.match(required_access):
                 return False
+        if generalized is not None:
+            for access_regex in self._negative_reserved_regexes:
+                if access_regex.match(generalized):
+                    return False
 
         for access_regex in self._positive_access_regexes:
             if access_regex.match(required_access):
                 return True
+        if generalized is not None:
+            for access_regex in self._positive_reserved_regexes:
+                if access_regex.match(generalized):
+                    return True
         return False
 
     def may_add_access(self, new_access: str) -> bool:

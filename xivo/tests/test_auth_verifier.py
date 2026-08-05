@@ -1,4 +1,4 @@
-# Copyright 2015-2025 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
@@ -18,6 +18,7 @@ from ..auth_verifier import (
     AuthServerUnreachable,
     AuthVerifierHelpers,
     Unauthorized,
+    compile_acl,
     no_auth,
     required_acl,
     required_tenant,
@@ -26,6 +27,11 @@ from ..http_exceptions import (
     InvalidTokenAPIException,
     MissingPermissionsTokenAPIException,
 )
+
+ALICE_UUID = 'alice-1111-2222-3333-444444444444'
+ALICE_SESSION_UUID = 'alice-session-5555-6666-777777777777'
+BOB_UUID = 'bob00-9999-8888-7777-666666666666'
+BOB_SESSION_UUID = 'bob00-session-4444-3333-222222222222'
 
 
 class TestAuthVerifierHelpers(unittest.TestCase):
@@ -393,3 +399,89 @@ class TestAccessCheck:
             check.matches_required_access('foo.edit.update'),
             equal_to(False),
         )
+
+
+class TestAccessCheckSharedCompilation:
+    def test_acl_is_compiled_once_for_every_user(self):
+        acl = ['events.calls.me', 'auth.users.me.sessions.my_session.read']
+        compile_acl.cache_clear()
+
+        AccessCheck(ALICE_UUID, ALICE_SESSION_UUID, acl)
+        misses_after_first = compile_acl.cache_info().misses
+        AccessCheck(BOB_UUID, BOB_SESSION_UUID, acl)
+
+        assert compile_acl.cache_info().misses == misses_after_first
+        assert compile_acl.cache_info().hits == 1
+
+    def test_acl_differing_in_content_is_compiled_separately(self):
+        compile_acl.cache_clear()
+
+        AccessCheck(ALICE_UUID, ALICE_SESSION_UUID, ['confd.users.me.read'])
+        AccessCheck(ALICE_UUID, ALICE_SESSION_UUID, ['confd.users.me.update'])
+
+        assert compile_acl.cache_info().misses == 2
+
+
+class TestAccessCheckUserIsolation:
+    def test_me_does_not_grant_access_to_another_user(self):
+        alice = AccessCheck(ALICE_UUID, ALICE_SESSION_UUID, ['events.calls.me'])
+        bob = AccessCheck(BOB_UUID, BOB_SESSION_UUID, ['events.calls.me'])
+
+        assert alice.matches_required_access(f'events.calls.{ALICE_UUID}') is True
+        assert alice.matches_required_access(f'events.calls.{BOB_UUID}') is False
+        assert bob.matches_required_access(f'events.calls.{BOB_UUID}') is True
+        assert bob.matches_required_access(f'events.calls.{ALICE_UUID}') is False
+
+    def test_only_the_caller_own_id_is_resolved_to_a_reserved_word(self):
+        check = AccessCheck(
+            ALICE_UUID, ALICE_SESSION_UUID, ['events.chat.message.*.me']
+        )
+
+        assert (
+            check.matches_required_access(
+                f'events.chat.message.{BOB_UUID}.{ALICE_UUID}'
+            )
+            is True
+        )
+        assert (
+            check.matches_required_access(
+                f'events.chat.message.{ALICE_UUID}.{BOB_UUID}'
+            )
+            is False
+        )
+
+    def test_my_session_does_not_grant_access_to_another_session(self):
+        check = AccessCheck(
+            ALICE_UUID,
+            ALICE_SESSION_UUID,
+            ['auth.users.me.sessions.my_session.read'],
+        )
+
+        assert (
+            check.matches_required_access(
+                f'auth.users.{ALICE_UUID}.sessions.{ALICE_SESSION_UUID}.read'
+            )
+            is True
+        )
+        assert (
+            check.matches_required_access(
+                f'auth.users.{ALICE_UUID}.sessions.{BOB_SESSION_UUID}.read'
+            )
+            is False
+        )
+
+    def test_acl_naming_the_auth_id_literally_keeps_per_position_semantics(self):
+        check = AccessCheck('123', 'session-uuid', ['me.123'])
+
+        assert check.matches_required_access('123.123') is True
+        assert check.matches_required_access('me.123') is True
+        assert check.matches_required_access('123.me') is False
+
+    def test_negative_access_still_denies_the_caller_own_id(self):
+        check = AccessCheck(
+            ALICE_UUID, ALICE_SESSION_UUID, ['events.calls.#', '!events.calls.me']
+        )
+
+        assert check.matches_required_access(f'events.calls.{ALICE_UUID}') is False
+        assert check.matches_required_access('events.calls.me') is False
+        assert check.matches_required_access(f'events.calls.{BOB_UUID}') is True
