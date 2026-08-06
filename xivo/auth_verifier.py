@@ -257,14 +257,13 @@ class AccessCheck:
             for access_regex in self._negative_reserved_regexes:
                 if access_regex.match(generalized):
                     return False
+            for access_regex in self._positive_reserved_regexes:
+                if access_regex.match(generalized):
+                    return True
 
         for access_regex in self._positive_access_regexes:
             if access_regex.match(required_access):
                 return True
-        if generalized is not None:
-            for access_regex in self._positive_reserved_regexes:
-                if access_regex.match(generalized):
-                    return True
         return False
 
     def may_add_access(self, new_access: str) -> bool:
