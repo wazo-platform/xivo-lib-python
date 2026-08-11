@@ -28,9 +28,19 @@ F = TypeVar('F', bound=Callable[..., Any])
 R = TypeVar('R')
 
 RESERVED_IDENTITY_WORDS = frozenset(('me', 'my_session'))
+DEPRECATED_ACCESS_ALIAS = ('edit', 'update')  # Compatibility for deprecated suffix
 ACCESS_CACHE_SIZE = 4096
 ACL_CACHE_SIZE = 2048
 CACHE_SATURATION_LOG_INTERVAL = 1000
+
+
+def identity_generalizations(auth_id: str, session_id: str) -> dict[str, str]:
+    """Reverse of the ReservedWord substitution, keyed by the caller's ids.
+
+    Adding a reserved identity means adding an entry here and to
+    RESERVED_IDENTITY_WORDS. `me` is last so it wins if the ids are equal.
+    """
+    return {str(session_id): 'my_session', str(auth_id): 'me'}
 
 
 class _ACLCheck(NamedTuple):
@@ -150,7 +160,7 @@ def _compile_access(access: str) -> re.Pattern:
     _log_cache_saturation(_compile_access)
     access_regex = re.escape(access).replace('\\*', '[^.#]*?').replace('\\#', '.*?')
     access_regex = AccessCheck._replace_reserved_words(
-        access_regex, ReservedWord('edit', 'update')
+        access_regex, ReservedWord(*DEPRECATED_ACCESS_ALIAS)
     )
     return re.compile(f'^{access_regex}$')
 
@@ -192,11 +202,10 @@ def compile_acl(acl: frozenset[str]) -> _CompiledACL:
 class AccessCheck:
     def __init__(self, auth_id: str, session_id: str, acl: list[str]) -> None:
         self.auth_id = auth_id
-        self._auth_id = str(auth_id)
-        self._session_id = str(session_id)
+        self._generalizations = identity_generalizations(auth_id, session_id)
 
         compiled = compile_acl(frozenset(acl))
-        if compiled.literal_ids & {self._auth_id, self._session_id}:
+        if compiled.literal_ids & self._generalizations.keys():
             compiled = self._compile_per_caller(auth_id, session_id, acl)
 
         self._positive_access_regexes = compiled.positive
@@ -225,17 +234,13 @@ class AccessCheck:
         )
 
     def _generalize_identity(self, required_access: str) -> str | None:
-        if (
-            self._auth_id not in required_access
-            and self._session_id not in required_access
-        ):
+        for identity in self._generalizations:
+            if identity in required_access:
+                break
+        else:
             return None
         generalized = '.'.join(
-            'me'
-            if segment == self._auth_id
-            else 'my_session'
-            if segment == self._session_id
-            else segment
+            self._generalizations.get(segment, segment)
             for segment in required_access.split('.')
         )
         return generalized if generalized != required_access else None
@@ -283,9 +288,11 @@ class AccessCheck:
         access_regex = re.escape(access).replace('\\*', '[^.#]*?').replace('\\#', '.*?')
         access_regex = AccessCheck._replace_reserved_words(
             access_regex,
-            ReservedWord('me', auth_id),
-            ReservedWord('my_session', session_id),
-            ReservedWord('edit', 'update'),  # Compatibility for deprecated suffix
+            *(
+                ReservedWord(word, value)
+                for value, word in identity_generalizations(auth_id, session_id).items()
+            ),
+            ReservedWord(*DEPRECATED_ACCESS_ALIAS),
         )
         return re.compile(f'^{access_regex}$')
 

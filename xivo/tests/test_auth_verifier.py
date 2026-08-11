@@ -14,11 +14,13 @@ from wazo_auth_client.exceptions import (
 )
 
 from ..auth_verifier import (
+    RESERVED_IDENTITY_WORDS,
     AccessCheck,
     AuthServerUnreachable,
     AuthVerifierHelpers,
     Unauthorized,
     compile_acl,
+    identity_generalizations,
     no_auth,
     required_acl,
     required_tenant,
@@ -441,6 +443,40 @@ class TestAccessCheckSharedCompilation:
             assert original.matches_required_access(
                 access
             ) == reordered.matches_required_access(access)
+
+
+class TestReservedIdentityWords:
+    def test_every_reserved_word_is_produced_by_the_generalization_map(self):
+        generalizations = identity_generalizations('auth-id', 'session-id')
+
+        assert set(generalizations.values()) == set(RESERVED_IDENTITY_WORDS)
+
+    def test_each_identity_maps_to_its_own_reserved_word(self):
+        generalizations = identity_generalizations('auth-id', 'session-id')
+
+        assert generalizations['auth-id'] == 'me'
+        assert generalizations['session-id'] == 'my_session'
+
+    def test_me_wins_when_both_identities_are_equal(self):
+        generalizations = identity_generalizations('same-id', 'same-id')
+
+        assert generalizations['same-id'] == 'me'
+
+    def test_only_the_identities_are_generalized(self):
+        generalizations = identity_generalizations('auth-id', 'session-id')
+
+        assert set(generalizations) == {'auth-id', 'session-id'}
+
+    def test_reserved_words_are_never_generalized(self):
+        generalizations = identity_generalizations('auth-id', 'session-id')
+
+        assert not set(generalizations) & RESERVED_IDENTITY_WORDS
+
+    def test_a_required_access_naming_a_reserved_word_is_left_alone(self):
+        check = AccessCheck(ALICE_UUID, ALICE_SESSION_UUID, ['events.calls.me'])
+
+        assert check._generalize_identity('events.calls.me') is None
+        assert check.matches_required_access('events.calls.me') is True
 
 
 class TestAccessCheckUserIsolation:
