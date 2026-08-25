@@ -7,7 +7,17 @@ import re
 from collections.abc import Generator
 from typing import NamedTuple
 
-channel_regexp = re.compile(r'(pjsip|sip|sccp|local|dahdi|iax2)/([#+|*.\w@/-]+)-', re.I)
+# A channel name is <tech>/<resource><discriminator>, where the discriminator is what
+# each channel driver appends to make the name unique. Most techs use -<uniqueid>, a
+# hexadecimal counter (PJSIP/Local '%08x', DAHDI '%x', IAX2 a decimal call number),
+# with Local channels adding ;<leg> for their two halves. chan_websocket instead uses
+# /%p, the channel pointer. The resource is tech-specific and unconstrained: whatever
+# lies between the technology and the discriminator belongs to it.
+channel_regexp = re.compile(
+    r'(pjsip|sip|sccp|local|dahdi|iax2|websocket)/(.+)'
+    r'(?:-[0-9a-f]+(?:;\d+)?|/0x[0-9a-f]+)$',
+    re.I,
+)
 agent_channel_regex = re.compile(r'Local/id-(\d+)@agentcallback')
 device_regexp = re.compile(r'(sip|sccp|local|dahdi|iax2)/([\w@/-]+)', re.I)
 
