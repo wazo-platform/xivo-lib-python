@@ -170,3 +170,46 @@ class TestProtocolInterface(unittest.TestCase):
         result = protocol_interface_from_channel(channel)
 
         self.assertEqual(result, expected_result)
+
+    def test_dot_in_interface(self):
+        channel = 'Local/.98@default-key-0000-internal-00003196;1'
+
+        expected_result = ProtocolInterface('Local', '.98@default-key-0000-internal')
+
+        result = protocol_interface_from_channel(channel)
+
+        self.assertEqual(result, expected_result)
+
+    def test_dot_separated_number_in_interface(self):
+        channel = 'Local/01.23.45.67.89@default-key-xxxxx-internal-00006c75;1'
+
+        expected_result = ProtocolInterface(
+            'Local', '01.23.45.67.89@default-key-xxxxx-internal'
+        )
+
+        result = protocol_interface_from_channel(channel)
+
+        self.assertEqual(result, expected_result)
+
+    def test_arbitrary_characters_in_interface(self):
+        channel = 'IAX2/user%demo!@10.0.0.1:4569-0000001f'
+
+        expected_result = ProtocolInterface('IAX2', 'user%demo!@10.0.0.1:4569')
+
+        result = protocol_interface_from_channel(channel)
+
+        self.assertEqual(result, expected_result)
+
+    def test_websocket_channel(self):
+        channel = 'WebSocket/connection1/0x559011d64c80'
+
+        expected_result = ProtocolInterface('WebSocket', 'connection1')
+
+        result = protocol_interface_from_channel(channel)
+
+        self.assertEqual(result, expected_result)
+
+    def test_protocol_interface_from_channel_without_uniqueid(self):
+        channel = 'PJSIP/my-line'
+
+        self.assertRaises(InvalidChannelError, protocol_interface_from_channel, channel)
