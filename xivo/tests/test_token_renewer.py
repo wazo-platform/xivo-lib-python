@@ -1,10 +1,11 @@
-# Copyright 2015-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2015-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
 from unittest.mock import Mock
 
-from hamcrest import assert_that, equal_to
+import requests
+from hamcrest import assert_that, equal_to, has_item, has_property, not_
 
 from ..token_renewer import TokenRenewer
 
@@ -40,6 +41,28 @@ class TestTokenRenewer(unittest.TestCase):
         self.token_renewer._renew_token()
 
         assert_that(callback.called, equal_to(False))
+
+    def test_renew_token_gateway_error_logs_without_traceback(self):
+        self.auth_client.token.new.side_effect = self._http_error(502)
+
+        with self.assertLogs('xivo.token_renewer', level='DEBUG') as logs:
+            self.token_renewer._renew_token()
+
+        assert_that(logs.records, not_(has_item(has_property('exc_info', not_(None)))))
+
+    def test_renew_token_other_http_error_logs_traceback(self):
+        self.auth_client.token.new.side_effect = self._http_error(401)
+
+        with self.assertLogs('xivo.token_renewer', level='DEBUG') as logs:
+            self.token_renewer._renew_token()
+
+        assert_that(logs.records, has_item(has_property('exc_info', not_(None))))
+
+    def _http_error(self, status_code):
+        response = Mock(status_code=status_code)
+        return requests.exceptions.HTTPError(
+            f'{status_code} Server Error', response=response
+        )
 
     def test_subscribe_to_next_token_change(self):
         callback = Mock()

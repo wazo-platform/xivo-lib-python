@@ -34,6 +34,7 @@ Self = TypeVar('Self', bound='TokenRenewer')
 class TokenRenewer:
     DEFAULT_EXPIRATION = 6 * 3_600
     _RENEW_TIME_COEFFICIENT = 0.8
+    _GATEWAY_STATUS_CODES = frozenset({502})
 
     def __init__(
         self, auth_client: AuthClient, expiration: int = DEFAULT_EXPIRATION
@@ -99,12 +100,22 @@ class TokenRenewer:
         except requests.exceptions.ConnectionError as error:
             logger.debug('Creating token with wazo-auth failed: %s', error)
             self._handle_renewal_error(error)
+        except requests.exceptions.HTTPError as error:
+            if self._is_gateway_error(error):
+                logger.debug('Creating token with wazo-auth failed: %s', error)
+            else:
+                logger.debug('Creating token with wazo-auth failed', exc_info=True)
+            self._handle_renewal_error(error)
         except Exception as error:
             logger.debug('Creating token with wazo-auth failed', exc_info=True)
             self._handle_renewal_error(error)
         else:
             self._renew_time = self._RENEW_TIME_COEFFICIENT * self._expiration
             self._notify_all(token)
+
+    def _is_gateway_error(self, error: requests.exceptions.HTTPError) -> bool:
+        status_code = getattr(error.response, 'status_code', None)
+        return status_code in self._GATEWAY_STATUS_CODES
 
     def _handle_renewal_error(self, error: Exception) -> None:
         response = getattr(error, 'response', None)
