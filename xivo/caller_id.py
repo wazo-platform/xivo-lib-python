@@ -8,10 +8,10 @@ import re
 COMPLETE_CALLER_ID_PATTERN = re.compile(r'\"(.*)\" \<(\+?\d+)\>')
 
 # What the dialplan accepts as a caller ID: a name, quoted or not, optionally
-# followed by a number in angle brackets. A name alone that looks like a number
-# is also the number.
+# followed by a number in angle brackets. The name may be empty or missing when
+# a number follows. A name alone that looks like a number is also the number.
 CALLER_ID_PATTERN = re.compile(
-    r'^ *(?:"(.+)"|([\w\-\.\!%\*\+`\'\~ ]*[^ "])) *(?:<(\+?[0-9\*#]+)>)?$'
+    r'^ *(?:"(.*)"|([\w\-\.\!%\*\+`\'\~ ]*[^ "]))? *(?:<(\+?[0-9\*#]+)>)?$'
 )
 CALLER_ID_NUMBER_PATTERN = re.compile(r'^\+?[0-9\*#]+$')
 
@@ -38,15 +38,21 @@ def assemble_caller_id(fullname: str, number: str | None) -> str:
     return f'"{fullname}"'
 
 
-def parse_caller_id(caller_id: str | None) -> tuple[str, str | None] | None:
+def parse_caller_id(
+    caller_id: str | None,
+) -> tuple[str | None, str | None] | None:
     '''
     split a caller ID into (name, number), or return None when the dialplan
-    could not parse it. A bare number is both the name and the number.
+    could not parse it. A bare number is both the name and the number, and a
+    number without a name has an empty or None name.
     '''
     if not caller_id or not (match := CALLER_ID_PATTERN.match(caller_id)):
         return None
 
     quoted_name, unquoted_name, number = match.groups()
+    # an empty name must be followed by a number
+    if number is None and not (quoted_name or unquoted_name):
+        return None
     if quoted_name is not None:
         return quoted_name, number
     if number is None and CALLER_ID_NUMBER_PATTERN.match(unquoted_name):

@@ -87,8 +87,14 @@ class TestParseCallerID(unittest.TestCase):
             ('+123', ('+123', '+123')),
             ('anonymous', ('anonymous', None)),
             ('default', ('default', None)),
-            ('"" <123>', None),
-            ('<123>', None),
+            ('"" <123>', ('', '123')),
+            ('""<+123>', ('', '+123')),
+            ('<123>', (None, '123')),
+            ('  <123>', (None, '123')),
+            ('""', None),
+            ('"" ', None),
+            ('"" <>', None),
+            ('   ', None),
             ('Bad; name <123>', None),
             ('', None),
             (None, None),
@@ -101,5 +107,7 @@ class TestParseCallerID(unittest.TestCase):
     def test_is_valid_caller_id(self):
         assert_that(is_valid_caller_id('"Acme Corp" <+14185551234>'), equal_to(True))
         assert_that(is_valid_caller_id('+14185551234'), equal_to(True))
-        assert_that(is_valid_caller_id('<+14185551234>'), equal_to(False))
+        assert_that(is_valid_caller_id('"" <+14185551234>'), equal_to(True))
+        assert_that(is_valid_caller_id('<+14185551234>'), equal_to(True))
+        assert_that(is_valid_caller_id('""'), equal_to(False))
         assert_that(is_valid_caller_id(''), equal_to(False))
