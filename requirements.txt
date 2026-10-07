@@ -4,7 +4,7 @@ https://github.com/wazo-platform/wazo-bus/archive/master.zip
 cheroot==9.0.0
 flask==2.2.2
 werkzeug==2.2.2
-marshmallow==3.18.0
+marshmallow==3.26.2
 netifaces==0.11.0
 phonenumbers==8.12.57
 python-consul==1.1.0
