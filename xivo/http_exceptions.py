@@ -47,9 +47,9 @@ class MissingPermissionsTokenAPIException(rest_api_helpers.APIException):
             'tenant_uuid': tenant_uuid,
         }
         super().__init__(
-            status_code=401,
-            message='Unauthorized',
-            error_id='unauthorized',
+            status_code=403,
+            message='Forbidden',
+            error_id='forbidden',
             details=details,
         )
 
