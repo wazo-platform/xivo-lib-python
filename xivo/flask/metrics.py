@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 from prometheus_flask_exporter import RESTfulPrometheusMetrics
 
 if TYPE_CHECKING:
+    from flask import Flask
     from flask_restful import Api
     from prometheus_client import CollectorRegistry
 
@@ -21,17 +22,26 @@ def init_flask_metrics(
     """Serve the app's metrics at <api prefix>/metrics, without authentication.
 
     Deny the route in nginx, or restrict it with `metrics_decorator`."""
-    if api.app is None:
-        # An Api bound later with init_app() would silently get no metrics
-        raise ValueError('init_flask_metrics needs an Api created with its Flask app')
-    return RESTfulPrometheusMetrics(
-        api.app,
+    metrics = RESTfulPrometheusMetrics.for_app_factory(
         api,
         path=f'{api.prefix}/metrics',
         group_by='endpoint',
         metrics_decorator=metrics_decorator,
         registry=registry,
     )
+    if api.app is not None:
+        metrics.init_app(api.app, api)
+        return metrics
+
+    # An Api bound later with init_app() gets its metrics when it is bound
+    bind_api = api.init_app
+
+    def init_app(app: Flask) -> None:
+        bind_api(app)
+        metrics.init_app(app, api)
+
+    api.init_app = init_app
+    return metrics
 
 
 class Plugin:
