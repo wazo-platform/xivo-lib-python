@@ -85,6 +85,14 @@ class TestInitFlaskMetrics(unittest.TestCase):
         assert_that(self.client.get('/1.0/metrics').status_code, equal_to(403))
         assert_that(self.client.get('/1.0/items').status_code, equal_to(200))
 
+    def test_api_without_app_is_rejected(self):
+        app = Flask('late')
+        api = Api(prefix='/1.0')
+        api.init_app(app)
+
+        with self.assertRaises(ValueError):
+            init_flask_metrics(api, registry=CollectorRegistry())
+
 
 class TestPlugin(unittest.TestCase):
     @patch('prometheus_client.REGISTRY', CollectorRegistry())
