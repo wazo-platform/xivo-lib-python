@@ -21,6 +21,9 @@ def init_flask_metrics(
     """Serve the app's metrics at <api prefix>/metrics, without authentication.
 
     Deny the route in nginx, or restrict it with `metrics_decorator`."""
+    if api.app is None:
+        # An Api bound later with init_app() would silently get no metrics
+        raise ValueError('init_flask_metrics needs an Api created with its Flask app')
     return RESTfulPrometheusMetrics(
         api.app,
         api,
