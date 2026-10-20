@@ -3,13 +3,14 @@
 
 import unittest
 from functools import wraps
+from unittest.mock import patch
 
 from flask import Flask
 from flask_restful import Api, Resource
 from hamcrest import assert_that, contains_string, equal_to, not_
 from prometheus_client import CollectorRegistry
 
-from ..metrics import init_flask_metrics
+from ..metrics import Plugin, init_flask_metrics
 
 
 class ItemsResource(Resource):
@@ -28,7 +29,7 @@ class TestInitFlaskMetrics(unittest.TestCase):
         self.client = self.app.test_client()
 
     def test_metrics_served_under_api_prefix_without_token(self):
-        init_flask_metrics(self.app, self.api, registry=CollectorRegistry())
+        init_flask_metrics(self.api, registry=CollectorRegistry())
 
         response = self.client.get('/1.0/metrics')
 
@@ -36,7 +37,7 @@ class TestInitFlaskMetrics(unittest.TestCase):
         assert_that(self.client.get('/metrics').status_code, equal_to(404))
 
     def test_requests_are_counted_by_endpoint_and_status(self):
-        init_flask_metrics(self.app, self.api, registry=CollectorRegistry())
+        init_flask_metrics(self.api, registry=CollectorRegistry())
 
         self.client.get('/1.0/items')
         self.client.post('/1.0/items')
@@ -62,31 +63,12 @@ class TestInitFlaskMetrics(unittest.TestCase):
         )
 
     def test_metrics_requests_are_not_counted(self):
-        init_flask_metrics(self.app, self.api, registry=CollectorRegistry())
+        init_flask_metrics(self.api, registry=CollectorRegistry())
 
         self.client.get('/1.0/metrics')
         body = self.client.get('/1.0/metrics').get_data(as_text=True)
 
         assert_that(body, not_(contains_string('prometheus_metrics')))
-
-    def test_api_attached_to_app_after_creation(self):
-        app = Flask('deferred')
-        api = Api(prefix='/1.0')
-        api.add_resource(ItemsResource, '/items', endpoint='items')
-        api.init_app(app)
-        client = app.test_client()
-
-        init_flask_metrics(app, api, registry=CollectorRegistry())
-        client.get('/1.0/items')
-        body = client.get('/1.0/metrics').get_data(as_text=True)
-
-        assert_that(
-            body,
-            contains_string(
-                'flask_http_request_duration_seconds_count'
-                '{endpoint="items",method="GET",status="200"} 1.0'
-            ),
-        )
 
     def test_metrics_decorator_restricts_the_route(self):
         def deny(func):
@@ -97,8 +79,29 @@ class TestInitFlaskMetrics(unittest.TestCase):
             return wrapper
 
         init_flask_metrics(
-            self.app, self.api, metrics_decorator=deny, registry=CollectorRegistry()
+            self.api, metrics_decorator=deny, registry=CollectorRegistry()
         )
 
         assert_that(self.client.get('/1.0/metrics').status_code, equal_to(403))
         assert_that(self.client.get('/1.0/items').status_code, equal_to(200))
+
+
+class TestPlugin(unittest.TestCase):
+    @patch('prometheus_client.REGISTRY', CollectorRegistry())
+    def test_load_serves_metrics_on_the_api(self):
+        app = Flask('test')
+        api = Api(app, prefix='/0.1')
+        api.add_resource(ItemsResource, '/items', endpoint='items')
+        client = app.test_client()
+
+        Plugin().load({'api': api})
+        client.get('/0.1/items')
+        body = client.get('/0.1/metrics').get_data(as_text=True)
+
+        assert_that(
+            body,
+            contains_string(
+                'flask_http_request_duration_seconds_count'
+                '{endpoint="items",method="GET",status="200"} 1.0'
+            ),
+        )
