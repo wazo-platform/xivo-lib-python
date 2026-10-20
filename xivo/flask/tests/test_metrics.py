@@ -85,13 +85,25 @@ class TestInitFlaskMetrics(unittest.TestCase):
         assert_that(self.client.get('/1.0/metrics').status_code, equal_to(403))
         assert_that(self.client.get('/1.0/items').status_code, equal_to(200))
 
-    def test_api_without_app_is_rejected(self):
+    def test_api_bound_after_init_serves_metrics(self):
         app = Flask('late')
         api = Api(prefix='/1.0')
-        api.init_app(app)
+        api.add_resource(ItemsResource, '/items', endpoint='items')
+        client = app.test_client()
 
-        with self.assertRaises(ValueError):
-            init_flask_metrics(api, registry=CollectorRegistry())
+        init_flask_metrics(api, registry=CollectorRegistry())
+        api.init_app(app)
+        client.get('/1.0/items')
+        body = client.get('/1.0/metrics').get_data(as_text=True)
+
+        assert_that(
+            body,
+            contains_string(
+                'flask_http_request_duration_seconds_count'
+                '{endpoint="items",method="GET",status="200"} 1.0'
+            ),
+        )
+        assert_that(client.get('/1.0/items').status_code, equal_to(200))
 
 
 class TestPlugin(unittest.TestCase):
