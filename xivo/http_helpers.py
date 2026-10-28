@@ -197,10 +197,14 @@ def _log_request(
         current_app.logger.debug("response body: %s", body)
 
 
+_REPLACE_TOKEN_REGEX = re.compile(r'\btoken=[-0-9a-zA-Z]+')
+
+
 def log_before_request(hidden_fields: list[str] | None = None) -> None:
+    url = unquote(request.url)
     params = {
         'method': request.method,
-        'url': unquote(request.url),
+        'url': _REPLACE_TOKEN_REGEX.sub('token=<hidden>', url),
         'headers': LazyHeaderFormatter(request.headers),
     }
 
@@ -229,15 +233,6 @@ def log_before_request(hidden_fields: list[str] | None = None) -> None:
 
 
 def log_request(response: Response) -> Response:
-    url = unquote(request.url)
-    _log_request(url, response)
-    return response
-
-
-_REPLACE_TOKEN_REGEX = re.compile(r'\btoken=[-0-9a-zA-Z]+')
-
-
-def log_request_hide_token(response: Response) -> Response:
     url = unquote(request.url)
     url = _REPLACE_TOKEN_REGEX.sub('token=<hidden>', url)
     _log_request(url, response)
