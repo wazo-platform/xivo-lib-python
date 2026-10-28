@@ -13,7 +13,6 @@ from xivo.http_helpers import (
     _parse_traceparent,
     log_before_request,
     log_request,
-    log_request_hide_token,
 )
 
 
@@ -24,7 +23,7 @@ def _assert_json_equals(result, expected):
 
 class TestLogRequest(unittest.TestCase):
     @patch('xivo.http_helpers.g', spec={})
-    def test_log_request(self, g):
+    def test_log_request_hides_token(self, g):
         del g.request_time
         mock_request = Mock()
         mock_request.url = '/foo/bar?token=1734768e-caf6'
@@ -35,31 +34,6 @@ class TestLogRequest(unittest.TestCase):
             patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
         ):
             log_request(response)
-
-            mock_current_app.logger.info.assert_called_once_with(
-                ANY,
-                mock_request.remote_addr,
-                '',
-                mock_request.method,
-                mock_request.url,
-                200,
-                '-',
-                '-',
-                '-',
-            )
-
-    @patch('xivo.http_helpers.g', spec={})
-    def test_log_request_hide_token(self, g):
-        del g.request_time
-        mock_request = Mock()
-        mock_request.url = '/foo/bar?token=1734768e-caf6'
-        response = Mock(data=None, status_code=200)
-
-        with (
-            patch('xivo.http_helpers.request', mock_request),
-            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
-        ):
-            log_request_hide_token(response)
 
             expected_url = '/foo/bar?token=<hidden>'
             mock_current_app.logger.info.assert_called_once_with(
@@ -143,6 +117,21 @@ class TestLogRequest(unittest.TestCase):
             assert_that(params['span_id'], equal_to(g.span_id))
             assert_that(params['trace_id'], equal_to(g.trace_id))
             assert_that(params['parent_id'], equal_to('-'))
+
+    @patch('xivo.http_helpers.g', spec={})
+    def test_log_before_request_hides_token(self, g):
+        mock_request = Mock(data=b'', method='GET')
+        mock_request.headers.get = Mock(return_value=None)
+        mock_request.url = '/foo/bar?token=1734768e-caf6'
+
+        with (
+            patch('xivo.http_helpers.request', mock_request),
+            patch('xivo.http_helpers.current_app', Mock()) as mock_current_app,
+        ):
+            log_before_request()
+
+            params = mock_current_app.logger.info.call_args[0][-1]
+            assert_that(params['url'], equal_to('/foo/bar?token=<hidden>'))
 
     @patch('xivo.http_helpers.g', spec={})
     def test_log_request_includes_span_parent_and_trace_id(self, g):
